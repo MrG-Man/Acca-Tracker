@@ -46,7 +46,7 @@ class BBCSportScraper:
         "English Championship": "/sport/football/championship/scores-fixtures",
         "English League One": "/sport/football/league-one/scores-fixtures",
         "English League Two": "/sport/football/league-two/scores-fixtures",
-        "English National League" "/sport/football/national-league/scores-fixtures",
+        "English National League": "/sport/football/national-league/scores-fixtures",
 
         # Scottish Leagues
         "Scottish Premiership": "/sport/football/scottish-premiership/scores-fixtures",
