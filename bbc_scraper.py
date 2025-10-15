@@ -128,7 +128,7 @@ class BBCSportScraper:
                 return False
 
             # If target date is in the past, cache is invalid
-            if target < today.date():
+            if target.date() < today.date():
                 return False
 
             return True
