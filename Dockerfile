@@ -35,16 +35,12 @@ RUN mkdir -p logs data/backups static/uploads
 # Expose port
 EXPOSE 5000
 
-# Health check
+# Health check - FIXED VERSION
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "
-import requests
-try:
-    response = requests.get('http://localhost:5000/health', timeout=5)
-    exit(0 if response.status_code == 200 else 1)
-except:
-    exit(1)
-"
+    CMD python -c "import requests; \
+    import sys; \
+    response = requests.get('http://localhost:5000/health', timeout=5); \
+    sys.exit(0 if response.status_code == 200 else 1)"
 
 # Start command
 CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
