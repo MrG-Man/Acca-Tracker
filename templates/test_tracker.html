@@ -108,61 +108,13 @@
             color: #212529;
         }
 
-        .live-tracker-container {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
-            min-height: 100vh;
-            position: relative;
-        }
-
-        .enhanced-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 25px 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .enhanced-header h1 {
-            background: linear-gradient(135deg, #ffc107, #fd7e14);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin: 0;
-            text-align: center;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 20px;
-            background: rgba(255, 193, 7, 0.1);
-            border-radius: 25px;
-            border: 2px solid rgba(255, 193, 7, 0.3);
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #ffc107;
-            animation: testPulse 2s infinite;
-        }
-
-        .status-text {
-            font-weight: 600;
-            color: #495057;
-        }
-
-        /* Reuse existing styles for the rest of the interface */
-        .enhanced-summary, .summary-card, .accumulator-status, .status-badge, 
-        .enhanced-stats, .stat-item, .stat-label, .stat-value, .enhanced-matches-grid,
-        .enhanced-match-card, .selector-name, .league-badge, .teams, .score-display,
-        .score, .time, .btts-status, .match-status, .enhanced-loading, .enhanced-error {
+        /* Reuse existing styles */
+        .live-tracker-container, .enhanced-header, .status-indicator, .status-dot, 
+        .status-text, .enhanced-summary, .summary-card, .accumulator-status, 
+        .status-badge, .enhanced-stats, .stat-item, .stat-label, .stat-value, 
+        .enhanced-matches-grid, .enhanced-match-card, .selector-name, .league-badge, 
+        .teams, .score-display, .score, .time, .btts-status, .match-status, 
+        .enhanced-loading, .enhanced-error {
             /* These will inherit styles from the main tracker.css */
         }
 
@@ -290,19 +242,20 @@
             try {
                 showLoading();
                 
-                const response = await fetch(`/api/btts-test-scenarios?scenario=${scenario}`);
-                const data = await response.json();
+                // Get test scenario data
+                const scenarioResponse = await fetch(`/api/btts-test-scenarios?scenario=${scenario}`);
+                const scenarioData = await scenarioResponse.json();
 
-                if (data.error) {
-                    showError(data.error);
+                if (scenarioData.error) {
+                    showError(scenarioData.error);
                     return;
                 }
 
                 currentScenario = scenario;
                 updateScenarioButtons(scenario);
-                renderMatches(data.matches);
-                updateStatistics(data.statistics);
-                updateAccumulatorStatus(data.statistics);
+                renderMatches(scenarioData.matches);
+                updateStatistics(scenarioData.statistics);
+                updateAccumulatorStatus(scenarioData.statistics);
                 updateLastUpdated();
 
                 hideLoading();
@@ -409,29 +362,6 @@
             document.getElementById('last-updated').textContent = now.toLocaleTimeString();
         }
 
-        async function triggerBTTS(selector) {
-            try {
-                const response = await fetch('/api/btts-test-trigger-btts', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        selector: selector,
-                        action: 'trigger_btts'
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    // Reload current scenario to show updated data
-                    loadTestScenario(currentScenario);
-                }
-            } catch (error) {
-                console.error('Error triggering BTTS:', error);
-            }
-        }
-
         async function resetAllScores() {
             try {
                 const response = await fetch('/api/btts-test-update-score', {
@@ -490,3 +420,4 @@
     </script>
 </body>
 </html>
+
