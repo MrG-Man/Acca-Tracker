@@ -13,7 +13,7 @@ import os
 import sys
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 # Import Flask and extensions
@@ -119,11 +119,42 @@ SELECTORS = [
     "Steve H", "Danny", "Eddie Lee", "Fran Radar"
 ]
 
-def get_week_string():
-    """Get the current week string in YYYY-MM-DD format for next Saturday."""
-    scraper = BBCSportScraper()
-    _, next_saturday = scraper._get_next_saturday()
-    return next_saturday
+def get_current_prediction_week():
+    """Get the current prediction week string in YYYY-MM-DD format.
+
+    Logic:
+    - Sunday: Use next Saturday's date
+    - Monday-Friday: Use next Saturday's date
+    - Saturday before 12:01: Use current Saturday's date
+    - Saturday after 12:01: Use next Saturday's date
+    """
+    from datetime import datetime, time, timedelta
+
+    now = datetime.now()
+    current_day = now.weekday()  # 0=Monday, 6=Sunday
+    current_time = now.time()
+
+    # Saturday cutoff time (12:01 PM)
+    saturday_cutoff = time(12, 1)
+
+    if current_day == 5:  # Saturday (weekday 5)
+        if current_time < saturday_cutoff:
+            # Before 12:01 PM on Saturday - use current Saturday
+            target_date = now.date()
+        else:
+            # After 12:01 PM on Saturday - use next Saturday (7 days later)
+            target_date = now.date() + timedelta(days=7)
+    else:
+        # Sunday through Friday - use next Saturday
+        # Calculate days until next Saturday
+        if current_day == 6:  # Sunday
+            days_until_saturday = 6  # Next Saturday is 6 days away
+        else:  # Monday-Friday
+            days_until_saturday = 5 - current_day  # Days until Saturday
+
+        target_date = now.date() + timedelta(days=days_until_saturday)
+
+    return target_date.strftime('%Y-%m-%d')
 
 def map_selections_to_sofascore_ids(selections):
     """
@@ -140,7 +171,7 @@ def map_selections_to_sofascore_ids(selections):
 
     try:
         # Get current week's BBC fixtures for team name matching
-        week = get_week_string()
+        week = get_current_prediction_week()
         bbc_fixtures = data_manager.get_bbc_fixtures(week)
 
         if not bbc_fixtures:
@@ -197,7 +228,7 @@ def map_selections_to_sofascore_ids(selections):
 
 def load_selections():
     """Load existing selections for the current week using DataManager."""
-    week = get_week_string()
+    week = get_current_prediction_week()
 
     # Load selections using DataManager
     selections = data_manager.load_weekly_selections(week)
@@ -223,7 +254,7 @@ def load_selections():
 
 def save_selections(selections_data):
     """Save selections using DataManager."""
-    week = get_week_string()
+    week = get_current_prediction_week()
 
     # Extract just the selections part for DataManager
     selections_only = selections_data.get("selectors", {})
@@ -306,7 +337,7 @@ def assign_match():
 
         # First, try to get cached match data from DataManager
         try:
-            week = get_week_string()
+            week = get_current_prediction_week()
             cached_fixtures = data_manager.get_bbc_fixtures(week)
             if cached_fixtures:
                 for match in cached_fixtures:
@@ -435,7 +466,7 @@ def btts_tracker():
     """Main BTTS accumulator tracker interface."""
     try:
         # Load current week's selections for context
-        week = get_week_string()
+        week = get_current_prediction_week()
         selections = data_manager.load_weekly_selections(week)
 
         return render_template('tracker.html')
@@ -466,7 +497,7 @@ def get_btts_status():
     """API endpoint to get current BTTS status for all matches."""
     try:
         # Load current week's selections
-        week = get_week_string()
+        week = get_current_prediction_week()
         selections = data_manager.load_weekly_selections(week)
 
         if not selections:
@@ -710,7 +741,7 @@ def get_btts_summary():
     """API endpoint to get BTTS accumulator summary."""
     try:
         # Load current week's selections
-        week = get_week_string()
+        week = get_current_prediction_week()
         selections = data_manager.load_weekly_selections(week)
 
         if not selections or len(selections) == 0:
