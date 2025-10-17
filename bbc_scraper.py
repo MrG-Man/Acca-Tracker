@@ -53,6 +53,11 @@ class BBCSportScraper:
         "Scottish Championship": "/sport/football/scottish-championship/scores-fixtures",
         "Scottish League One": "/sport/football/scottish-league-one/scores-fixtures",
         "Scottish League Two": "/sport/football/scottish-league-two/scores-fixtures",
+
+        # Example: Adding a new league would be this simple:
+        # "Italian Serie A": "/sport/football/italian-serie-a/scores-fixtures",
+        # "German Bundesliga": "/sport/football/german-bundesliga/scores-fixtures",
+        # "French Ligue 1": "/sport/football/french-ligue-1/scores-fixtures",
     }
 
     def __init__(self, rate_limit: float = 1.0):
@@ -183,6 +188,10 @@ class BBCSportScraper:
             Match dictionary or None if parsing failed
         """
         try:
+            # Special handling for Championship - use JSON data extraction
+            if league_name in ["English Championship", "Scottish Championship"]:
+                return self._parse_championship_match_data(match_element, league_name)
+
             # NEW BBC Sport structure: Look for match text with "versus" pattern
             match_text = None
 
@@ -239,6 +248,80 @@ class BBCSportScraper:
             logger.error(f"Error parsing match data: {e}")
             return None
 
+    def _parse_championship_match_data(self, match_element, league_name: str) -> Optional[Dict]:
+        """
+        Parse Championship match data from JSON embedded in HTML.
+
+        Args:
+            match_element: BeautifulSoup element containing match info
+            league_name: Name of the league for this match
+
+        Returns:
+            Match dictionary or None if parsing failed
+        """
+        try:
+            # Look for script tags containing match data
+            script_tags = match_element.find_all('script', type='application/json')
+
+            for script in script_tags:
+                if script.string:
+                    try:
+                        data = json.loads(script.string)
+
+                        # Navigate through the JSON structure to find match data
+                        # The structure appears to be nested under props/data/eventGroups
+                        if 'props' in data and 'data' in data['props']:
+                            props_data = data['props']['data']
+
+                            # Look for eventGroups which contain the match information
+                            if 'eventGroups' in props_data:
+                                for group in props_data['eventGroups']:
+                                    if 'secondaryGroups' in group:
+                                        for secondary_group in group['secondaryGroups']:
+                                            if 'events' in secondary_group:
+                                                for event in secondary_group['events']:
+                                                    # Extract match information
+                                                    if 'home' in event and 'away' in event:
+                                                        home_team = event['home'].get('fullName', '')
+                                                        away_team = event['away'].get('fullName', '')
+
+                                                        # Validate team names
+                                                        if (len(home_team) < 2 or len(away_team) < 2 or
+                                                            len(home_team) > 50 or len(away_team) > 50):
+                                                            continue
+
+                                                        # Extract kickoff time
+                                                        start_time = event.get('startDateTime', '')
+                                                        if start_time:
+                                                            # Convert UTC time to local time and extract hour:minute
+                                                            try:
+                                                                utc_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                                                                local_time = utc_time.astimezone()  # Convert to local timezone
+                                                                kickoff = local_time.strftime('%H:%M')
+                                                            except:
+                                                                kickoff = "15:00"  # Default fallback
+                                                        else:
+                                                            kickoff = "15:00"
+
+                                                        # Only return matches at 15:00
+                                                        if kickoff == "15:00":
+                                                            return {
+                                                                "league": league_name,
+                                                                "home_team": home_team,
+                                                                "away_team": away_team,
+                                                                "kickoff": kickoff,
+                                                                "venue": "TBC"
+                                                            }
+
+                    except json.JSONDecodeError:
+                        continue
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error parsing Championship match data: {e}")
+            return None
+
     def _scrape_league_fixtures(self, league_name: str, league_url: str, target_date: str) -> List[Dict]:
         """
         Scrape fixtures for a specific league with aggressive caching.
@@ -251,7 +334,17 @@ class BBCSportScraper:
         Returns:
             List of match dictionaries
         """
-        full_url = urljoin(self.BASE_URL, league_url)
+        # Extract year-month from target_date for URL construction (e.g., "2025-10")
+        date_parts = target_date.split('-')
+        if len(date_parts) >= 2:
+            year_month = f"{date_parts[0]}-{date_parts[1]}"
+            # Construct URL with date parameter and fixtures filter
+            # This will create URLs like: /sport/football/championship/scores-fixtures/2025-10?filter=fixtures
+            full_url = urljoin(self.BASE_URL, f"{league_url}/{year_month}?filter=fixtures")
+        else:
+            # Fallback to original URL if date parsing fails
+            full_url = urljoin(self.BASE_URL, league_url)
+
         cache_key = self._get_cache_key(full_url, target_date)
 
         # Check if cache is valid for this date first
@@ -277,9 +370,15 @@ class BBCSportScraper:
                     return cached_data.get('matches', [])
                 return matches
 
-            # Look for fixture containers - NEW BBC Sport structure uses ssrcss classes
-            # Be more specific to avoid duplicates - look for match containers with time elements
-            fixture_containers = soup.find_all(['div', 'section'], class_=re.compile(r'ssrcss'))
+            # Special handling for Championship leagues - they use different structure
+            if league_name in ["English Championship", "Scottish Championship"]:
+                # For Championship, we need to look at the entire page structure
+                # The match data is embedded in JSON within script tags
+                fixture_containers = soup.find_all(['script', 'div', 'section'])
+            else:
+                # Look for fixture containers - NEW BBC Sport structure uses ssrcss classes
+                # Be more specific to avoid duplicates - look for match containers with time elements
+                fixture_containers = soup.find_all(['div', 'section'], class_=re.compile(r'ssrcss'))
 
             processed_matches = set()  # Track processed matches to avoid duplicates
 
@@ -298,7 +397,10 @@ class BBCSportScraper:
                 self._save_cache_data(cache_key, cache_data, target_date, league_name)
                 logger.info(f"Cached {len(matches)} matches for {league_name}")
             else:
-                logger.warning(f"No matches found for {league_name} - not caching empty results")
+                if league_name in ["English Championship", "Scottish Championship"]:
+                    logger.info(f"No matches found for {league_name} - this may be due to international break or scheduled weekend off")
+                else:
+                    logger.warning(f"No matches found for {league_name} - not caching empty results")
 
         except Exception as e:
             logger.error(f"Error scraping {league_name}: {e}")
@@ -332,6 +434,12 @@ class BBCSportScraper:
 
             logger.info(f"Found {len(matches_3pm)} 15:00 matches in {league_name}")
 
+        # Cache the aggregated results for the date
+        if all_matches:
+            cache_data = {'matches': all_matches}
+            self._save_cache_data(f"aggregated_{next_saturday}", cache_data, next_saturday, "ALL_LEAGUES")
+            logger.info(f"Cached {len(all_matches)} aggregated matches for {next_saturday}")
+
         result = {
             "scraping_date": scraping_date,
             "next_saturday": next_saturday,
@@ -339,6 +447,15 @@ class BBCSportScraper:
         }
 
         logger.info(f"Total 15:00 matches found: {len(all_matches)}")
+
+        # Log summary by league for transparency
+        league_summary = {}
+        for league_name in self.LEAGUES.keys():
+            league_matches = [match for match in all_matches if match.get('league') == league_name]
+            league_summary[league_name] = len(league_matches)
+
+        logger.info(f"Matches by league: {league_summary}")
+
         return result
 
     def clear_cache(self):
@@ -359,6 +476,158 @@ class BBCSportScraper:
             logger.info(f"Cleared {removed_count} BBC cache files")
         except Exception as e:
             logger.error(f"Error clearing BBC cache: {e}")
+
+
+def debug_championship_parsing():
+    """Debug function to examine Championship page structure."""
+    scraper = BBCSportScraper(rate_limit=0.5)
+
+    # Get next Saturday
+    scraping_date, next_saturday = scraper._get_next_saturday()
+    print(f"Debugging Championship parsing for {next_saturday}")
+
+    # Make request to Championship page
+    championship_url = "/sport/football/championship/scores-fixtures"
+    full_url = urljoin(scraper.BASE_URL, championship_url)
+
+    soup = scraper._make_request(full_url)
+    if not soup:
+        print("Failed to retrieve Championship page")
+        return
+
+    print(f"Successfully retrieved Championship page: {full_url}")
+    print(f"Page title: {soup.title.text if soup.title else 'No title'}")
+
+    # Look for fixture containers - NEW BBC Sport structure uses ssrcss classes
+    fixture_containers = soup.find_all(['div', 'section'], class_=re.compile(r'ssrcss'))
+
+    print(f"\nFound {len(fixture_containers)} containers with 'ssrcss' classes")
+
+    # Look for specific patterns that might indicate matches
+    match_patterns = [
+        r'versus',
+        r'kick off',
+        r'15:00',
+        r'fixtures',
+        r'match'
+    ]
+
+    print("\nSearching for match-related text patterns:")
+    for pattern in match_patterns:
+        elements = soup.find_all(string=re.compile(pattern, re.IGNORECASE))
+        print(f"  '{pattern}' found in {len(elements)} elements")
+
+    # Look for time elements specifically
+    time_elements = soup.find_all('time', class_=re.compile(r'ssrcss.*Time'))
+    print(f"\nFound {len(time_elements)} time elements with 'ssrcss' classes")
+
+    for i, time_elem in enumerate(time_elements[:10]):  # Show first 10
+        print(f"  Time element {i+1}: '{time_elem.get_text(strip=True)}'")
+
+    # Look for any elements containing "versus"
+    versus_elements = soup.find_all(string=re.compile(r'versus', re.IGNORECASE))
+    print(f"\nFound {len(versus_elements)} elements containing 'versus'")
+
+    for i, elem in enumerate(versus_elements[:5]):  # Show first 5
+        print(f"  Versus element {i+1}: '{elem.strip()}'")
+
+    # Look for any elements containing "15:00"
+    time_1500_elements = soup.find_all(string=re.compile(r'15:00'))
+    print(f"\nFound {len(time_1500_elements)} elements containing '15:00'")
+
+    for i, elem in enumerate(time_1500_elements[:5]):  # Show first 5
+        print(f"  15:00 element {i+1}: '{elem.strip()}'")
+
+    # Let's examine the HTML structure more deeply
+    print(f"\nExamining HTML structure...")
+
+    # Look for any divs or sections that might contain fixture information
+    fixture_sections = soup.find_all(['div', 'section', 'article'], class_=re.compile(r'fixture|match|game|event'))
+    print(f"Found {len(fixture_sections)} elements with fixture/match/game/event classes")
+
+    # Look for any elements containing team names (common patterns)
+    team_patterns = [
+        r'City', r'United', r'Town', r'Rovers', r'AFC', r'FC',
+        r'Albion', r'Wanderers', r'Athletic', r'Rangers'
+    ]
+
+    print("\nSearching for team name patterns:")
+    for pattern in team_patterns:
+        elements = soup.find_all(string=re.compile(pattern, re.IGNORECASE))
+        if len(elements) > 0 and len(elements) < 20:  # Only show if reasonable number
+            print(f"  '{pattern}' found in {len(elements)} elements")
+            for i, elem in enumerate(elements[:3]):  # Show first 3 examples
+                print(f"    Example {i+1}: '{elem.strip()}'")
+
+    # Let's also check if this might be a JavaScript-rendered page
+    scripts = soup.find_all('script')
+    print(f"\nFound {len(scripts)} script tags - page might be JavaScript rendered")
+
+    # Check for any data attributes that might contain fixture information
+    data_attrs = []
+    for element in soup.find_all():
+        for attr, value in element.attrs.items():
+            if attr.startswith('data-') and ('fixture' in attr.lower() or 'match' in attr.lower() or 'team' in attr.lower()):
+                data_attrs.append((attr, value))
+
+    print(f"\nFound {len(data_attrs)} data attributes related to fixtures/matches/teams")
+    for i, (attr, value) in enumerate(data_attrs[:5]):  # Show first 5
+        print(f"  {attr}: {value[:100]}{'...' if len(str(value)) > 100 else ''}")
+
+    return soup
+
+
+def test_championship_fix():
+    """Test function to verify Championship scraping fix."""
+    scraper = BBCSportScraper(rate_limit=0.5)
+
+    # Test Championship specifically
+    league_name = "English Championship"
+    league_url = "/sport/football/championship/scores-fixtures"
+    scraping_date, next_saturday = scraper._get_next_saturday()
+
+    print(f"Testing Championship scraping for {next_saturday}")
+
+    matches = scraper._scrape_league_fixtures(league_name, league_url, next_saturday)
+
+    print(f"Found {len(matches)} matches for {league_name}")
+
+    for match in matches:
+        print(f"  {match['home_team']} vs {match['away_team']} ({match['kickoff']})")
+
+    return matches
+
+
+def test_dynamic_url_construction():
+    """Test function to verify dynamic URL construction for different months."""
+    scraper = BBCSportScraper(rate_limit=2.0)
+
+    # Test different date formats
+    test_dates = [
+        "2025-10-18",  # October 2025
+        "2025-11-15",  # November 2025
+        "2025-12-20",  # December 2025
+        "2026-01-10",  # January 2026
+    ]
+
+    league_name = "English Championship"
+    league_url = "/sport/football/championship/scores-fixtures"
+
+    print("Testing dynamic URL construction for different months:")
+    print("=" * 60)
+
+    for test_date in test_dates:
+        # Extract year-month from target_date for URL construction
+        date_parts = test_date.split('-')
+        if len(date_parts) >= 2:
+            year_month = f"{date_parts[0]}-{date_parts[1]}"
+            full_url = urljoin(scraper.BASE_URL, f"{league_url}/{year_month}?filter=fixtures")
+        else:
+            full_url = urljoin(scraper.BASE_URL, league_url)
+
+        print(f"Date: {test_date} -> URL: {full_url}")
+
+    print("=" * 60)
 
 
 def main():
