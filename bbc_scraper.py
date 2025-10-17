@@ -85,10 +85,12 @@ class BBCSportScraper:
         """
         today = datetime.now()
         days_until_saturday = (5 - today.weekday()) % 7
-        if days_until_saturday == 0 and today.weekday() == 5:  # If today is Saturday
-            days_until_saturday = 7  # Get next Saturday
 
-        next_saturday = today + timedelta(days=days_until_saturday)
+        # If today is Saturday, use today as the target date
+        if today.weekday() == 5:  # 5 = Saturday
+            next_saturday = today
+        else:
+            next_saturday = today + timedelta(days=days_until_saturday)
 
         return today.strftime("%Y-%m-%d"), next_saturday.strftime("%Y-%m-%d")
 
@@ -269,49 +271,68 @@ class BBCSportScraper:
                         data = json.loads(script.string)
 
                         # Navigate through the JSON structure to find match data
-                        # The structure appears to be nested under props/data/eventGroups
+                        # Try multiple possible JSON structures
+                        event_groups = None
+
+                        # Structure 1: props/data/eventGroups (original structure)
                         if 'props' in data and 'data' in data['props']:
                             props_data = data['props']['data']
-
-                            # Look for eventGroups which contain the match information
                             if 'eventGroups' in props_data:
-                                for group in props_data['eventGroups']:
-                                    if 'secondaryGroups' in group:
-                                        for secondary_group in group['secondaryGroups']:
-                                            if 'events' in secondary_group:
-                                                for event in secondary_group['events']:
-                                                    # Extract match information
-                                                    if 'home' in event and 'away' in event:
-                                                        home_team = event['home'].get('fullName', '')
-                                                        away_team = event['away'].get('fullName', '')
+                                event_groups = props_data['eventGroups']
 
-                                                        # Validate team names
-                                                        if (len(home_team) < 2 or len(away_team) < 2 or
-                                                            len(home_team) > 50 or len(away_team) > 50):
-                                                            continue
+                        # Structure 2: Direct eventGroups in data
+                        elif 'data' in data and 'eventGroups' in data['data']:
+                            event_groups = data['data']['eventGroups']
 
-                                                        # Extract kickoff time
-                                                        start_time = event.get('startDateTime', '')
-                                                        if start_time:
-                                                            # Convert UTC time to local time and extract hour:minute
-                                                            try:
-                                                                utc_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-                                                                local_time = utc_time.astimezone()  # Convert to local timezone
-                                                                kickoff = local_time.strftime('%H:%M')
-                                                            except:
-                                                                kickoff = "15:00"  # Default fallback
-                                                        else:
-                                                            kickoff = "15:00"
+                        # Structure 3: Direct eventGroups in root
+                        elif 'eventGroups' in data:
+                            event_groups = data['eventGroups']
 
-                                                        # Only return matches at 15:00
-                                                        if kickoff == "15:00":
-                                                            return {
-                                                                "league": league_name,
-                                                                "home_team": home_team,
-                                                                "away_team": away_team,
-                                                                "kickoff": kickoff,
-                                                                "venue": "TBC"
-                                                            }
+                        if event_groups:
+                            for group in event_groups:
+                                # Handle both direct events and nested secondaryGroups
+                                events = []
+
+                                if 'events' in group:
+                                    events.extend(group['events'])
+                                elif 'secondaryGroups' in group:
+                                    for secondary_group in group['secondaryGroups']:
+                                        if 'events' in secondary_group:
+                                            events.extend(secondary_group['events'])
+
+                                for event in events:
+                                    # Extract match information
+                                    if 'home' in event and 'away' in event:
+                                        home_team = event['home'].get('fullName', '')
+                                        away_team = event['away'].get('fullName', '')
+
+                                        # Validate team names
+                                        if (len(home_team) < 2 or len(away_team) < 2 or
+                                            len(home_team) > 50 or len(away_team) > 50):
+                                            continue
+
+                                        # Extract kickoff time
+                                        start_time = event.get('startDateTime', '')
+                                        if start_time:
+                                            # Convert UTC time to local time and extract hour:minute
+                                            try:
+                                                utc_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                                                local_time = utc_time.astimezone()  # Convert to local timezone
+                                                kickoff = local_time.strftime('%H:%M')
+                                            except:
+                                                kickoff = "15:00"  # Default fallback
+                                        else:
+                                            kickoff = "15:00"
+
+                                        # Only return matches at 15:00
+                                        if kickoff == "15:00":
+                                            return {
+                                                "league": league_name,
+                                                "home_team": home_team,
+                                                "away_team": away_team,
+                                                "kickoff": kickoff,
+                                                "venue": "TBC"
+                                            }
 
                     except json.JSONDecodeError:
                         continue
@@ -479,16 +500,24 @@ class BBCSportScraper:
 
 
 def debug_championship_parsing():
-    """Debug function to examine Championship page structure."""
+    """Debug function to examine Championship page structure and JSON data."""
     scraper = BBCSportScraper(rate_limit=0.5)
 
     # Get next Saturday
     scraping_date, next_saturday = scraper._get_next_saturday()
     print(f"Debugging Championship parsing for {next_saturday}")
 
-    # Make request to Championship page
+    # Make request to Championship page with NEW URL format
     championship_url = "/sport/football/championship/scores-fixtures"
-    full_url = urljoin(scraper.BASE_URL, championship_url)
+    # Use the same dynamic URL construction as the main scraper
+    date_parts = next_saturday.split('-')
+    if len(date_parts) >= 2:
+        year_month = f"{date_parts[0]}-{date_parts[1]}"
+        full_url = urljoin(scraper.BASE_URL, f"{championship_url}/{year_month}?filter=fixtures")
+    else:
+        full_url = urljoin(scraper.BASE_URL, championship_url)
+
+    print(f"Debug URL: {full_url}")
 
     soup = scraper._make_request(full_url)
     if not soup:
@@ -498,81 +527,53 @@ def debug_championship_parsing():
     print(f"Successfully retrieved Championship page: {full_url}")
     print(f"Page title: {soup.title.text if soup.title else 'No title'}")
 
-    # Look for fixture containers - NEW BBC Sport structure uses ssrcss classes
-    fixture_containers = soup.find_all(['div', 'section'], class_=re.compile(r'ssrcss'))
+    # Look for script tags with JSON data
+    script_tags = soup.find_all('script', type='application/json')
+    print(f"\nFound {len(script_tags)} script tags with JSON data")
 
-    print(f"\nFound {len(fixture_containers)} containers with 'ssrcss' classes")
+    for i, script in enumerate(script_tags):  # Examine ALL scripts
+        if script.string:
+            try:
+                # Clean the JSON string (remove any potential issues)
+                json_str = script.string.strip()
 
-    # Look for specific patterns that might indicate matches
-    match_patterns = [
-        r'versus',
-        r'kick off',
-        r'15:00',
-        r'fixtures',
-        r'match'
-    ]
+                # Skip if it looks like CSS or other non-JSON content
+                if json_str.startswith('{') and '{' in json_str and '}' in json_str:
+                    data = json.loads(json_str)
+                    print(f"\nScript {i+1} JSON structure:")
 
-    print("\nSearching for match-related text patterns:")
-    for pattern in match_patterns:
-        elements = soup.find_all(string=re.compile(pattern, re.IGNORECASE))
-        print(f"  '{pattern}' found in {len(elements)} elements")
+                    # Print the top-level keys and structure
+                    if isinstance(data, dict):
+                        for key in data.keys():
+                            print(f"  Top-level key: {key}")
+                            if isinstance(data[key], dict):
+                                sub_keys = list(data[key].keys())[:10]  # Show first 10 sub-keys
+                                print(f"    Sub-keys: {sub_keys}")
 
-    # Look for time elements specifically
-    time_elements = soup.find_all('time', class_=re.compile(r'ssrcss.*Time'))
-    print(f"\nFound {len(time_elements)} time elements with 'ssrcss' classes")
+                                # Look deeper for eventGroups
+                                if 'eventGroups' in data[key]:
+                                    print(f"    Found eventGroups: {len(data[key]['eventGroups'])} groups")
+                                    for j, group in enumerate(data[key]['eventGroups'][:2]):  # Show first 2 groups
+                                        print(f"      Group {j+1}: {list(group.keys())}")
+                                        if 'events' in group:
+                                            print(f"        Direct events: {len(group['events'])}")
+                                        if 'secondaryGroups' in group:
+                                            print(f"        Secondary groups: {len(group['secondaryGroups'])}")
 
-    for i, time_elem in enumerate(time_elements[:10]):  # Show first 10
-        print(f"  Time element {i+1}: '{time_elem.get_text(strip=True)}'")
+                    # Also check if the entire data structure contains eventGroups
+                    if 'eventGroups' in data:
+                        print(f"  Found eventGroups at root level: {len(data['eventGroups'])} groups")
 
-    # Look for any elements containing "versus"
-    versus_elements = soup.find_all(string=re.compile(r'versus', re.IGNORECASE))
-    print(f"\nFound {len(versus_elements)} elements containing 'versus'")
+            except json.JSONDecodeError as e:
+                print(f"  Script {i+1} is not valid JSON: {str(e)[:100]}...")
+            except Exception as e:
+                print(f"  Error processing script {i+1}: {str(e)[:100]}...")
 
-    for i, elem in enumerate(versus_elements[:5]):  # Show first 5
-        print(f"  Versus element {i+1}: '{elem.strip()}'")
-
-    # Look for any elements containing "15:00"
-    time_1500_elements = soup.find_all(string=re.compile(r'15:00'))
-    print(f"\nFound {len(time_1500_elements)} elements containing '15:00'")
-
-    for i, elem in enumerate(time_1500_elements[:5]):  # Show first 5
-        print(f"  15:00 element {i+1}: '{elem.strip()}'")
-
-    # Let's examine the HTML structure more deeply
-    print(f"\nExamining HTML structure...")
-
-    # Look for any divs or sections that might contain fixture information
-    fixture_sections = soup.find_all(['div', 'section', 'article'], class_=re.compile(r'fixture|match|game|event'))
-    print(f"Found {len(fixture_sections)} elements with fixture/match/game/event classes")
-
-    # Look for any elements containing team names (common patterns)
-    team_patterns = [
-        r'City', r'United', r'Town', r'Rovers', r'AFC', r'FC',
-        r'Albion', r'Wanderers', r'Athletic', r'Rangers'
-    ]
-
-    print("\nSearching for team name patterns:")
-    for pattern in team_patterns:
-        elements = soup.find_all(string=re.compile(pattern, re.IGNORECASE))
-        if len(elements) > 0 and len(elements) < 20:  # Only show if reasonable number
-            print(f"  '{pattern}' found in {len(elements)} elements")
-            for i, elem in enumerate(elements[:3]):  # Show first 3 examples
-                print(f"    Example {i+1}: '{elem.strip()}'")
-
-    # Let's also check if this might be a JavaScript-rendered page
-    scripts = soup.find_all('script')
-    print(f"\nFound {len(scripts)} script tags - page might be JavaScript rendered")
-
-    # Check for any data attributes that might contain fixture information
-    data_attrs = []
-    for element in soup.find_all():
-        for attr, value in element.attrs.items():
-            if attr.startswith('data-') and ('fixture' in attr.lower() or 'match' in attr.lower() or 'team' in attr.lower()):
-                data_attrs.append((attr, value))
-
-    print(f"\nFound {len(data_attrs)} data attributes related to fixtures/matches/teams")
-    for i, (attr, value) in enumerate(data_attrs[:5]):  # Show first 5
-        print(f"  {attr}: {value[:100]}{'...' if len(str(value)) > 100 else ''}")
+    # Also check for visible match text
+    print("\nVisible match text on page:")
+    match_text_elements = soup.find_all(string=re.compile(r'\w+\s+versus\s+\w+', re.IGNORECASE))
+    for i, elem in enumerate(match_text_elements[:10]):  # Show first 10
+        print(f"  Match {i+1}: '{elem.strip()}'")
 
     return soup
 
