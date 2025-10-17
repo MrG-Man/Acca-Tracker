@@ -256,7 +256,6 @@
                 renderMatches(scenarioData.matches);
                 updateStatistics(scenarioData.statistics);
                 updateAccumulatorStatus(scenarioData.statistics);
-                updateLastUpdated();
 
                 hideLoading();
 
@@ -357,11 +356,6 @@
             }
         }
 
-        function updateLastUpdated() {
-            const now = new Date();
-            document.getElementById('last-updated').textContent = now.toLocaleTimeString();
-        }
-
         async function resetAllScores() {
             try {
                 const response = await fetch('/api/btts-test-update-score', {
@@ -420,4 +414,5 @@
     </script>
 </body>
 </html>
+
 
