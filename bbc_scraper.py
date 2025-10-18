@@ -636,6 +636,58 @@ def main():
     scraper = BBCSportScraper(rate_limit=0.5)  # Faster rate limit for testing
     result = scraper.scrape_saturday_3pm_fixtures()
 
+    # Print formatted output similar to admin page style
+    print_bbc_scraper_results(result)
+
+
+def print_bbc_scraper_results(result):
+    """Print BBC scraper results in a formatted, admin-page-like layout."""
+    print("=" * 80)
+    print("🏆 BBC SPORT FOOTBALL FIXTURES SCRAPER")
+    print("=" * 80)
+    print(f"📅 Scraping Date: {result['scraping_date']}")
+    print(f"🎯 Target Date: {result['next_saturday']}")
+    print(f"⚽ Total Matches Found: {len(result['matches_3pm'])}")
+    print()
+
+    if not result['matches_3pm']:
+        print("❌ No 15:00 matches found for the target date.")
+        print("This may be due to:")
+        print("  • International break")
+        print("  • Scheduled weekend off")
+        print("  • BBC website structure changes")
+        return
+
+    # Group matches by league
+    leagues = {}
+    for match in result['matches_3pm']:
+        league = match['league']
+        if league not in leagues:
+            leagues[league] = []
+        leagues[league].append(match)
+
+    # Print matches in admin-page-like format
+    for league, matches in leagues.items():
+        print(f"🏆 {league}")
+        print(f"   Matches: {len(matches)}")
+        print()
+
+        for i, match in enumerate(matches, 1):
+            print(f"   {i}. {match['home_team']}")
+            print(f"      vs")
+            print(f"      {match['away_team']}")
+            print(f"      🕐 Kickoff: {match['kickoff']}")
+            if match['venue'] != "TBC":
+                print(f"      📍 Venue: {match['venue']}")
+            print()
+
+    print("=" * 80)
+    print("✅ SCRAPER COMPLETED SUCCESSFULLY")
+    print("=" * 80)
+
+    # Also print raw JSON for debugging
+    print("\n🔧 RAW JSON OUTPUT (for debugging):")
+    print("-" * 40)
     print(json.dumps(result, indent=2))
 
 
