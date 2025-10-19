@@ -5,8 +5,25 @@ Football Predictions Admin Interface - Production Ready
 Flask web interface for match selection using BBC scraper data.
 Provides admin panel for assigning Saturday 3pm matches to selectors.
 
+TRACKER BEHAVIOR:
+- Shows ONLY games selected by selectors in the Admin panel
+- Displays placeholders for unselected games during the week
+- Updates dynamically as more selections are made
+- Shows live scores only for selected games on match day
+
+WEEKLY TRANSITION LOGIC:
+- Sunday-Friday: Shows next Saturday's matches for selection
+- Saturday (all day): Maintains current Saturday's matches for live monitoring
+- Safe transition to next Saturday occurs on Sunday after games finish
+
+API ENDPOINTS:
+- /api/tracker-data: Complete tracker data with selections and placeholders
+- /api/bbc-fixtures: BBC fixtures for selected games only
+- /api/bbc-live-scores: Live scores for selected games only
+
 Author: Football Predictions System
 Date: 2024
+Updated: 2025 - Enhanced with safer weekly transition logic and selection-only tracker
 """
 
 import os
@@ -122,28 +139,22 @@ SELECTORS = [
 def get_current_prediction_week():
     """Get the current prediction week string in YYYY-MM-DD format.
 
-    Logic:
-    - Sunday: Use next Saturday's date
-    - Monday-Friday: Use next Saturday's date
-    - Saturday before 12:01: Use current Saturday's date
-    - Saturday after 12:01: Use next Saturday's date
+    IMPROVED SAFER LOGIC:
+    - Sunday-Friday: Use next Saturday's date
+    - Saturday (all day): Use current Saturday's date
+    - Next Sunday: Use following Saturday's date
+
+    This eliminates the risky Saturday afternoon switch and maintains
+    current Saturday's matches throughout the entire match day.
     """
-    from datetime import datetime, time, timedelta
+    from datetime import datetime, timedelta
 
     now = datetime.now()
     current_day = now.weekday()  # 0=Monday, 6=Sunday
-    current_time = now.time()
 
-    # Saturday cutoff time (12:01 PM)
-    saturday_cutoff = time(12, 1)
-
-    if current_day == 5:  # Saturday (weekday 5)
-        if current_time < saturday_cutoff:
-            # Before 12:01 PM on Saturday - use current Saturday
-            target_date = now.date()
-        else:
-            # After 12:01 PM on Saturday - use next Saturday (7 days later)
-            target_date = now.date() + timedelta(days=7)
+    if current_day == 5:  # Saturday - use current Saturday all day long
+        # Maintain current Saturday throughout the entire day for stable match day experience
+        target_date = now.date()
     else:
         # Sunday through Friday - use next Saturday
         # Calculate days until next Saturday
@@ -956,6 +967,314 @@ def reset_btts_detector():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+# ===== ENHANCED BBC SCRAPER API ENDPOINTS =====
+
+@app.route('/api/bbc-fixtures')
+def get_bbc_fixtures():
+    """API endpoint to get BBC fixtures for next Saturday - ONLY selected games."""
+    try:
+        # Get current week's selections
+        week = get_current_prediction_week()
+        selections = data_manager.load_weekly_selections(week) or {}
+
+        if not selections:
+            # No selections yet - return empty with placeholder structure
+            return jsonify({
+                "success": True,
+                "scraping_date": datetime.now().strftime("%Y-%m-%d"),
+                "next_saturday": week,
+                "matches": [],
+                "selected_matches": [],
+                "total_matches": 0,
+                "selected_count": 0,
+                "placeholder_count": len(SELECTORS),
+                "last_updated": datetime.now().isoformat()
+            })
+
+        # Get matches from enhanced BBC scraper
+        scraper = BBCSportScraper()
+        scraper_result = scraper.scrape_saturday_3pm_fixtures()
+
+        # Filter to only selected matches
+        all_bbc_matches = scraper_result.get("matches_3pm", [])
+        selected_matches = []
+
+        for selector, match_data in selections.items():
+            home_team = match_data.get('home_team')
+            away_team = match_data.get('away_team')
+
+            # Find matching BBC data for this selection
+            for bbc_match in all_bbc_matches:
+                if (bbc_match.get('home_team') == home_team and
+                    bbc_match.get('away_team') == away_team):
+                    # Add selector info to BBC match data
+                    enhanced_match = bbc_match.copy()
+                    enhanced_match['selector'] = selector
+                    enhanced_match['prediction'] = match_data.get('prediction', 'TBD')
+                    enhanced_match['confidence'] = match_data.get('confidence', 5)
+                    selected_matches.append(enhanced_match)
+                    break
+
+        return jsonify({
+            "success": True,
+            "scraping_date": scraper_result.get("scraping_date"),
+            "next_saturday": scraper_result.get("next_saturday"),
+            "matches": selected_matches,  # Only selected matches
+            "selected_matches": selected_matches,
+            "total_matches": len(selected_matches),
+            "selected_count": len(selected_matches),
+            "placeholder_count": len(SELECTORS) - len(selected_matches),
+            "last_updated": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Error getting BBC fixtures: {str(e)}",
+            "last_updated": datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/bbc-live-scores')
+def get_bbc_live_scores():
+    """API endpoint to get live scores from BBC - ONLY for selected games."""
+    try:
+        # Get target date (today by default, or specified date)
+        target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+
+        # Get current week's selections
+        week = get_current_prediction_week()
+        selections = data_manager.load_weekly_selections(week) or {}
+
+        if not selections:
+            # No selections yet - return empty structure
+            return jsonify({
+                "success": True,
+                "target_date": target_date,
+                "scraping_date": datetime.now().strftime("%Y-%m-%d"),
+                "live_matches": [],
+                "total_matches": 0,
+                "selected_count": 0,
+                "placeholder_count": len(SELECTORS),
+                "last_updated": datetime.now().isoformat()
+            })
+
+        # Get live scores from enhanced BBC scraper
+        scraper = BBCSportScraper()
+        live_result = scraper.scrape_live_scores(target_date)
+
+        # Filter to only selected matches and enhance with selector info
+        all_live_matches = live_result.get("live_matches", [])
+        selected_live_matches = []
+
+        for selector, match_data in selections.items():
+            home_team = match_data.get('home_team')
+            away_team = match_data.get('away_team')
+
+            # Find matching live data for this selection
+            for live_match in all_live_matches:
+                if (live_match.get('home_team') == home_team and
+                    live_match.get('away_team') == away_team):
+                    # Add selector info to live match data
+                    enhanced_match = live_match.copy()
+                    enhanced_match['selector'] = selector
+                    enhanced_match['prediction'] = match_data.get('prediction', 'TBD')
+                    enhanced_match['confidence'] = match_data.get('confidence', 5)
+                    selected_live_matches.append(enhanced_match)
+                    break
+
+        return jsonify({
+            "success": True,
+            "target_date": live_result.get("target_date"),
+            "scraping_date": live_result.get("scraping_date"),
+            "live_matches": selected_live_matches,  # Only selected matches
+            "total_matches": len(selected_live_matches),
+            "selected_count": len(selected_live_matches),
+            "placeholder_count": len(SELECTORS) - len(selected_live_matches),
+            "last_updated": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Error getting BBC live scores: {str(e)}",
+            "last_updated": datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/bbc-matches/<date>')
+def get_bbc_matches_for_date(date):
+    """API endpoint to get BBC matches for a specific date."""
+    try:
+        # Validate date format
+        try:
+            datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            return jsonify({
+                "success": False,
+                "error": "Invalid date format. Use YYYY-MM-DD",
+                "last_updated": datetime.now().isoformat()
+            }), 400
+
+        # Get both fixtures and live scores for the date
+        scraper = BBCSportScraper()
+
+        # Try fixtures mode first
+        try:
+            fixtures_result = scraper._scrape_league_fixtures("Premier League",
+                                                            "/sport/football/premier-league/scores-fixtures",
+                                                            date, "fixtures")
+        except:
+            fixtures_result = []
+
+        # Try live mode
+        try:
+            live_result = scraper._scrape_league_fixtures("Premier League",
+                                                        "/sport/football/premier-league/scores-fixtures",
+                                                        date, "live")
+        except:
+            live_result = []
+
+        # Combine results
+        all_matches = fixtures_result + live_result
+
+        return jsonify({
+            "success": True,
+            "date": date,
+            "fixtures": fixtures_result,
+            "live_scores": live_result,
+            "total_matches": len(all_matches),
+            "last_updated": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Error getting BBC matches for date: {str(e)}",
+            "last_updated": datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/tracker-data')
+def get_tracker_data():
+    """API endpoint to get complete tracker data with selections and placeholders."""
+    try:
+        # Get current week's selections
+        week = get_current_prediction_week()
+        selections = data_manager.load_weekly_selections(week)
+
+        # Get current live scores for selected matches
+        target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+
+        tracker_matches = []
+        selected_count = 0
+        placeholder_count = 0
+
+        # Process each selector
+        for selector in SELECTORS:
+            if selections and selector in selections:
+                # Selector has a match assigned
+                match_data = selections[selector]
+                home_team = match_data.get('home_team')
+                away_team = match_data.get('away_team')
+
+                # Try to get live score data for this match
+                live_score_data = None
+                try:
+                    scraper = BBCSportScraper()
+                    live_result = scraper.scrape_live_scores(target_date)
+                    live_matches = live_result.get("live_matches", [])
+
+                    for live_match in live_matches:
+                        if (live_match.get('home_team') == home_team and
+                            live_match.get('away_team') == away_team):
+                            live_score_data = live_match
+                            break
+                except:
+                    pass  # Continue without live data if scraping fails
+
+                if live_score_data:
+                    # Use live score data
+                    match_info = {
+                        "selector": selector,
+                        "home_team": home_team,
+                        "away_team": away_team,
+                        "home_score": live_score_data.get('home_score', 0),
+                        "away_score": live_score_data.get('away_score', 0),
+                        "status": live_score_data.get('status', 'not_started'),
+                        "match_time": live_score_data.get('match_time', '0\''),
+                        "league": live_score_data.get('league', 'Unknown'),
+                        "prediction": match_data.get('prediction', 'TBD'),
+                        "confidence": match_data.get('confidence', 5),
+                        "is_selected": True,
+                        "last_updated": datetime.now().isoformat()
+                    }
+                else:
+                    # Use fixture data (no live scores yet)
+                    match_info = {
+                        "selector": selector,
+                        "home_team": home_team,
+                        "away_team": away_team,
+                        "home_score": 0,
+                        "away_score": 0,
+                        "status": "not_started",
+                        "match_time": "0'",
+                        "league": "Unknown",  # Would need to get from BBC fixture data
+                        "prediction": match_data.get('prediction', 'TBD'),
+                        "confidence": match_data.get('confidence', 5),
+                        "is_selected": True,
+                        "last_updated": datetime.now().isoformat()
+                    }
+
+                tracker_matches.append(match_info)
+                selected_count += 1
+            else:
+                # Selector has no match assigned - create placeholder
+                placeholder_info = {
+                    "selector": selector,
+                    "home_team": None,
+                    "away_team": None,
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "no_selection",
+                    "match_time": "—",
+                    "league": None,
+                    "prediction": "TBD",
+                    "confidence": 0,
+                    "is_selected": False,
+                    "placeholder_text": "Awaiting Match Assignment",
+                    "last_updated": datetime.now().isoformat()
+                }
+                tracker_matches.append(placeholder_info)
+                placeholder_count += 1
+
+        # Calculate BTTS statistics
+        btts_detected = sum(1 for match in tracker_matches if match.get('home_score', 0) > 0 and match.get('away_score', 0) > 0)
+        btts_pending = sum(1 for match in tracker_matches if match.get('is_selected') and match.get('status') in ['not_started', 'live'])
+        btts_failed = sum(1 for match in tracker_matches if match.get('status') == 'finished' and not (match.get('home_score', 0) > 0 and match.get('away_score', 0) > 0))
+
+        return jsonify({
+            "success": True,
+            "target_date": target_date,
+            "week": week,
+            "matches": tracker_matches,
+            "selectors": SELECTORS,
+            "statistics": {
+                "total_selectors": len(SELECTORS),
+                "selected_count": selected_count,
+                "placeholder_count": placeholder_count,
+                "btts_detected": btts_detected,
+                "btts_pending": btts_pending,
+                "btts_failed": btts_failed,
+                "completion_percentage": int((selected_count / len(SELECTORS)) * 100)
+            },
+            "last_updated": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Error getting tracker data: {str(e)}",
+            "last_updated": datetime.now().isoformat()
+        }), 500
 
 # ===== BTTS TEST MODE API ENDPOINTS =====
 

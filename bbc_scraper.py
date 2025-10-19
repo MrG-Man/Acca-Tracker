@@ -1,12 +1,41 @@
 #!/usr/bin/env python3
 """
-BBC Sport Football Fixtures Scraper
+Enhanced BBC Sport Football Fixtures and Live Scores Scraper
 
-Scrapes BBC Sport for football fixtures from 8 leagues focusing on next Saturday's 15:00 matches.
-Returns structured data for admin interface with zero API calls.
+FEATURES:
+- Dual-mode operation: fixture scraping and live score monitoring
+- Dynamic date-based URL construction for BBC Sport
+- Live score extraction including current scores and match status
+- Enhanced data models with live score information and match timing
+- Comprehensive error handling and fallback mechanisms
+- Intelligent caching system for both fixtures and live data
+- Rate limiting and performance optimization
+- Zero external API dependencies (BBC direct scraping)
+
+NEW FUNCTIONALITY:
+- scrape_live_scores(): Monitor live matches with current scores and status
+- Enhanced data models include: home_score, away_score, status, match_time
+- Support for all match times (not just 15:00 kickoffs)
+- Real-time match status tracking (not_started, live, halftime, finished)
+- Dynamic URL construction using BBC's date-based format
+
+LEAGUES SUPPORTED:
+- Premier League, English Championship, League One, League Two, National League
+- Scottish Premiership, Championship, League One, League Two
+
+USAGE:
+- python bbc_scraper.py          # Run fixture scraping (original functionality)
+- python bbc_scraper.py test     # Test enhanced functionality
+- python bbc_scraper.py api-test # Test API endpoint logic
+
+API ENDPOINTS (when used with Flask app):
+- GET /api/bbc-fixtures         # Get next Saturday's fixtures
+- GET /api/bbc-live-scores      # Get current live scores
+- GET /api/bbc-matches/<date>   # Get matches for specific date
 
 Author: Football Predictions System
 Date: 2024
+Updated: 2025 - Enhanced with live score capabilities
 """
 
 import requests
@@ -30,14 +59,18 @@ logger = logging.getLogger(__name__)
 
 class BBCSportScraper:
     """
-    BBC Sport scraper for football fixtures.
+    Enhanced BBC Sport scraper for football fixtures and live scores.
 
-    Scrapes match data from BBC Sport website for English and Scottish leagues,
-    focusing specifically on next Saturday's 15:00 kickoffs.
+    Supports both fixture scraping for upcoming matches and live score monitoring
+    using dynamic date-based URLs. Handles all match times, not just 15:00 kickoffs.
     """
 
     # Base URL for BBC Sport
     BASE_URL = "https://www.bbc.co.uk"
+
+    # Operating modes
+    MODE_FIXTURES = "fixtures"
+    MODE_LIVE = "live"
 
     # League configurations with their BBC Sport URLs
     LEAGUES = {
@@ -93,6 +126,51 @@ class BBCSportScraper:
             next_saturday = today + timedelta(days=days_until_saturday)
 
         return today.strftime("%Y-%m-%d"), next_saturday.strftime("%Y-%m-%d")
+
+    def _build_bbc_url(self, target_date: str, mode: str = MODE_FIXTURES) -> str:
+        """
+        Build BBC Sport URL for the specified date and mode.
+
+        Args:
+            target_date: Target date in YYYY-MM-DD format
+            mode: Operating mode (fixtures or live)
+
+        Returns:
+            Complete BBC Sport URL
+        """
+        if mode == self.MODE_FIXTURES:
+            # Format: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+            return f"{self.BASE_URL}/sport/football/scores-fixtures/{target_date}"
+        elif mode == self.MODE_LIVE:
+            # Format: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25?filter=results
+            return f"{self.BASE_URL}/sport/football/scores-fixtures/{target_date}?filter=results"
+        else:
+            raise ValueError(f"Invalid mode: {mode}. Use MODE_FIXTURES or MODE_LIVE")
+
+    def _build_league_url(self, league_url: str, target_date: str, mode: str = MODE_FIXTURES) -> str:
+        """
+        Build league-specific BBC Sport URL for the specified date and mode.
+
+        Args:
+            league_url: Base league URL from LEAGUES configuration
+            target_date: Target date in YYYY-MM-DD format
+            mode: Operating mode (fixtures or live)
+
+        Returns:
+            Complete league-specific BBC Sport URL
+        """
+        # Extract year-month from target_date for URL construction
+        date_parts = target_date.split('-')
+        if len(date_parts) >= 2:
+            year_month = f"{date_parts[0]}-{date_parts[1]}"
+            # Use the original working URL format with year-month
+            if mode == self.MODE_FIXTURES:
+                return f"{self.BASE_URL}{league_url}/{year_month}?filter=fixtures"
+            else:  # MODE_LIVE
+                return f"{self.BASE_URL}{league_url}/{year_month}?filter=results"
+        else:
+            # Fallback to base URL if date parsing fails
+            return f"{self.BASE_URL}{league_url}"
 
     def _enforce_rate_limit(self):
         """Enforce rate limiting between requests."""
@@ -178,13 +256,14 @@ class BBCSportScraper:
             logger.error(f"Unexpected error requesting {url}: {e}")
             return None
 
-    def _parse_match_data(self, match_element, league_name: str) -> Optional[Dict]:
+    def _parse_match_data(self, match_element, league_name: str, mode: str = MODE_FIXTURES) -> Optional[Dict]:
         """
         Parse individual match data from HTML element.
 
         Args:
             match_element: BeautifulSoup element containing match info
             league_name: Name of the league for this match
+            mode: Operating mode (fixtures or live)
 
         Returns:
             Match dictionary or None if parsing failed
@@ -192,62 +271,179 @@ class BBCSportScraper:
         try:
             # Special handling for Championship - use JSON data extraction
             if league_name in ["English Championship", "Scottish Championship"]:
-                return self._parse_championship_match_data(match_element, league_name)
+                if mode == self.MODE_FIXTURES:
+                    return self._parse_championship_match_data(match_element, league_name)
+                else:
+                    # For live mode, use the general live parsing method
+                    return self._parse_live_match_data(match_element, league_name)
 
-            # NEW BBC Sport structure: Look for match text with "versus" pattern
+            # Route to appropriate parsing method based on mode
+            if mode == self.MODE_LIVE:
+                return self._parse_live_match_data(match_element, league_name)
+            elif mode == self.MODE_FIXTURES:
+                # NEW BBC Sport structure: Look for match text with "versus" pattern
+                match_text = None
+
+                # Look for text containing "versus" and "kick off 15:00"
+                for element in match_element.find_all(string=lambda text: text and 'versus' in text.lower() and 'kick off 15:00' in text):
+                    match_text = element.strip()
+                    break
+
+                if not match_text:
+                    return None
+
+                # Parse team names from match text like "Team A versus Team B kick off 15:00"
+                try:
+                    # Extract teams from pattern "Home versus Away kick off 15:00"
+                    versus_pattern = re.search(r'(.+?)\s+versus\s+(.+?)\s+kick off 15:00', match_text, re.IGNORECASE)
+                    if versus_pattern:
+                        home_team = versus_pattern.group(1).strip()
+                        away_team = versus_pattern.group(2).strip()
+                    else:
+                        return None
+
+                except Exception:
+                    return None
+
+                # Validate team names are reasonable
+                if (len(home_team) < 2 or len(away_team) < 2 or
+                    len(home_team) > 50 or len(away_team) > 50):
+                    return None
+
+                # Extract kickoff time - NEW structure uses ssrcss time classes
+                time_element = match_element.find('time', class_=re.compile(r'ssrcss.*Time'))
+                if not time_element:
+                    return None
+
+                kickoff = time_element.get_text(strip=True)
+
+                # Extract venue if available
+                venue_element = match_element.find('span', class_=re.compile(r'ssrcss.*Venue|stadium'))
+                venue = venue_element.get_text(strip=True) if venue_element else "TBC"
+
+                # Validate that this is exactly 15:00
+                if kickoff != "15:00":
+                    return None
+
+                return {
+                    "league": league_name,
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "kickoff": kickoff,
+                    "venue": venue,
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "not_started",
+                    "match_time": "0'"
+                }
+            else:
+                raise ValueError(f"Invalid mode: {mode}")
+
+        except Exception as e:
+            logger.error(f"Error parsing match data: {e}")
+            return None
+
+    def _parse_live_match_data(self, match_element, league_name: str) -> Optional[Dict]:
+        """
+        Parse live match data from HTML element including current scores and status.
+
+        Args:
+            match_element: BeautifulSoup element containing match info
+            league_name: Name of the league for this match
+
+        Returns:
+            Match dictionary with live data or None if parsing failed
+        """
+        try:
+            # Look for live score indicators and current match status
             match_text = None
 
-            # Look for text containing "versus" and "kick off 15:00"
-            for element in match_element.find_all(string=lambda text: text and 'versus' in text.lower() and 'kick off 15:00' in text):
+            # Look for text containing team names and scores
+            for element in match_element.find_all(string=lambda text: text and (' vs ' in text.lower() or ' v ' in text.lower())):
                 match_text = element.strip()
                 break
 
             if not match_text:
                 return None
 
-            # Parse team names from match text like "Team A versus Team B kick off 15:00"
-            try:
-                # Extract teams from pattern "Home versus Away kick off 15:00"
-                versus_pattern = re.search(r'(.+?)\s+versus\s+(.+?)\s+kick off 15:00', match_text, re.IGNORECASE)
-                if versus_pattern:
-                    home_team = versus_pattern.group(1).strip()
-                    away_team = versus_pattern.group(2).strip()
+            # Extract team names and scores from patterns like:
+            # "Team A 2-1 Team B" or "Team A vs Team B"
+            teams = []
+            scores = []
+
+            # Pattern 1: "Team A 2-1 Team B"
+            score_pattern = re.search(r'(.+?)\s+(\d+)-(\d+)\s+(.+)', match_text)
+            if score_pattern:
+                teams = [score_pattern.group(1).strip(), score_pattern.group(4).strip()]
+                scores = [int(score_pattern.group(2)), int(score_pattern.group(3))]
+            else:
+                # Pattern 2: "Team A vs Team B" (no scores yet)
+                vs_pattern = re.search(r'(.+?)\s+vs?\s+(.+)', match_text, re.IGNORECASE)
+                if vs_pattern:
+                    teams = [vs_pattern.group(1).strip(), vs_pattern.group(2).strip()]
+                    scores = [0, 0]
                 else:
                     return None
 
-            except Exception:
+            # Validate team names
+            if (len(teams[0]) < 2 or len(teams[1]) < 2 or
+                len(teams[0]) > 50 or len(teams[1]) > 50):
                 return None
 
-            # Validate team names are reasonable
-            if (len(home_team) < 2 or len(away_team) < 2 or
-                len(home_team) > 50 or len(away_team) > 50):
-                return None
+            home_team, away_team = teams[0], teams[1]
+            home_score, away_score = scores[0], scores[1]
 
-            # Extract kickoff time - NEW structure uses ssrcss time classes
+            # Extract match status and time
+            status = "not_started"
+            match_time = "0'"
+
+            # Look for status indicators (live, finished, halftime, etc.)
+            status_element = match_element.find(['span', 'div'], class_=re.compile(r'ssrcss.*Status|live|finished|halftime'))
+            if status_element:
+                status_text = status_element.get_text(strip=True).lower()
+                if 'live' in status_text or 'playing' in status_text:
+                    status = "live"
+                    # Look for match time (e.g., "67'", "45+2'", etc.)
+                    time_element = match_element.find(['span', 'div'], class_=re.compile(r'ssrcss.*Time|minute'))
+                    if time_element:
+                        match_time = time_element.get_text(strip=True)
+                    else:
+                        match_time = "LIVE"
+                elif 'finished' in status_text or 'ft' in status_text.lower():
+                    status = "finished"
+                    match_time = "FT"
+                elif 'halftime' in status_text or 'ht' in status_text.lower():
+                    status = "halftime"
+                    match_time = "HT"
+                elif 'half time' in status_text:
+                    status = "halftime"
+                    match_time = "HT"
+
+            # Extract kickoff time for fixtures mode
+            kickoff = "TBC"
             time_element = match_element.find('time', class_=re.compile(r'ssrcss.*Time'))
-            if not time_element:
-                return None
-
-            kickoff = time_element.get_text(strip=True)
+            if time_element:
+                kickoff = time_element.get_text(strip=True)
 
             # Extract venue if available
             venue_element = match_element.find('span', class_=re.compile(r'ssrcss.*Venue|stadium'))
             venue = venue_element.get_text(strip=True) if venue_element else "TBC"
-
-            # Validate that this is exactly 15:00
-            if kickoff != "15:00":
-                return None
 
             return {
                 "league": league_name,
                 "home_team": home_team,
                 "away_team": away_team,
                 "kickoff": kickoff,
-                "venue": venue
+                "venue": venue,
+                "home_score": home_score,
+                "away_score": away_score,
+                "status": status,
+                "match_time": match_time,
+                "last_updated": datetime.now().isoformat()
             }
 
         except Exception as e:
-            logger.error(f"Error parsing match data: {e}")
+            logger.error(f"Error parsing live match data: {e}")
             return None
 
     def _parse_championship_match_data(self, match_element, league_name: str) -> Optional[Dict]:
@@ -343,28 +539,21 @@ class BBCSportScraper:
             logger.error(f"Error parsing Championship match data: {e}")
             return None
 
-    def _scrape_league_fixtures(self, league_name: str, league_url: str, target_date: str) -> List[Dict]:
+    def _scrape_league_fixtures(self, league_name: str, league_url: str, target_date: str, mode: str = MODE_FIXTURES) -> List[Dict]:
         """
-        Scrape fixtures for a specific league with aggressive caching.
+        Scrape fixtures or live scores for a specific league with aggressive caching.
 
         Args:
             league_name: Name of the league
             league_url: BBC Sport URL for the league
             target_date: Target date in YYYY-MM-DD format
+            mode: Operating mode (fixtures or live)
 
         Returns:
             List of match dictionaries
         """
-        # Extract year-month from target_date for URL construction (e.g., "2025-10")
-        date_parts = target_date.split('-')
-        if len(date_parts) >= 2:
-            year_month = f"{date_parts[0]}-{date_parts[1]}"
-            # Construct URL with date parameter and fixtures filter
-            # This will create URLs like: /sport/football/championship/scores-fixtures/2025-10?filter=fixtures
-            full_url = urljoin(self.BASE_URL, f"{league_url}/{year_month}?filter=fixtures")
-        else:
-            # Fallback to original URL if date parsing fails
-            full_url = urljoin(self.BASE_URL, league_url)
+        # Use new URL construction method
+        full_url = self._build_league_url(league_url, target_date, mode)
 
         cache_key = self._get_cache_key(full_url, target_date)
 
@@ -404,7 +593,7 @@ class BBCSportScraper:
             processed_matches = set()  # Track processed matches to avoid duplicates
 
             for container in fixture_containers:
-                match = self._parse_match_data(container, league_name)
+                match = self._parse_match_data(container, league_name, mode)
                 if match:
                     # Create unique match key to avoid duplicates
                     match_key = f"{match['home_team']}_{match['away_team']}_{match['kickoff']}"
@@ -431,6 +620,52 @@ class BBCSportScraper:
                 return cached_data.get('matches', [])
 
         return matches
+
+    def scrape_live_scores(self, target_date: Optional[str] = None) -> Dict:
+        """
+        Scrape live scores for the specified date (or today if not specified).
+
+        Args:
+            target_date: Target date in YYYY-MM-DD format (defaults to today)
+
+        Returns:
+            Dictionary containing scraping metadata and live matches
+        """
+        if target_date is None:
+            target_date = datetime.now().strftime("%Y-%m-%d")
+
+        scraping_date = datetime.now().strftime("%Y-%m-%d")
+        logger.info(f"Scraping live scores for {target_date}")
+
+        all_matches = []
+
+        for league_name, league_url in self.LEAGUES.items():
+            logger.info(f"Scraping live scores for {league_name}")
+            matches = self._scrape_league_fixtures(league_name, league_url, target_date, self.MODE_LIVE)
+
+            # Include all matches for live mode (not just 15:00)
+            all_matches.extend(matches)
+
+            logger.info(f"Found {len(matches)} live matches in {league_name}")
+
+        result = {
+            "scraping_date": scraping_date,
+            "target_date": target_date,
+            "live_matches": all_matches,
+            "total_matches": len(all_matches)
+        }
+
+        logger.info(f"Total live matches found: {len(all_matches)}")
+
+        # Log summary by league for transparency
+        league_summary = {}
+        for league_name in self.LEAGUES.keys():
+            league_matches = [match for match in all_matches if match.get('league') == league_name]
+            league_summary[league_name] = len(league_matches)
+
+        logger.info(f"Live matches by league: {league_summary}")
+
+        return result
 
     def scrape_saturday_3pm_fixtures(self) -> Dict:
         """
@@ -631,6 +866,106 @@ def test_dynamic_url_construction():
     print("=" * 60)
 
 
+def test_new_bbc_scraper():
+    """Test function for the new enhanced BBC scraper functionality."""
+    print("🧪 Testing Enhanced BBC Scraper")
+    print("=" * 50)
+
+    scraper = BBCSportScraper(rate_limit=1.0)
+
+    # Test URL construction
+    print("\n1. Testing URL Construction:")
+    test_date = "2025-10-25"
+    fixtures_url = scraper._build_bbc_url(test_date, scraper.MODE_FIXTURES)
+    live_url = scraper._build_bbc_url(test_date, scraper.MODE_LIVE)
+
+    print(f"   Fixtures URL: {fixtures_url}")
+    print(f"   Live URL: {live_url}")
+
+    # Test league URL construction
+    print("\n2. Testing League URL Construction:")
+    for league_name, league_url in list(scraper.LEAGUES.items())[:3]:  # Test first 3 leagues
+        league_fixture_url = scraper._build_league_url(league_url, test_date, scraper.MODE_FIXTURES)
+        league_live_url = scraper._build_league_url(league_url, test_date, scraper.MODE_LIVE)
+        print(f"   {league_name}:")
+        print(f"     Fixtures: {league_fixture_url}")
+        print(f"     Live: {league_live_url}")
+
+    # Test live score scraping (if it's a match day)
+    print("\n3. Testing Live Score Scraping:")
+    try:
+        live_result = scraper.scrape_live_scores(test_date)
+        print(f"   Found {live_result['total_matches']} live matches")
+
+        if live_result['live_matches']:
+            print("   Sample match data:")
+            for match in live_result['live_matches'][:3]:  # Show first 3 matches
+                print(f"     {match['home_team']} vs {match['away_team']} ({match.get('status', 'unknown')})")
+                if 'home_score' in match and 'away_score' in match:
+                    print(f"       Score: {match['home_score']}-{match['away_score']}")
+                    print(f"       Time: {match.get('match_time', 'N/A')}")
+    except Exception as e:
+        print(f"   Live scraping test failed: {e}")
+
+    # Test fixture scraping
+    print("\n4. Testing Fixture Scraping:")
+    try:
+        fixture_result = scraper.scrape_saturday_3pm_fixtures()
+        print(f"   Found {len(fixture_result['matches_3pm'])} 15:00 fixtures")
+        if fixture_result['matches_3pm']:
+            print("   Sample fixtures:")
+            for match in fixture_result['matches_3pm'][:3]:
+                print(f"     {match['home_team']} vs {match['away_team']} ({match['league']}) at {match['kickoff']}")
+    except Exception as e:
+        print(f"   Fixture scraping test failed: {e}")
+
+    print("\n✅ Enhanced BBC Scraper Tests Completed")
+
+
+def test_api_endpoints():
+    """Test the new API endpoints without running Flask server."""
+    print("🔗 Testing API Endpoint Logic")
+    print("=" * 50)
+
+    # Test the logic that would be used in API endpoints
+    scraper = BBCSportScraper(rate_limit=2.0)
+
+    # Test fixtures endpoint logic
+    print("\n1. Testing BBC Fixtures API Logic:")
+    try:
+        scraper_result = scraper.scrape_saturday_3pm_fixtures()
+        api_response = {
+            "success": True,
+            "scraping_date": scraper_result.get("scraping_date"),
+            "next_saturday": scraper_result.get("next_saturday"),
+            "matches": scraper_result.get("matches_3pm", []),
+            "total_matches": len(scraper_result.get("matches_3pm", [])),
+        }
+        print(f"   Success: {api_response['success']}")
+        print(f"   Total matches: {api_response['total_matches']}")
+        print(f"   Next Saturday: {api_response['next_saturday']}")
+    except Exception as e:
+        print(f"   Error: {e}")
+
+    # Test live scores endpoint logic
+    print("\n2. Testing BBC Live Scores API Logic:")
+    try:
+        live_result = scraper.scrape_live_scores()
+        api_response = {
+            "success": True,
+            "target_date": live_result.get("target_date"),
+            "live_matches": live_result.get("live_matches", []),
+            "total_matches": live_result.get("total_matches", 0),
+        }
+        print(f"   Success: {api_response['success']}")
+        print(f"   Total live matches: {api_response['total_matches']}")
+        print(f"   Target date: {api_response['target_date']}")
+    except Exception as e:
+        print(f"   Error: {e}")
+
+    print("\n✅ API Endpoint Logic Tests Completed")
+
+
 def main():
     """Main function for testing the scraper."""
     scraper = BBCSportScraper(rate_limit=0.5)  # Faster rate limit for testing
@@ -692,4 +1027,16 @@ def print_bbc_scraper_results(result):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "test":
+            test_new_bbc_scraper()
+        elif sys.argv[1] == "api-test":
+            test_api_endpoints()
+        else:
+            print("Usage: python bbc_scraper.py [test|api-test]")
+            print("  test     - Test enhanced BBC scraper functionality")
+            print("  api-test - Test API endpoint logic")
+    else:
+        main()
