@@ -1118,19 +1118,14 @@ def get_bbc_matches_for_date(date):
         # Get both fixtures and live scores for the date
         scraper = BBCSportScraper()
 
-        # Try fixtures mode first
+        # Use the unified scraping approach for both fixtures and live scores
         try:
-            fixtures_result = scraper._scrape_league_fixtures("Premier League",
-                                                            "/sport/football/premier-league/scores-fixtures",
-                                                            date, "fixtures")
+            fixtures_result = scraper.scrape_unified_bbc_matches(date, "fixtures").get("matches", [])
         except:
             fixtures_result = []
 
-        # Try live mode
         try:
-            live_result = scraper._scrape_league_fixtures("Premier League",
-                                                        "/sport/football/premier-league/scores-fixtures",
-                                                        date, "live")
+            live_result = scraper.scrape_unified_bbc_matches(date, "live").get("matches", [])
         except:
             live_result = []
 
