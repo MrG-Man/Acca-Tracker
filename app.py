@@ -28,13 +28,12 @@ Updated: 2025 - Enhanced with safer weekly transition logic and selection-only t
 
 import os
 import sys
-import json
 import logging
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 # Import Flask and extensions
-from flask import Flask, render_template, request, jsonify, g
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -84,6 +83,7 @@ limiter = Limiter(
     default_limits=[f"{config.RATE_LIMIT_PER_MINUTE} per minute"]
 )
 
+
 # Setup logging
 def setup_logging():
     """Setup production-grade logging"""
@@ -108,7 +108,7 @@ def setup_logging():
     # File handler with rotation
     file_handler = RotatingFileHandler(
         config.LOG_FILE,
-        maxBytes=10*1024*1024,  # 10MB
+        maxBytes=10 * 1024 * 1024,  # 10MB
         backupCount=5
     )
     file_handler.setFormatter(formatter)
@@ -171,6 +171,7 @@ def validate_critical_components():
 
     return errors
 
+
 # Validate components and log results
 startup_errors = validate_critical_components()
 if startup_errors:
@@ -182,7 +183,7 @@ else:
 
 # Import BTTS detector for integration
 try:
-    from btts_detector import btts_detector
+    from btts_detector import btts_detector  # noqa: F401
     BTTS_DETECTOR_AVAILABLE = True
     app.logger.info("BTTS detector loaded successfully")
 except ImportError:
@@ -227,8 +228,6 @@ def get_current_prediction_week():
     This eliminates the risky Saturday afternoon switch and maintains
     current Saturday's matches throughout the entire match day.
     """
-    from datetime import datetime, timedelta
-
     now = datetime.now()
     current_day = now.weekday()  # 0=Monday, 6=Sunday
 
@@ -259,8 +258,6 @@ def find_next_available_fixtures_date(target_date=None, max_days_ahead=14):
     """
     if target_date is None:
         target_date = get_current_prediction_week()
-
-    from datetime import datetime, timedelta
 
     try:
         current_date = datetime.strptime(target_date, '%Y-%m-%d').date()
@@ -311,6 +308,12 @@ def map_selections_to_sofascore_ids(selections):
     try:
         # Get current week's BBC fixtures for team name matching
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot get BBC fixtures")
+            return {}
+
         bbc_fixtures = data_manager.get_bbc_fixtures(week)
 
         if not bbc_fixtures:
@@ -369,6 +372,11 @@ def load_selections():
     """Load existing selections for the current week using DataManager."""
     week = get_current_prediction_week()
 
+    # Check if data_manager is available before calling methods
+    if data_manager is None:
+        print("ERROR: data_manager is None - cannot load selections")
+        return {"selectors": {}, "matches": [], "last_updated": None}
+
     # Load selections using DataManager
     selections = data_manager.load_weekly_selections(week)
 
@@ -394,6 +402,11 @@ def load_selections():
 def save_selections(selections_data):
     """Save selections using DataManager."""
     week = get_current_prediction_week()
+
+    # Check if data_manager is available before calling methods
+    if data_manager is None:
+        print("ERROR: data_manager is None - cannot save selections")
+        return False
 
     # Extract just the selections part for DataManager
     selections_only = selections_data.get("selectors", {})
@@ -461,13 +474,21 @@ def admin():
 
         # Get available selectors (those not yet assigned)
         assigned_selectors = set(selections_data.get("selectors", {}).keys())
-        available_selectors = [s for s in SELECTORS if s not in assigned_selectors]
 
         # Prepare match data for template
         selections = selections_data.get("selectors", {})
 
-        # Calculate progress percentage
-        progress_percentage = int((len(selections) / len(SELECTORS)) * 100)
+        # Calculate progress percentage with safety check
+        try:
+            if len(SELECTORS) > 0 and isinstance(len(selections), int):
+                progress_percentage = max(0, min(100, int((len(selections) / len(SELECTORS)) * 100)))
+            else:
+                progress_percentage = 0
+        except (ZeroDivisionError, TypeError, ValueError):
+            progress_percentage = 0
+
+        # Ensure it's always an integer
+        progress_percentage = int(progress_percentage) if progress_percentage is not None else 0
 
         # Add diagnostic information for debugging
         diagnostic_info = {
@@ -525,19 +546,46 @@ def assign_match():
         # First, try to get cached match data from DataManager
         try:
             week = get_current_prediction_week()
-            cached_fixtures = data_manager.get_bbc_fixtures(week)
-            if cached_fixtures:
-                for match in cached_fixtures:
-                    current_id = f"{match['league']}_{match['home_team']}_{match['away_team']}"
-                    if current_id == match_id:
-                        match_details = match
-                        break
+
+            # Check if data_manager is available before calling methods
+            if data_manager is None:
+                print("ERROR: data_manager is None - cannot get cached fixtures")
+            else:
+                cached_fixtures = data_manager.get_bbc_fixtures(week)
+                if cached_fixtures:
+                    for match in cached_fixtures:
+                        current_id = f"{match['league']}_{match['home_team']}_{match['away_team']}"
+                        if current_id == match_id:
+                            match_details = match
+                            break
         except Exception as e:
             print(f"Error loading cached fixtures: {e}")
 
         # If no cached data or match not found, try scraping (but handle errors gracefully)
         if not match_details:
             try:
+                if BBCSportScraper is None:
+                    return jsonify({"success": False, "error": "BBC scraper not available"}), 500
+
+                scraper = BBCSportScraper()
+                scraper_result = scraper.scrape_saturday_3pm_fixtures()
+                matches = scraper_result.get("matches_3pm", [])
+
+                for match in matches:
+                    current_id = f"{match['league']}_{match['home_team']}_{match['away_team']}"
+                    if current_id == match_id:
+                        match_details = match
+                        break
+            except Exception as e:
+                print(f"Error scraping fixtures: {e}")
+                return jsonify({"success": False, "error": "Unable to retrieve match data. Please try again later."}), 500
+
+        # If no cached data or match not found, try scraping (but handle errors gracefully)
+        if not match_details:
+            try:
+                if BBCSportScraper is None:
+                    return jsonify({"success": False, "error": "BBC scraper not available"}), 500
+
                 scraper = BBCSportScraper()
                 scraper_result = scraper.scrape_saturday_3pm_fixtures()
                 matches = scraper_result.get("matches_3pm", [])
@@ -571,8 +619,6 @@ def assign_match():
         else:
             return jsonify({"success": False, "error": "Failed to save selections"}), 500
 
-        return jsonify({"success": True, "message": f"Match assigned to {selector}"})
-
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -600,8 +646,6 @@ def unassign_match():
             return jsonify({"success": True, "message": f"Match unassigned from {selector}"})
         else:
             return jsonify({"success": False, "error": "Failed to save selections"}), 500
-
-        return jsonify({"success": True, "message": f"Match unassigned from {selector}"})
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -641,8 +685,6 @@ def override_selections():
         else:
             return jsonify({"success": False, "error": "Failed to save selections"}), 500
 
-        return jsonify({"success": True, "message": "Override confirmed"})
-
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -654,6 +696,12 @@ def btts_tracker():
     try:
         # Load current week's selections for context
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot load selections for BTTS tracker")
+            return render_template('tracker.html')
+
         selections = data_manager.load_weekly_selections(week)
 
         return render_template('tracker.html')
@@ -685,6 +733,23 @@ def get_btts_status():
     try:
         # Load current week's selections
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot load selections for BTTS status")
+            return jsonify({
+                "status": "ERROR",
+                "message": "Data manager not available",
+                "matches": {},
+                "statistics": {
+                    "total_matches_tracked": 0,
+                    "btts_detected": 0,
+                    "btts_pending": 0,
+                    "last_update": datetime.now().isoformat()
+                },
+                "last_updated": datetime.now().isoformat()
+            })
+
         selections = data_manager.load_weekly_selections(week)
 
         if not selections:
@@ -929,6 +994,21 @@ def get_btts_summary():
     try:
         # Load current week's selections
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot load selections for BTTS summary")
+            return jsonify({
+                "status": "ERROR",
+                "message": "Data manager not available",
+                "selectors": {},
+                "total_matches": 0,
+                "btts_success": 0,
+                "btts_pending": 0,
+                "btts_failed": 0,
+                "accumulator_status": "ERROR"
+            })
+
         selections = data_manager.load_weekly_selections(week)
 
         if not selections or len(selections) == 0:
@@ -1152,6 +1232,16 @@ def get_bbc_fixtures():
     try:
         # Get current week's selections
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot load selections for BBC fixtures")
+            return jsonify({
+                "success": False,
+                "error": "Data manager not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
         selections = data_manager.load_weekly_selections(week) or {}
 
         if not selections:
@@ -1169,6 +1259,13 @@ def get_bbc_fixtures():
             })
 
         # Get matches from enhanced BBC scraper
+        if BBCSportScraper is None:
+            return jsonify({
+                "success": False,
+                "error": "BBC scraper not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
         scraper = BBCSportScraper()
         scraper_result = scraper.scrape_saturday_3pm_fixtures()
 
@@ -1220,6 +1317,16 @@ def get_bbc_live_scores():
 
         # Get current week's selections
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot load selections for BBC live scores")
+            return jsonify({
+                "success": False,
+                "error": "Data manager not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
         selections = data_manager.load_weekly_selections(week) or {}
 
         if not selections:
@@ -1236,6 +1343,13 @@ def get_bbc_live_scores():
             })
 
         # Get live scores from enhanced BBC scraper
+        if BBCSportScraper is None:
+            return jsonify({
+                "success": False,
+                "error": "BBC scraper not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
         scraper = BBCSportScraper()
         live_result = scraper.scrape_live_scores(target_date)
 
@@ -1292,6 +1406,13 @@ def get_bbc_matches_for_date(date):
             }), 400
 
         # Get both fixtures and live scores for the date
+        if BBCSportScraper is None:
+            return jsonify({
+                "success": False,
+                "error": "BBC scraper not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
         scraper = BBCSportScraper()
 
         # Use the unified scraping approach for both fixtures and live scores
@@ -1330,6 +1451,16 @@ def get_tracker_data():
     try:
         # Get current week's selections
         week = get_current_prediction_week()
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            print("ERROR: data_manager is None - cannot load selections for tracker data")
+            return jsonify({
+                "success": False,
+                "error": "Data manager not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
         selections = data_manager.load_weekly_selections(week)
 
         # Get current live scores for selected matches
@@ -1350,15 +1481,18 @@ def get_tracker_data():
                 # Try to get live score data for this match
                 live_score_data = None
                 try:
-                    scraper = BBCSportScraper()
-                    live_result = scraper.scrape_live_scores(target_date)
-                    live_matches = live_result.get("live_matches", [])
+                    if BBCSportScraper is None:
+                        pass  # Continue without live data if scraper not available
+                    else:
+                        scraper = BBCSportScraper()
+                        live_result = scraper.scrape_live_scores(target_date)
+                        live_matches = live_result.get("live_matches", [])
 
-                    for live_match in live_matches:
-                        if (live_match.get('home_team') == home_team and
-                            live_match.get('away_team') == away_team):
-                            live_score_data = live_match
-                            break
+                        for live_match in live_matches:
+                            if (live_match.get('home_team') == home_team and
+                                live_match.get('away_team') == away_team):
+                                live_score_data = live_match
+                                break
                 except:
                     pass  # Continue without live data if scraping fails
 
@@ -1435,7 +1569,7 @@ def get_tracker_data():
                 "btts_detected": btts_detected,
                 "btts_pending": btts_pending,
                 "btts_failed": btts_failed,
-                "completion_percentage": int((selected_count / len(SELECTORS)) * 100)
+                "completion_percentage": max(0, min(100, int((selected_count / len(SELECTORS)) * 100))) if len(SELECTORS) > 0 else 0
             },
             "last_updated": datetime.now().isoformat()
         })
@@ -1739,7 +1873,7 @@ def trigger_btts_test():
         return jsonify({
             "success": True,
             "message": f"BTTS {'triggered for all' if action == 'trigger_all_btts' else f'triggered for {selector}'}",
-            "match_data" if selector else "matches_data": current_matches[selector] if selector else current_matches,
+            "match_data" if selector else "matches_data": current_matches[selector] if selector and selector in current_matches else current_matches,
             "statistics": {
                 "total_matches_tracked": len(current_matches),
                 "btts_detected": btts_detected,
@@ -1809,7 +1943,7 @@ def update_score_test():
         return jsonify({
             "success": True,
             "message": f"Score {'reset for all' if action == 'reset_all' else f'updated for {selector} ({team} {delta:+d})'}",
-            "match_data" if selector else "matches_data": current_matches[selector] if selector else current_matches,
+            "match_data" if selector else "matches_data": current_matches[selector] if selector and selector in current_matches else current_matches,
             "statistics": {
                 "total_matches_tracked": len(current_matches),
                 "btts_detected": btts_detected,
