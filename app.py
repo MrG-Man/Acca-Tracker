@@ -445,13 +445,38 @@ def admin():
             "original_target_date": target_date
         }
 
-        # Try to get matches from BBC scraper
-        if BBCSportScraper is not None:
+        # Try to get matches from DataManager cache first
+        matches = []
+        if data_manager is not None:
+            try:
+                app.logger.info(f"Attempting to load cached fixtures for {target_date}")
+                cached_fixtures = data_manager.get_bbc_fixtures(target_date)
+                app.logger.info(f"DataManager returned: {len(cached_fixtures) if cached_fixtures else 0} fixtures")
+
+                if cached_fixtures:
+                    # Filter for 15:00 matches only
+                    matches = [match for match in cached_fixtures if match.get('kickoff') == '15:00']
+                    app.logger.info(f"Filtered to {len(matches)} 15:00 matches for {target_date}")
+
+                    # Debug: Show sample matches
+                    if matches:
+                        sample_match = matches[0]
+                        app.logger.info(f"Sample match: {sample_match['league']} - {sample_match['home_team']} vs {sample_match['away_team']} at {sample_match['kickoff']}")
+                else:
+                    app.logger.warning(f"No cached fixtures found for {target_date}")
+            except Exception as e:
+                app.logger.error(f"Error loading cached fixtures: {e}")
+                import traceback
+                app.logger.error(f"Traceback: {traceback.format_exc()}")
+
+        # If no cached data, fall back to scraping
+        if not matches and BBCSportScraper is not None:
             try:
                 scraper = BBCSportScraper()
                 scraper_result = scraper.scrape_saturday_3pm_fixtures()
                 matches = scraper_result.get("matches_3pm", [])
                 target_date = scraper_result.get("next_saturday", target_date)
+                app.logger.info(f"Scraped {len(matches)} matches for {target_date}")
 
                 # If no matches found, try to find an alternative date
                 if not matches:
