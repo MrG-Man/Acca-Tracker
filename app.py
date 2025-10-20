@@ -118,9 +118,15 @@ except ImportError:
 # Import Sofascore Live Scores API for live tracking
 try:
     from sofascore_optimized import SofascoreLiveScoresAPI
-    sofascore_api = SofascoreLiveScoresAPI(api_key=config.SOFASCORE_API_KEY)
-    SOFASCORE_AVAILABLE = True
-    app.logger.info("Sofascore API loaded successfully")
+    # Only initialize if API key is available
+    if config.SOFASCORE_API_KEY:
+        sofascore_api = SofascoreLiveScoresAPI(api_key=config.SOFASCORE_API_KEY)
+        SOFASCORE_AVAILABLE = True
+        app.logger.info("Sofascore API loaded successfully")
+    else:
+        sofascore_api = None
+        SOFASCORE_AVAILABLE = False
+        app.logger.warning("Sofascore API key not configured - live scores disabled")
 except ImportError:
     sofascore_api = None
     SOFASCORE_AVAILABLE = False
