@@ -489,52 +489,53 @@ def admin():
                 app.logger.error(f"Traceback: {traceback.format_exc()}")
 
         # If no cached data, fall back to scraping
-        if not matches and BBCSportScraper is not None:
-            try:
-                scraper = BBCSportScraper()
-                scraper_result = scraper.scrape_saturday_3pm_fixtures()
-                matches = scraper_result.get("matches_3pm", [])
-                target_date = scraper_result.get("next_saturday", target_date)
-                app.logger.info(f"Scraped {len(matches)} matches for {target_date}")
+        if not matches:
+            if BBCSportScraper is not None:
+                try:
+                    scraper = BBCSportScraper()
+                    scraper_result = scraper.scrape_saturday_3pm_fixtures()
+                    matches = scraper_result.get("matches_3pm", [])
+                    target_date = scraper_result.get("next_saturday", target_date)
+                    app.logger.info(f"Scraped {len(matches)} matches for {target_date}")
 
-                # If no matches found, try to find an alternative date
-                if not matches:
-                    app.logger.info(f"No matches found for {target_date}, searching for alternative date")
-                    try:
-                        alternative_date = find_next_available_fixtures_date(target_date, max_days_ahead=14)
+                    # If no matches found, try to find an alternative date
+                    if not matches:
+                        app.logger.info(f"No matches found for {target_date}, searching for alternative date")
+                        try:
+                            alternative_date = find_next_available_fixtures_date(target_date, max_days_ahead=14)
 
-                        if alternative_date and alternative_date != target_date:
-                            app.logger.info(f"Found alternative date with matches: {alternative_date}")
-                            try:
-                                # Re-scrape for the alternative date
-                                alt_scraper_result = scraper.scrape_unified_bbc_matches(alternative_date, 'fixtures')
-                                alt_matches = [match for match in alt_scraper_result.get("matches", []) if match.get('kickoff') == '15:00']
+                            if alternative_date and alternative_date != target_date:
+                                app.logger.info(f"Found alternative date with matches: {alternative_date}")
+                                try:
+                                    # Re-scrape for the alternative date
+                                    alt_scraper_result = scraper.scrape_unified_bbc_matches(alternative_date, 'fixtures')
+                                    alt_matches = [match for match in alt_scraper_result.get("matches", []) if match.get('kickoff') == '15:00']
 
-                                if alt_matches:
-                                    # Update scraper result with alternative date data
-                                    scraper_result = {
-                                        "scraping_date": alt_scraper_result.get("scraping_date"),
-                                        "next_saturday": alternative_date,
-                                        "matches_3pm": alt_matches,
-                                        "all_matches": alt_scraper_result.get("matches", []),
-                                        "total_3pm_matches": len(alt_matches),
-                                        "total_all_matches": len(alt_scraper_result.get("matches", [])),
-                                        "using_alternative_date": True,
-                                        "original_target_date": target_date
-                                    }
-                                    matches = alt_matches
-                                    target_date = alternative_date
-                            except Exception as e:
-                                app.logger.warning(f"Error scraping alternative date {alternative_date}: {e}")
-                                # Continue with empty matches list
-                    except Exception as e:
-                        app.logger.warning(f"Error finding alternative date: {e}")
-                        # Continue with empty matches list
-            except Exception as e:
-                app.logger.error(f"Error with BBC scraper: {e}")
-                # Continue with empty matches list - don't fail completely
-        else:
-            app.logger.warning("BBC scraper not available - showing admin interface without live data")
+                                    if alt_matches:
+                                        # Update scraper result with alternative date data
+                                        scraper_result = {
+                                            "scraping_date": alt_scraper_result.get("scraping_date"),
+                                            "next_saturday": alternative_date,
+                                            "matches_3pm": alt_matches,
+                                            "all_matches": alt_scraper_result.get("matches", []),
+                                            "total_3pm_matches": len(alt_matches),
+                                            "total_all_matches": len(alt_scraper_result.get("matches", [])),
+                                            "using_alternative_date": True,
+                                            "original_target_date": target_date
+                                        }
+                                        matches = alt_matches
+                                        target_date = alternative_date
+                                except Exception as e:
+                                    app.logger.warning(f"Error scraping alternative date {alternative_date}: {e}")
+                                    # Continue with empty matches list
+                        except Exception as e:
+                            app.logger.warning(f"Error finding alternative date: {e}")
+                            # Continue with empty matches list
+                except Exception as e:
+                    app.logger.error(f"Error with BBC scraper: {e}")
+                    # Continue with empty matches list - don't fail completely
+            else:
+                app.logger.warning("BBC scraper not available - showing admin interface without live data")
 
         # Load existing selections with enhanced error handling
         if data_manager is None:
