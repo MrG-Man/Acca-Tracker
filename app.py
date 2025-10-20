@@ -429,6 +429,7 @@ def index():
 @app.route('/admin')
 def admin():
     """Main admin interface for match selection."""
+    # Ultimate fallback - if anything goes wrong, show basic info
     try:
         # Get matches from BBC scraper with enhanced error handling
         matches = []
