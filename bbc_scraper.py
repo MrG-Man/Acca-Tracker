@@ -740,7 +740,7 @@ class BBCSportScraper:
 
     def _parse_unified_matches(self, soup: BeautifulSoup, mode: str) -> List[Dict]:
         """
-        Parse all matches from the unified BBC page.
+        Parse all matches from the unified BBC page using embedded JSON data.
 
         Args:
             soup: BeautifulSoup object of the BBC page
@@ -752,38 +752,252 @@ class BBCSportScraper:
         matches = []
 
         try:
-            # NEW APPROACH: Look for elements containing "versus" and "kick off"
-            # This is more targeted than looking for all ssrcss elements
+            # IMPROVED APPROACH: Extract JSON data from window.__INITIAL_DATA__
+            # This contains complete, structured match data with proper league groupings
+            json_matches = self._extract_json_from_bbc_page(soup)
+            if json_matches:
+                matches.extend(json_matches)
+                logger.info(f"Extracted {len(json_matches)} matches from JSON data")
+            
+            # FALLBACK: If JSON extraction fails, use the old HTML parsing method
+            if not matches:
+                logger.warning("JSON extraction failed, falling back to HTML parsing")
+                matches = self._parse_unified_matches_from_html(soup, mode)
 
+            logger.info(f"Parsed {len(matches)} matches from unified BBC page")
+            return matches
+
+        except Exception as e:
+            logger.error(f"Error parsing unified matches: {e}")
+            return []
+    def _extract_json_from_bbc_page(self, soup: BeautifulSoup) -> List[Dict]:
+        """
+        Extract match data from window.__INITIAL_DATA__ JSON embedded in BBC page.
+        
+        Args:
+            soup: BeautifulSoup object of the BBC page
+            
+        Returns:
+            List of match dictionaries with proper league assignments
+        """
+        matches = []
+        
+        try:
+            # Find the script tag containing window.__INITIAL_DATA__
+            script_text = None
+            for script in soup.find_all('script'):
+                if script.string and 'window.__INITIAL_DATA__' in script.string:
+                    script_text = script.string
+                    break
+            
+            if not script_text:
+                logger.warning("Could not find window.__INITIAL_DATA__ in page")
+                return matches
+            
+            # Extract JSON from window.__INITIAL_DATA__="...";
+            json_match = re.search(r'window\.__INITIAL_DATA__="(.+?)";', script_text)
+            if not json_match:
+                logger.warning("Could not extract JSON from window.__INITIAL_DATA__")
+                return matches
+            
+            # The JSON is string-escaped, so we need to unescape it
+            json_str = json_match.group(1)
+            # Unescape the JSON string
+            json_str = json_str.encode().decode('unicode_escape')
+            
+            # Parse the JSON
+            data = json.loads(json_str)
+            
+            # Navigate to the sports data
+            if 'data' not in data:
+                logger.warning("No 'data' key in __INITIAL_DATA__")
+                return matches
+            
+            # Find the sport-data-scores-fixtures entry
+            for key, value in data['data'].items():
+                if 'sport-data-scores-fixtures' in key and 'data' in value:
+                    sport_data = value['data']
+                    if 'eventGroups' in sport_data:
+                        matches = self._parse_event_groups(sport_data['eventGroups'])
+                        break
+            
+            return matches
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error extracting BBC data: {e}")
+            return matches
+        except Exception as e:
+            logger.error(f"Error extracting JSON from BBC page: {e}")
+            return matches
+    
+    def _parse_event_groups(self, event_groups: List[Dict]) -> List[Dict]:
+        """
+        Parse event groups from BBC JSON data structure.
+        
+        Args:
+            event_groups: List of event group dictionaries from BBC JSON
+            
+        Returns:
+            List of match dictionaries
+        """
+        matches = []
+        
+        # BBC to internal league name mapping
+        league_mapping = {
+            'Premier League': 'Premier League',
+            'Championship': 'English Championship',
+            'League One': 'English League One',
+            'League Two': 'English League Two',
+            'National League': 'English National League',
+            'Scottish Premiership': 'Scottish Premiership',
+            'Scottish Championship': 'Scottish Championship',
+            'Scottish League One': 'Scottish League One',
+            'Scottish League Two': 'Scottish League Two',
+        }
+        
+        try:
+            for group in event_groups:
+                # Get the league name from displayLabel
+                bbc_league_name = group.get('displayLabel', '')
+                
+                # Map BBC league name to our internal name
+                league_name = league_mapping.get(bbc_league_name)
+                
+                # Skip if not a supported league
+                if not league_name:
+                    continue
+                
+                # Process events in this group
+                events = []
+                
+                # Events can be directly in the group or in secondaryGroups
+                if 'events' in group:
+                    events.extend(group['events'])
+                
+                if 'secondaryGroups' in group:
+                    for secondary_group in group['secondaryGroups']:
+                        if 'events' in secondary_group:
+                            events.extend(secondary_group['events'])
+                
+                # Parse each event
+                for event in events:
+                    match = self._parse_json_event(event, league_name)
+                    if match:
+                        matches.append(match)
+            
+            return matches
+            
+        except Exception as e:
+            logger.error(f"Error parsing event groups: {e}")
+            return matches
+    
+    def _parse_json_event(self, event: Dict, league_name: str) -> Optional[Dict]:
+        """
+        Parse a single event from BBC JSON data.
+        
+        Args:
+            event: Event dictionary from BBC JSON
+            league_name: Name of the league for this event
+            
+        Returns:
+            Match dictionary or None if parsing failed
+        """
+        try:
+            # Extract team information
+            if 'home' not in event or 'away' not in event:
+                return None
+            
+            home_team = event['home'].get('fullName', '').strip()
+            away_team = event['away'].get('fullName', '').strip()
+            
+            # Validate team names
+            if not home_team or not away_team:
+                return None
+            
+            if len(home_team) < 2 or len(away_team) < 2:
+                return None
+            
+            # Extract match time information
+            kickoff = "TBC"
+            if 'date' in event and 'time' in event['date']:
+                kickoff = event['date']['time']
+            elif 'time' in event and 'displayTimeUK' in event['time']:
+                kickoff = event['time']['displayTimeUK']
+            
+            # Extract venue if available
+            venue = event.get('venue', {}).get('name', 'TBC') if 'venue' in event else "TBC"
+            
+            # Extract scores and status for live matches
+            home_score = 0
+            away_score = 0
+            status = "not_started"
+            match_time = "0'"
+            
+            if 'status' in event:
+                event_status = event['status']
+                if event_status in ['InProgress', 'Live']:
+                    status = "live"
+                    match_time = "LIVE"
+                elif event_status == 'Complete':
+                    status = "finished"
+                    match_time = "FT"
+                elif event_status == 'HalfTime':
+                    status = "halftime"
+                    match_time = "HT"
+            
+            # Extract scores if available
+            if 'home' in event and 'score' in event['home']:
+                home_score = int(event['home']['score'])
+            if 'away' in event and 'score' in event['away']:
+                away_score = int(event['away']['score'])
+            
+            return {
+                "league": league_name,
+                "home_team": home_team,
+                "away_team": away_team,
+                "kickoff": kickoff,
+                "venue": venue,
+                "home_score": home_score,
+                "away_score": away_score,
+                "status": status,
+                "match_time": match_time
+            }
+            
+        except Exception as e:
+            logger.error(f"Error parsing JSON event: {e}")
+            return None
+    
+    def _parse_unified_matches_from_html(self, soup: BeautifulSoup, mode: str) -> List[Dict]:
+        """
+        FALLBACK: Parse matches from HTML when JSON extraction fails.
+        This is the old parsing logic kept as a fallback.
+        
+        Args:
+            soup: BeautifulSoup object of the BBC page
+            mode: Operating mode (fixtures or live)
+            
+        Returns:
+            List of match dictionaries
+        """
+        matches = []
+        
+        try:
             # Find all elements that contain match information
             match_elements = []
-
+            
             # Look for elements containing "versus" - these are likely match containers
             versus_elements = soup.find_all(string=re.compile(r'versus', re.IGNORECASE))
-
+            
             for versus_element in versus_elements:
                 # Get the parent element that contains the match info
                 parent = versus_element.parent
-
+                
                 # Look for elements that also contain "kick off" (indicating a match)
                 if parent and 'kick off' in parent.get_text().lower():
                     match_elements.append(parent)
-
-            # Also look for script tags with JSON data (for Championship)
-            script_tags = soup.find_all('script', type='application/json')
-            for script in script_tags:
-                if script.string:
-                    try:
-                        data = json.loads(script.string)
-                        # Extract matches from JSON data if present
-                        json_matches = self._extract_matches_from_json(data)
-                        if json_matches:
-                            matches.extend(json_matches)
-                    except json.JSONDecodeError:
-                        continue
-
+            
             processed_matches = set()
-
+            
             # Process each match element
             for match_element in match_elements:
                 match = self._parse_unified_match_data(match_element, mode)
@@ -793,13 +1007,13 @@ class BBCSportScraper:
                     if match_key not in processed_matches:
                         processed_matches.add(match_key)
                         matches.append(match)
-
-            logger.info(f"Parsed {len(matches)} matches from unified BBC page")
+            
             return matches
-
+            
         except Exception as e:
-            logger.error(f"Error parsing unified matches: {e}")
+            logger.error(f"Error parsing matches from HTML: {e}")
             return []
+
 
     def _parse_unified_match_data(self, match_element, mode: str) -> Optional[Dict]:
         """
