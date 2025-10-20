@@ -39,19 +39,40 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-# Import custom modules
-from bbc_scraper import BBCSportScraper
-from data_manager import data_manager
-
-# Import configuration
+# Import configuration first for logging
 from config import get_config
 
+# Import custom modules with error handling
+try:
+    from bbc_scraper import BBCSportScraper
+    print("BBC scraper imported successfully")
+except Exception as e:
+    print(f"ERROR: Failed to import BBC scraper: {e}")
+    BBCSportScraper = None
+
+try:
+    from data_manager import data_manager
+    print("Data manager imported successfully")
+except Exception as e:
+    print(f"ERROR: Failed to import data manager: {e}")
+    data_manager = None
+
 # Initialize configuration
-config = get_config()
+try:
+    config = get_config()
+    print(f"Configuration loaded successfully. DEBUG: {config.DEBUG}, LOG_LEVEL: {config.LOG_LEVEL}")
+except Exception as e:
+    print(f"ERROR: Failed to load configuration: {e}")
+    raise
 
 # Create Flask app with configuration
 app = Flask(__name__)
 app.config.from_object(config)
+
+# Log critical environment variables (without exposing secrets)
+print(f"Environment check - HOST: {config.HOST}, PORT: {config.PORT}")
+print(f"Feature flags - BBC: {config.ENABLE_BBC_SCRAPER}, Sofascore: {config.ENABLE_SOFA_SCORE_API}")
+print(f"API Keys configured - Sofascore: {'Yes' if config.SOFASCORE_API_KEY else 'No'}")
 
 # Setup CORS
 CORS(app, origins=config.CORS_ORIGINS, supports_credentials=True)
@@ -71,7 +92,13 @@ def setup_logging():
     # Create logs directory if it doesn't exist
     log_dir = os.path.dirname(config.LOG_FILE)
     if log_dir and not os.path.exists(log_dir):
-        os.makedirs(log_dir, exist_ok=True)
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            app.logger.info(f"Created logs directory: {log_dir}")
+        except Exception as e:
+            print(f"ERROR: Cannot create logs directory {log_dir}: {e}")
+            # Fallback to current directory
+            config.LOG_FILE = 'app.log'
 
     # Configure logging
     formatter = logging.Formatter(
@@ -105,6 +132,53 @@ def setup_logging():
     logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 setup_logging()
+
+# Validate critical components before starting
+def validate_critical_components():
+    """Validate that all critical components are available before starting the app."""
+    errors = []
+
+    if BBCSportScraper is None:
+        errors.append("BBC scraper module failed to import")
+    else:
+        print("✓ BBC scraper module available")
+
+    if data_manager is None:
+        errors.append("Data manager module failed to import")
+    else:
+        print("✓ Data manager module available")
+
+    if config.SOFASCORE_API_KEY:
+        print("✓ Sofascore API key configured")
+    else:
+        print("⚠ Sofascore API key not configured - live scores will be disabled")
+
+    if config.SECRET_KEY:
+        print("✓ Flask secret key configured")
+    else:
+        errors.append("SECRET_KEY environment variable not set")
+
+    # Try to create necessary directories
+    try:
+        os.makedirs('logs', exist_ok=True)
+        os.makedirs('data', exist_ok=True)
+        os.makedirs('data/selections', exist_ok=True)
+        os.makedirs('data/fixtures', exist_ok=True)
+        os.makedirs('data/backups', exist_ok=True)
+        print("✓ Data directories created/verified")
+    except Exception as e:
+        errors.append(f"Cannot create data directories: {e}")
+
+    return errors
+
+# Validate components and log results
+startup_errors = validate_critical_components()
+if startup_errors:
+    print(f"CRITICAL: {len(startup_errors)} startup errors detected:")
+    for error in startup_errors:
+        print(f"  - {error}")
+else:
+    print("✓ All critical components validated successfully")
 
 # Import BTTS detector for integration
 try:
@@ -296,10 +370,16 @@ def admin():
     """Main admin interface for match selection."""
     try:
         # Get matches from BBC scraper
+        if BBCSportScraper is None:
+            return "Error: BBC scraper module not available", 500
+
         scraper = BBCSportScraper()
         scraper_result = scraper.scrape_saturday_3pm_fixtures()
 
         # Load existing selections
+        if data_manager is None:
+            return "Error: Data manager module not available", 500
+
         selections_data = load_selections()
 
         # Get available selectors (those not yet assigned)
