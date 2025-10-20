@@ -722,13 +722,22 @@ class BBCSportScraper:
         matches = []
 
         try:
-            # Look for match containers - BBC uses various class patterns
-            match_containers = []
+            # NEW APPROACH: Look for elements containing "versus" and "kick off"
+            # This is more targeted than looking for all ssrcss elements
 
-            # Find all potential match containers
-            for tag in ['div', 'section', 'article']:
-                containers = soup.find_all(tag, class_=re.compile(r'ssrcss'))
-                match_containers.extend(containers)
+            # Find all elements that contain match information
+            match_elements = []
+
+            # Look for elements containing "versus" - these are likely match containers
+            versus_elements = soup.find_all(string=re.compile(r'versus', re.IGNORECASE))
+
+            for versus_element in versus_elements:
+                # Get the parent element that contains the match info
+                parent = versus_element.parent
+
+                # Look for elements that also contain "kick off" (indicating a match)
+                if parent and 'kick off' in parent.get_text().lower():
+                    match_elements.append(parent)
 
             # Also look for script tags with JSON data (for Championship)
             script_tags = soup.find_all('script', type='application/json')
@@ -745,8 +754,9 @@ class BBCSportScraper:
 
             processed_matches = set()
 
-            for container in match_containers:
-                match = self._parse_unified_match_data(container, mode)
+            # Process each match element
+            for match_element in match_elements:
+                match = self._parse_unified_match_data(match_element, mode)
                 if match:
                     # Create unique match key to avoid duplicates
                     match_key = f"{match['home_team']}_{match['away_team']}_{match['league']}"
@@ -773,34 +783,51 @@ class BBCSportScraper:
             Match dictionary or None if parsing failed
         """
         try:
-            # Try multiple parsing approaches
+            # NEW APPROACH: Look for the specific BBC match structure
+            # The BBC page has a different structure than expected
 
-            # Approach 1: Look for league headers first to determine league
-            league_name = self._identify_league_from_element(match_element)
-            if not league_name:
+            # Look for elements containing match information
+            # BBC uses spans with match text and time elements nearby
+            match_text_element = None
+
+            # Find elements that contain "versus" and "kick off"
+            for element in match_element.find_all(string=lambda text: text and 'versus' in text.lower() and 'kick off' in text):
+                match_text_element = element
+                break
+
+            if not match_text_element:
                 return None
 
-            # Skip if not a supported league
-            if league_name not in self.LEAGUES.keys():
+            # Get the full match text
+            match_text = match_text_element.strip()
+
+            # Extract teams from pattern like "Team A versus Team B kick off 15:00"
+            versus_pattern = re.search(r'(.+?)\s+versus\s+(.+?)\s+kick off (\d{1,2}:\d{2})', match_text, re.IGNORECASE)
+            if not versus_pattern:
                 return None
 
-            # Approach 2: Extract team names and scores
-            teams_and_scores = self._extract_teams_and_scores(match_element, mode)
-            if not teams_and_scores:
+            home_team = versus_pattern.group(1).strip()
+            away_team = versus_pattern.group(2).strip()
+            kickoff = versus_pattern.group(3).strip()
+
+            # Validate team names
+            if (len(home_team) < 2 or len(away_team) < 2 or
+                len(home_team) > 50 or len(away_team) > 50):
                 return None
 
-            home_team, away_team, home_score, away_score, status, match_time = teams_and_scores
+            # Determine league - look for league headers in nearby elements
+            league_name = self._identify_league_from_context(match_element)
+            if not league_name or league_name not in self.LEAGUES.keys():
+                return None
 
-            # Approach 3: Extract timing information
-            kickoff = "15:00"  # Default for fixture mode
-            if mode == self.MODE_FIXTURES:
-                time_element = match_element.find('time', class_=re.compile(r'ssrcss.*Time'))
-                if time_element:
-                    kickoff = time_element.get_text(strip=True)
-
-            # Approach 4: Extract venue if available
-            venue_element = match_element.find('span', class_=re.compile(r'ssrcss.*Venue|stadium'))
-            venue = venue_element.get_text(strip=True) if venue_element else "TBC"
+            # Extract venue if available (look for stadium/venue info)
+            venue = "TBC"
+            venue_patterns = ['stadium', 'venue', 'ground']
+            for pattern in venue_patterns:
+                venue_element = match_element.find(string=lambda text: text and pattern in text.lower())
+                if venue_element:
+                    venue = venue_element.strip()
+                    break
 
             return {
                 "league": league_name,
@@ -808,10 +835,10 @@ class BBCSportScraper:
                 "away_team": away_team,
                 "kickoff": kickoff,
                 "venue": venue,
-                "home_score": home_score,
-                "away_score": away_score,
-                "status": status,
-                "match_time": match_time
+                "home_score": 0,
+                "away_score": 0,
+                "status": "not_started",
+                "match_time": "0'"
             }
 
         except Exception as e:
@@ -833,6 +860,42 @@ class BBCSportScraper:
         for league in league_headers:
             if league.lower() in element_text.lower():
                 return league
+
+        return None
+
+    def _identify_league_from_context(self, element) -> Optional[str]:
+        """Identify the league name from the broader context around a match element."""
+        # NEW APPROACH: Use document structure to find league headers
+        # Look backwards from the match element to find the nearest league header
+
+        league_headers = [
+            "Premier League", "English Championship", "English League One",
+            "English League Two", "English National League",
+            "Scottish Premiership", "Scottish Championship",
+            "Scottish League One", "Scottish League Two"
+        ]
+
+        # Start from the match element and look backwards through the document
+        current_element = element
+
+        # Look at preceding siblings and their children
+        for _ in range(10):  # Look back up to 10 levels
+            if current_element:
+                # Check if current element contains league name
+                element_text = current_element.get_text()
+                for league in league_headers:
+                    if league.lower() in element_text.lower():
+                        return league
+
+                # Move to previous sibling or parent
+                if current_element.previous_sibling:
+                    current_element = current_element.previous_sibling
+                elif current_element.parent:
+                    current_element = current_element.parent
+                else:
+                    break
+            else:
+                break
 
         return None
 
@@ -1071,7 +1134,7 @@ class BBCSportScraper:
 
         logger.info(f"Scraping unified BBC fixtures for Saturday {next_saturday}")
 
-        # Use the unified scraping approach
+        # Use the unified scraping approach with the FIXED parsing logic
         unified_result = self.scrape_unified_bbc_matches(next_saturday, self.MODE_FIXTURES)
 
         # Filter for exactly 15:00 matches
