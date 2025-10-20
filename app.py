@@ -430,41 +430,66 @@ def index():
 def admin():
     """Main admin interface for match selection."""
     try:
-        # Get matches from BBC scraper
-        if BBCSportScraper is None:
-            return "Error: BBC scraper module not available", 500
+        # Get matches from BBC scraper with enhanced error handling
+        matches = []
+        target_date = get_current_prediction_week()
+        scraper_result = {
+            "scraping_date": datetime.now().strftime("%Y-%m-%d"),
+            "next_saturday": target_date,
+            "matches_3pm": [],
+            "all_matches": [],
+            "total_3pm_matches": 0,
+            "total_all_matches": 0,
+            "using_alternative_date": False,
+            "original_target_date": target_date
+        }
 
-        scraper = BBCSportScraper()
-        scraper_result = scraper.scrape_saturday_3pm_fixtures()
+        # Try to get matches from BBC scraper
+        if BBCSportScraper is not None:
+            try:
+                scraper = BBCSportScraper()
+                scraper_result = scraper.scrape_saturday_3pm_fixtures()
+                matches = scraper_result.get("matches_3pm", [])
+                target_date = scraper_result.get("next_saturday", target_date)
 
-        # If no matches found, try to find an alternative date with matches
-        matches = scraper_result.get("matches_3pm", [])
-        target_date = scraper_result.get("next_saturday")
+                # If no matches found, try to find an alternative date
+                if not matches:
+                    app.logger.info(f"No matches found for {target_date}, searching for alternative date")
+                    try:
+                        alternative_date = find_next_available_fixtures_date(target_date, max_days_ahead=14)
 
-        if not matches:
-            app.logger.info(f"No matches found for {target_date}, searching for alternative date")
-            alternative_date = find_next_available_fixtures_date(target_date, max_days_ahead=14)
+                        if alternative_date and alternative_date != target_date:
+                            app.logger.info(f"Found alternative date with matches: {alternative_date}")
+                            try:
+                                # Re-scrape for the alternative date
+                                alt_scraper_result = scraper.scrape_unified_bbc_matches(alternative_date, 'fixtures')
+                                alt_matches = [match for match in alt_scraper_result.get("matches", []) if match.get('kickoff') == '15:00']
 
-            if alternative_date and alternative_date != target_date:
-                app.logger.info(f"Found alternative date with matches: {alternative_date}")
-                # Re-scrape for the alternative date
-                alt_scraper_result = scraper.scrape_unified_bbc_matches(alternative_date, 'fixtures')
-                alt_matches = [match for match in alt_scraper_result.get("matches", []) if match.get('kickoff') == '15:00']
-
-                if alt_matches:
-                    # Update scraper result with alternative date data
-                    scraper_result = {
-                        "scraping_date": alt_scraper_result.get("scraping_date"),
-                        "next_saturday": alternative_date,
-                        "matches_3pm": alt_matches,
-                        "all_matches": alt_scraper_result.get("matches", []),
-                        "total_3pm_matches": len(alt_matches),
-                        "total_all_matches": len(alt_scraper_result.get("matches", [])),
-                        "using_alternative_date": True,
-                        "original_target_date": target_date
-                    }
-                    matches = alt_matches
-                    target_date = alternative_date
+                                if alt_matches:
+                                    # Update scraper result with alternative date data
+                                    scraper_result = {
+                                        "scraping_date": alt_scraper_result.get("scraping_date"),
+                                        "next_saturday": alternative_date,
+                                        "matches_3pm": alt_matches,
+                                        "all_matches": alt_scraper_result.get("matches", []),
+                                        "total_3pm_matches": len(alt_matches),
+                                        "total_all_matches": len(alt_scraper_result.get("matches", [])),
+                                        "using_alternative_date": True,
+                                        "original_target_date": target_date
+                                    }
+                                    matches = alt_matches
+                                    target_date = alternative_date
+                            except Exception as e:
+                                app.logger.warning(f"Error scraping alternative date {alternative_date}: {e}")
+                                # Continue with empty matches list
+                    except Exception as e:
+                        app.logger.warning(f"Error finding alternative date: {e}")
+                        # Continue with empty matches list
+            except Exception as e:
+                app.logger.error(f"Error with BBC scraper: {e}")
+                # Continue with empty matches list - don't fail completely
+        else:
+            app.logger.warning("BBC scraper not available - showing admin interface without live data")
 
         # Load existing selections
         if data_manager is None:
@@ -502,19 +527,55 @@ def admin():
             "using_alternative_date": scraper_result.get("using_alternative_date", False)
         }
 
-        return render_template('admin.html',
-                              matches=matches,
-                              all_selectors_for_dropdown=SELECTORS,
-                              selections=selections,
-                              all_selectors=SELECTORS,
-                              scraping_date=scraper_result.get("scraping_date"),
-                              next_saturday=target_date,
-                              progress_percentage=progress_percentage,
-                              diagnostic_info=diagnostic_info)
+        try:
+            return render_template('admin.html',
+                                   matches=matches,
+                                   all_selectors_for_dropdown=SELECTORS,
+                                   selections=selections,
+                                   all_selectors=SELECTORS,
+                                   scraping_date=scraper_result.get("scraping_date"),
+                                   next_saturday=target_date,
+                                   progress_percentage=progress_percentage,
+                                   diagnostic_info=diagnostic_info)
+        except Exception as template_error:
+            app.logger.error(f"Template rendering error: {template_error}")
+            # Fallback to basic error page if template fails
+            return f"""
+            <html><head><title>Admin Interface</title></head><body>
+            <h1>Football Predictions Admin</h1>
+            <p><strong>Template Error:</strong> {str(template_error)}</p>
+            <p><strong>Debug Info:</strong> {diagnostic_info}</p>
+            <p><a href="/health">Check Health Status</a></p>
+            </body></html>
+            """, 500
 
     except Exception as e:
         app.logger.error(f"Error loading admin interface: {str(e)}")
-        return f"Error loading admin interface: {str(e)}", 500
+        # Return a basic HTML response if template rendering fails
+        return f"""
+        <html>
+        <head><title>Admin Interface - Error</title></head>
+        <body style="font-family: Arial, sans-serif; margin: 40px;">
+        <h1>Football Predictions Admin</h1>
+        <div style="background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2 style="color: #c33;">⚠️ Application Error</h2>
+            <p><strong>Error:</strong> {str(e)}</p>
+            <p><strong>Time:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+            <p><strong>Target Date:</strong> {get_current_prediction_week()}</p>
+            <p><strong>BBC Scraper:</strong> {"Available" if BBCSportScraper else "Unavailable"}</p>
+            <p><strong>Data Manager:</strong> {"Available" if data_manager else "Unavailable"}</p>
+        </div>
+        <div style="margin: 20px 0;">
+            <h3>🔧 Troubleshooting:</h3>
+            <ul>
+                <li><a href="/health">Check Health Status</a></li>
+                <li><a href="/">Return to Home</a></li>
+                <li>Check application logs for detailed error information</li>
+            </ul>
+        </div>
+        </body>
+        </html>
+        """, 500
 
 @app.route('/api/assign', methods=['POST'])
 def assign_match():
