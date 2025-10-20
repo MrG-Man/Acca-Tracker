@@ -308,6 +308,36 @@ class BBCSportScraper:
                 if not isinstance(value, str) or len(value.strip()) == 0:
                     return False
 
+            # CRITICAL VALIDATION: Ensure league is in our supported leagues
+            league_name = match.get('league', '')
+            if league_name not in self.LEAGUES.keys():
+                logger.error(f"Found unsupported league '{league_name}' in match data. Supported leagues: {list(self.LEAGUES.keys())}")
+                return False
+
+            # Validate team names are reasonable (not international teams or other invalid entries)
+            home_team = match.get('home_team', '').strip()
+            away_team = match.get('away_team', '').strip()
+
+            # Check for international teams or non-football teams
+            invalid_indicators = [
+                'wales', 'australia', 'ukraine', 'kharkiv', 'lviv', 'vynnyky',
+                'miami', 'nashville', 'sc', 'kyiv', 'polissya', 'cherkasy'
+            ]
+
+            home_lower = home_team.lower()
+            away_lower = away_team.lower()
+
+            for indicator in invalid_indicators:
+                if indicator in home_lower or indicator in away_lower:
+                    logger.error(f"Found invalid team name(s) '{home_team}' vs '{away_team}' - appears to be international/other sport match")
+                    return False
+
+            # Additional validation: team names should be reasonable length and not contain numbers (except for numbered teams)
+            if (len(home_team) < 3 or len(home_team) > 50 or
+                len(away_team) < 3 or len(away_team) > 50):
+                logger.error(f"Team names have invalid length: '{home_team}' ({len(home_team)}) vs '{away_team}' ({len(away_team)})")
+                return False
+
         return True
 
     def _make_request(self, url: str) -> Optional[BeautifulSoup]:
@@ -810,14 +840,30 @@ class BBCSportScraper:
             away_team = versus_pattern.group(2).strip()
             kickoff = versus_pattern.group(3).strip()
 
-            # Validate team names
-            if (len(home_team) < 2 or len(away_team) < 2 or
+            # Validate team names - enhanced validation
+            if (len(home_team) < 3 or len(away_team) < 3 or
                 len(home_team) > 50 or len(away_team) > 50):
                 return None
+
+            # CRITICAL: Filter out international teams and invalid matches
+            invalid_indicators = [
+                'wales', 'australia', 'ukraine', 'kharkiv', 'lviv', 'vynnyky',
+                'miami', 'nashville', 'sc', 'kyiv', 'polissya', 'cherkasy',
+                'international', 'world cup', 'euro', 'olympic'
+            ]
+
+            home_lower = home_team.lower()
+            away_lower = away_team.lower()
+
+            for indicator in invalid_indicators:
+                if indicator in home_lower or indicator in away_lower:
+                    logger.debug(f"Filtering out invalid match: '{home_team}' vs '{away_team}'")
+                    return None
 
             # Determine league - look for league headers in nearby elements
             league_name = self._identify_league_from_context(match_element)
             if not league_name or league_name not in self.LEAGUES.keys():
+                logger.debug(f"Unsupported or unidentified league for match: '{home_team}' vs '{away_team}' (detected: '{league_name}')")
                 return None
 
             # Extract venue if available (look for stadium/venue info)

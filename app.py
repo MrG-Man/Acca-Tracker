@@ -1391,46 +1391,137 @@ def get_bbc_fixtures():
                 "last_updated": datetime.now().isoformat()
             })
 
-        # Get matches from enhanced BBC scraper
-        if BBCSportScraper is None:
+        # Try to get matches from DataManager cache first
+        cached_fixtures = None
+        if data_manager is not None:
+            try:
+                app.logger.info(f"Attempting to load cached fixtures for {week}")
+                cached_fixtures = data_manager.get_bbc_fixtures(week)
+                app.logger.info(f"DataManager returned: {len(cached_fixtures) if cached_fixtures else 0} fixtures")
+
+                if cached_fixtures:
+                    # Filter for 15:00 matches only
+                    matches_3pm = [match for match in cached_fixtures if match.get('kickoff') == '15:00']
+                    app.logger.info(f"Filtered to {len(matches_3pm)} 15:00 matches for {week}")
+                else:
+                    app.logger.warning(f"No cached fixtures found for {week}")
+            except Exception as e:
+                app.logger.error(f"Error loading cached fixtures: {e}")
+                import traceback
+                app.logger.error(f"Traceback: {traceback.format_exc()}")
+
+        # If no cached data, fall back to scraping
+        if not cached_fixtures:
+            if BBCSportScraper is not None:
+                try:
+                    scraper = BBCSportScraper()
+                    scraper_result = scraper.scrape_saturday_3pm_fixtures()
+                    all_bbc_matches = scraper_result.get("matches_3pm", [])
+                    week = scraper_result.get("next_saturday", week)
+                    app.logger.info(f"Scraped {len(all_bbc_matches)} matches for {week}")
+
+                    # Cache successful scraping results
+                    if all_bbc_matches:
+                        try:
+                            # Convert scraper matches to cache format if needed
+                            cache_data = []
+                            for match in all_bbc_matches:
+                                cache_match = match.copy()
+                                # Ensure required fields for caching
+                                if 'id' not in cache_match:
+                                    cache_match['id'] = f"{match.get('league', 'Unknown')}_{match.get('home_team', '')}_{match.get('away_team', '')}"
+                                cache_data.append(cache_match)
+
+                            # Cache the scraped data
+                            if data_manager is not None:
+                                data_manager.cache_bbc_fixtures(cache_data, week)
+                                app.logger.info(f"Cached {len(cache_data)} scraped fixtures for {week}")
+                        except Exception as cache_error:
+                            app.logger.warning(f"Failed to cache scraped fixtures: {cache_error}")
+
+                    # Filter to only selected matches
+                    selected_matches = []
+
+                    for selector, match_data in selections.items():
+                        home_team = match_data.get('home_team')
+                        away_team = match_data.get('away_team')
+
+                        # Find matching BBC data for this selection
+                        for bbc_match in all_bbc_matches:
+                            if (bbc_match.get('home_team') == home_team and
+                                bbc_match.get('away_team') == away_team):
+                                # Add selector info to BBC match data
+                                enhanced_match = bbc_match.copy()
+                                enhanced_match['selector'] = selector
+                                enhanced_match['prediction'] = match_data.get('prediction', 'TBD')
+                                enhanced_match['confidence'] = match_data.get('confidence', 5)
+                                selected_matches.append(enhanced_match)
+                                break
+
+                    return jsonify({
+                        "success": True,
+                        "scraping_date": scraper_result.get("scraping_date"),
+                        "next_saturday": scraper_result.get("next_saturday"),
+                        "matches": selected_matches,  # Only selected matches
+                        "selected_matches": selected_matches,
+                        "total_matches": len(selected_matches),
+                        "selected_count": len(selected_matches),
+                        "placeholder_count": len(SELECTORS) - len(selected_matches),
+                        "last_updated": datetime.now().isoformat()
+                    })
+                except Exception as e:
+                    app.logger.error(f"Error with BBC scraper: {e}")
+                    # Continue with empty matches list - don't fail completely
+            else:
+                app.logger.warning("BBC scraper not available - returning empty fixtures")
+
+        # Use cached data if available
+        if cached_fixtures:
+            # Filter for 15:00 matches only
+            matches_3pm = [match for match in cached_fixtures if match.get('kickoff') == '15:00']
+
+            # Filter to only selected matches
+            selected_matches = []
+
+            for selector, match_data in selections.items():
+                home_team = match_data.get('home_team')
+                away_team = match_data.get('away_team')
+
+                # Find matching BBC data for this selection
+                for bbc_match in matches_3pm:
+                    if (bbc_match.get('home_team') == home_team and
+                        bbc_match.get('away_team') == away_team):
+                        # Add selector info to BBC match data
+                        enhanced_match = bbc_match.copy()
+                        enhanced_match['selector'] = selector
+                        enhanced_match['prediction'] = match_data.get('prediction', 'TBD')
+                        enhanced_match['confidence'] = match_data.get('confidence', 5)
+                        selected_matches.append(enhanced_match)
+                        break
+
             return jsonify({
-                "success": False,
-                "error": "BBC scraper not available",
-                "last_updated": datetime.now().isoformat()
-            }), 500
+                "success": True,
+                "scraping_date": datetime.now().strftime("%Y-%m-%d"),
+                "next_saturday": week,
+                "matches": selected_matches,  # Only selected matches
+                "selected_matches": selected_matches,
+                "total_matches": len(selected_matches),
+                "selected_count": len(selected_matches),
+                "placeholder_count": len(SELECTORS) - len(selected_matches),
+                "last_updated": datetime.now().isoformat(),
+                "cache_used": True
+            })
 
-        scraper = BBCSportScraper()
-        scraper_result = scraper.scrape_saturday_3pm_fixtures()
-
-        # Filter to only selected matches
-        all_bbc_matches = scraper_result.get("matches_3pm", [])
-        selected_matches = []
-
-        for selector, match_data in selections.items():
-            home_team = match_data.get('home_team')
-            away_team = match_data.get('away_team')
-
-            # Find matching BBC data for this selection
-            for bbc_match in all_bbc_matches:
-                if (bbc_match.get('home_team') == home_team and
-                    bbc_match.get('away_team') == away_team):
-                    # Add selector info to BBC match data
-                    enhanced_match = bbc_match.copy()
-                    enhanced_match['selector'] = selector
-                    enhanced_match['prediction'] = match_data.get('prediction', 'TBD')
-                    enhanced_match['confidence'] = match_data.get('confidence', 5)
-                    selected_matches.append(enhanced_match)
-                    break
-
+        # Fallback: return empty structure if no data available
         return jsonify({
             "success": True,
-            "scraping_date": scraper_result.get("scraping_date"),
-            "next_saturday": scraper_result.get("next_saturday"),
-            "matches": selected_matches,  # Only selected matches
-            "selected_matches": selected_matches,
-            "total_matches": len(selected_matches),
-            "selected_count": len(selected_matches),
-            "placeholder_count": len(SELECTORS) - len(selected_matches),
+            "scraping_date": datetime.now().strftime("%Y-%m-%d"),
+            "next_saturday": week,
+            "matches": [],
+            "selected_matches": [],
+            "total_matches": 0,
+            "selected_count": 0,
+            "placeholder_count": len(SELECTORS),
             "last_updated": datetime.now().isoformat()
         })
 
@@ -1538,36 +1629,113 @@ def get_bbc_matches_for_date(date):
                 "last_updated": datetime.now().isoformat()
             }), 400
 
-        # Get both fixtures and live scores for the date
-        if BBCSportScraper is None:
-            return jsonify({
-                "success": False,
-                "error": "BBC scraper not available",
-                "last_updated": datetime.now().isoformat()
-            }), 500
+        # Try to get matches from DataManager cache first
+        cached_fixtures = None
+        if data_manager is not None:
+            try:
+                app.logger.info(f"Attempting to load cached fixtures for {date}")
+                cached_fixtures = data_manager.get_bbc_fixtures(date)
+                app.logger.info(f"DataManager returned: {len(cached_fixtures) if cached_fixtures else 0} fixtures")
 
-        scraper = BBCSportScraper()
+                if cached_fixtures:
+                    app.logger.info(f"Using cached fixtures for {date}")
+                else:
+                    app.logger.warning(f"No cached fixtures found for {date}")
+            except Exception as e:
+                app.logger.error(f"Error loading cached fixtures: {e}")
+                import traceback
+                app.logger.error(f"Traceback: {traceback.format_exc()}")
 
-        # Use the unified scraping approach for both fixtures and live scores
-        try:
-            fixtures_result = scraper.scrape_unified_bbc_matches(date, "fixtures").get("matches", [])
-        except:
+        # If no cached data, fall back to scraping
+        if not cached_fixtures:
+            if BBCSportScraper is not None:
+                try:
+                    scraper = BBCSportScraper()
+
+                    # Use the unified scraping approach for both fixtures and live scores
+                    try:
+                        fixtures_result = scraper.scrape_unified_bbc_matches(date, "fixtures").get("matches", [])
+                    except:
+                        fixtures_result = []
+
+                    try:
+                        live_result = scraper.scrape_unified_bbc_matches(date, "live").get("matches", [])
+                    except:
+                        live_result = []
+
+                    # Combine results
+                    all_matches = fixtures_result + live_result
+
+                    # Cache successful scraping results if we got data
+                    if all_matches:
+                        try:
+                            # Convert scraper matches to cache format if needed
+                            cache_data = []
+                            for match in all_matches:
+                                cache_match = match.copy()
+                                # Ensure required fields for caching
+                                if 'id' not in cache_match:
+                                    cache_match['id'] = f"{match.get('league', 'Unknown')}_{match.get('home_team', '')}_{match.get('away_team', '')}"
+                                cache_data.append(cache_match)
+
+                            # Cache the scraped data
+                            if data_manager is not None:
+                                data_manager.cache_bbc_fixtures(cache_data, date)
+                                app.logger.info(f"Cached {len(cache_data)} scraped fixtures for {date}")
+                        except Exception as cache_error:
+                            app.logger.warning(f"Failed to cache scraped fixtures: {cache_error}")
+
+                    return jsonify({
+                        "success": True,
+                        "date": date,
+                        "fixtures": fixtures_result,
+                        "live_scores": live_result,
+                        "total_matches": len(all_matches),
+                        "last_updated": datetime.now().isoformat()
+                    })
+                except Exception as e:
+                    app.logger.error(f"Error with BBC scraper: {e}")
+                    # Continue with empty matches list - don't fail completely
+            else:
+                app.logger.warning("BBC scraper not available - returning empty matches")
+
+        # Use cached data if available
+        if cached_fixtures:
+            # Separate cached fixtures into fixtures and live scores based on status
             fixtures_result = []
-
-        try:
-            live_result = scraper.scrape_unified_bbc_matches(date, "live").get("matches", [])
-        except:
             live_result = []
 
-        # Combine results
-        all_matches = fixtures_result + live_result
+            for match in cached_fixtures:
+                status = match.get('status', 'not_started')
+                if status in ['live', 'finished', 'first_half', 'second_half']:
+                    # Treat as live score
+                    live_match = match.copy()
+                    live_match['match_time'] = match.get('match_time', '0\'')
+                    live_result.append(live_match)
+                else:
+                    # Treat as fixture
+                    fixtures_result.append(match)
 
+            # Combine results
+            all_matches = fixtures_result + live_result
+
+            return jsonify({
+                "success": True,
+                "date": date,
+                "fixtures": fixtures_result,
+                "live_scores": live_result,
+                "total_matches": len(all_matches),
+                "last_updated": datetime.now().isoformat(),
+                "cache_used": True
+            })
+
+        # Fallback: return empty structure if no data available
         return jsonify({
             "success": True,
             "date": date,
-            "fixtures": fixtures_result,
-            "live_scores": live_result,
-            "total_matches": len(all_matches),
+            "fixtures": [],
+            "live_scores": [],
+            "total_matches": 0,
             "last_updated": datetime.now().isoformat()
         })
 
