@@ -251,13 +251,64 @@ class BBCSportScraper:
             return False
 
     def _save_cache_data(self, cache_key: str, data: Dict, date: str, league_name: str):
-        """Save data to cache using DataManager."""
+        """Save data to cache using DataManager with validation."""
         matches = data.get('matches', [])
+
+        # Validate the scraped data before caching
+        if not self._validate_scraped_matches(matches):
+            logger.error(f"Scraped data validation failed for {date} - {league_name}. Not caching corrupted data.")
+            return
+
         success = data_manager.cache_bbc_fixtures(matches, date)
         if success:
             logger.info(f"Cached BBC data for {date} - {league_name} using DataManager")
         else:
             logger.error(f"Failed to cache BBC data for {date} - {league_name}")
+
+    def _validate_scraped_matches(self, matches: List[Dict]) -> bool:
+        """Validate scraped match data to prevent caching corrupted HTML content.
+
+        Args:
+            matches: List of match dictionaries to validate
+
+        Returns:
+            bool: True if data is valid, False if corrupted
+        """
+        if not isinstance(matches, list):
+            return False
+
+        if len(matches) == 0:
+            return True  # Empty list is valid
+
+        for match in matches:
+            if not isinstance(match, dict):
+                return False
+
+            # Check for HTML content in match data (indicates scraping failure)
+            for key, value in match.items():
+                if isinstance(value, str):
+                    # Check if the value looks like HTML (contains many HTML tags)
+                    html_tags = value.count('<') + value.count('>')
+                    if html_tags > 10:  # More than 10 HTML tags indicates HTML content
+                        logger.error(f"Found HTML content in match data for key '{key}': {value[:200]}...")
+                        return False
+
+                    # Check for extremely long values (likely HTML content)
+                    if len(value) > 1000:
+                        logger.error(f"Found extremely long value in match data for key '{key}': {len(value)} characters")
+                        return False
+
+            # Validate required fields
+            required_fields = ["league", "home_team", "away_team", "kickoff"]
+            for field in required_fields:
+                if field not in match:
+                    return False
+
+                value = match[field]
+                if not isinstance(value, str) or len(value.strip()) == 0:
+                    return False
+
+        return True
 
     def _make_request(self, url: str) -> Optional[BeautifulSoup]:
         """

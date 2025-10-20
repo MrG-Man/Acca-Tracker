@@ -177,6 +177,17 @@ def validate_critical_components():
     except Exception as e:
         errors.append(f"Cannot create data directories: {e}")
 
+    # Clean up any corrupted cache files on startup
+    if data_manager is not None:
+        try:
+            corrupted_count = data_manager.cleanup_corrupted_cache_files()
+            if corrupted_count > 0:
+                print(f"✓ Cleaned up {corrupted_count} corrupted cache files on startup")
+            else:
+                print("✓ No corrupted cache files found")
+        except Exception as e:
+            print(f"⚠ Warning: Could not clean up corrupted cache files: {e}")
+
     return errors
 
 

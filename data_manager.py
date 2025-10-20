@@ -573,6 +573,57 @@ class DataManager:
             except OSError:
                 pass  # File may already be removed
 
+    def cleanup_corrupted_cache_files(self) -> int:
+        """Clean up corrupted cache files that contain HTML instead of JSON data.
+
+        Returns:
+            int: Number of corrupted files removed
+        """
+        try:
+            removed_count = 0
+            fixtures_path = self.fixtures_path
+
+            if not os.path.exists(fixtures_path):
+                return 0
+
+            # Check all BBC cache files
+            cache_files = [f for f in os.listdir(fixtures_path) if f.startswith('bbc_cache_') and f.endswith('.json')]
+
+            for cache_file in cache_files:
+                filepath = os.path.join(fixtures_path, cache_file)
+
+                try:
+                    # Try to load and validate the cache file
+                    data = self._load_json_file(filepath)
+                    if data is None:
+                        # File is corrupted or not valid JSON
+                        self.logger.warning(f"Removing corrupted cache file: {cache_file}")
+                        self._cleanup_expired_cache(filepath)
+                        removed_count += 1
+                        continue
+
+                    # Check if fixtures data is valid
+                    fixtures = data.get("fixtures", [])
+                    if not self._validate_fixture_data(fixtures):
+                        self.logger.warning(f"Removing cache file with invalid fixture data: {cache_file}")
+                        self._cleanup_expired_cache(filepath)
+                        removed_count += 1
+
+                except Exception as e:
+                    self.logger.warning(f"Error checking cache file {cache_file}: {e}")
+                    # Remove the file if we can't even check it
+                    self._cleanup_expired_cache(filepath)
+                    removed_count += 1
+
+            if removed_count > 0:
+                self.logger.info(f"Cleaned up {removed_count} corrupted cache files")
+
+            return removed_count
+
+        except Exception as e:
+            self.logger.error(f"Error during corrupted cache cleanup: {str(e)}")
+            return 0
+
     def _validate_fixture_data(self, fixtures: List[Dict[str, Any]]) -> bool:
         """Validate fixture data structure."""
         if not isinstance(fixtures, list):
@@ -596,6 +647,14 @@ class DataManager:
             if not isinstance(fixture["away_team"], str) or len(fixture["away_team"]) == 0:
                 return False
             if not isinstance(fixture["kickoff"], str) or fixture["kickoff"] not in ["15:00"]:
+                return False
+
+            # Additional validation: check for HTML content (corrupted cache files)
+            if any('<' in str(value) and '>' in str(value) for value in fixture.values()):
+                return False
+
+            # Check for reasonable team name lengths (not massive HTML content)
+            if any(len(str(value)) > 200 for value in fixture.values()):
                 return False
 
         return True
