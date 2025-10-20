@@ -247,6 +247,54 @@ def get_current_prediction_week():
 
     return target_date.strftime('%Y-%m-%d')
 
+def find_next_available_fixtures_date(target_date=None, max_days_ahead=14):
+    """Find the next date that has available fixtures, within a reasonable range.
+
+    Args:
+        target_date: Starting date to search from (defaults to current prediction week)
+        max_days_ahead: Maximum days to search ahead
+
+    Returns:
+        str: Date string in YYYY-MM-DD format with available fixtures, or None if none found
+    """
+    if target_date is None:
+        target_date = get_current_prediction_week()
+
+    from datetime import datetime, timedelta
+
+    try:
+        current_date = datetime.strptime(target_date, '%Y-%m-%d').date()
+    except ValueError:
+        current_date = datetime.now().date()
+
+    # Try dates from target_date up to max_days_ahead
+    for days_ahead in range(max_days_ahead + 1):
+        test_date = current_date + timedelta(days=days_ahead)
+        test_date_str = test_date.strftime('%Y-%m-%d')
+
+        # Skip if date is too far in the past (more than 7 days ago)
+        if test_date < datetime.now().date() - timedelta(days=7):
+            continue
+
+        # Test if this date has fixtures
+        try:
+            if BBCSportScraper is not None:
+                scraper = BBCSportScraper(rate_limit=2.0)
+                result = scraper.scrape_unified_bbc_matches(test_date_str, 'fixtures')
+
+                if result.get('matches') and len(result['matches']) > 0:
+                    # Filter for 15:00 matches
+                    matches_3pm = [match for match in result['matches'] if match.get('kickoff') == '15:00']
+                    if matches_3pm:
+                        app.logger.info(f"Found {len(matches_3pm)} 15:00 matches for {test_date_str}")
+                        return test_date_str
+        except Exception as e:
+            app.logger.warning(f"Error testing fixtures for {test_date_str}: {e}")
+            continue
+
+    app.logger.warning(f"No fixtures found within {max_days_ahead} days of {target_date}")
+    return None
+
 def map_selections_to_sofascore_ids(selections):
     """
     Map current week's selections to Sofascore match IDs.
@@ -376,6 +424,35 @@ def admin():
         scraper = BBCSportScraper()
         scraper_result = scraper.scrape_saturday_3pm_fixtures()
 
+        # If no matches found, try to find an alternative date with matches
+        matches = scraper_result.get("matches_3pm", [])
+        target_date = scraper_result.get("next_saturday")
+
+        if not matches:
+            app.logger.info(f"No matches found for {target_date}, searching for alternative date")
+            alternative_date = find_next_available_fixtures_date(target_date, max_days_ahead=14)
+
+            if alternative_date and alternative_date != target_date:
+                app.logger.info(f"Found alternative date with matches: {alternative_date}")
+                # Re-scrape for the alternative date
+                alt_scraper_result = scraper.scrape_unified_bbc_matches(alternative_date, 'fixtures')
+                alt_matches = [match for match in alt_scraper_result.get("matches", []) if match.get('kickoff') == '15:00']
+
+                if alt_matches:
+                    # Update scraper result with alternative date data
+                    scraper_result = {
+                        "scraping_date": alt_scraper_result.get("scraping_date"),
+                        "next_saturday": alternative_date,
+                        "matches_3pm": alt_matches,
+                        "all_matches": alt_scraper_result.get("matches", []),
+                        "total_3pm_matches": len(alt_matches),
+                        "total_all_matches": len(alt_scraper_result.get("matches", [])),
+                        "using_alternative_date": True,
+                        "original_target_date": target_date
+                    }
+                    matches = alt_matches
+                    target_date = alternative_date
+
         # Load existing selections
         if data_manager is None:
             return "Error: Data manager module not available", 500
@@ -387,11 +464,22 @@ def admin():
         available_selectors = [s for s in SELECTORS if s not in assigned_selectors]
 
         # Prepare match data for template
-        matches = scraper_result.get("matches_3pm", [])
         selections = selections_data.get("selectors", {})
 
         # Calculate progress percentage
         progress_percentage = int((len(selections) / len(SELECTORS)) * 100)
+
+        # Add diagnostic information for debugging
+        diagnostic_info = {
+            "total_matches_found": len(matches),
+            "target_date": target_date,
+            "original_target_date": scraper_result.get("original_target_date", target_date),
+            "scraping_date": scraper_result.get("scraping_date"),
+            "bbc_scraper_available": BBCSportScraper is not None,
+            "data_manager_available": data_manager is not None,
+            "selections_count": len(selections),
+            "using_alternative_date": scraper_result.get("using_alternative_date", False)
+        }
 
         return render_template('admin.html',
                               matches=matches,
@@ -399,10 +487,12 @@ def admin():
                               selections=selections,
                               all_selectors=SELECTORS,
                               scraping_date=scraper_result.get("scraping_date"),
-                              next_saturday=scraper_result.get("next_saturday"),
-                              progress_percentage=progress_percentage)
+                              next_saturday=target_date,
+                              progress_percentage=progress_percentage,
+                              diagnostic_info=diagnostic_info)
 
     except Exception as e:
+        app.logger.error(f"Error loading admin interface: {str(e)}")
         return f"Error loading admin interface: {str(e)}", 500
 
 @app.route('/api/assign', methods=['POST'])

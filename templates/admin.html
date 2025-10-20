@@ -13,6 +13,11 @@
             <div class="header-info">
                 <p>Next Saturday: <strong>{{ next_saturday }}</strong></p>
                 <p>Data from: <strong>{{ scraping_date }}</strong></p>
+                {% if diagnostic_info.using_alternative_date %}
+                <div class="alert alert-info" style="margin: 10px 0; padding: 10px; background: #e7f3ff; border: 1px solid #bee5eb; border-radius: 4px;">
+                    <strong>ℹ️ Using Alternative Date:</strong> No matches found for {{ diagnostic_info.original_target_date }}, showing fixtures for {{ next_saturday }} instead.
+                </div>
+                {% endif %}
             </div>
         </header>
 
@@ -144,8 +149,35 @@
             </div>
             {% else %}
             <div class="no-matches">
-                <p>No 15:00 matches found for next Saturday.</p>
-                <p>Check back later or run the BBC scraper manually.</p>
+                <div class="no-matches-content">
+                    <h3>📅 No Matches Available</h3>
+                    <p>No 15:00 matches found for <strong>{{ next_saturday }}</strong>.</p>
+
+                    <div class="troubleshooting-info">
+                        <h4>Possible reasons:</h4>
+                        <ul>
+                            <li>International break or scheduled weekend off</li>
+                            <li>Date is too far in the future for fixture publication</li>
+                            <li>BBC Sport hasn't published fixtures for this date yet</li>
+                            <li>Technical issues with the BBC scraper</li>
+                        </ul>
+
+                        <div class="debug-info" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                            <h5>Debug Information:</h5>
+                            <p><strong>Target Date:</strong> {{ diagnostic_info.target_date }}</p>
+                            <p><strong>Scraping Date:</strong> {{ diagnostic_info.scraping_date }}</p>
+                            <p><strong>Matches Found:</strong> {{ diagnostic_info.total_matches_found }}</p>
+                            <p><strong>BBC Scraper:</strong> {{ "Available" if diagnostic_info.bbc_scraper_available else "Unavailable" }}</p>
+                            <p><strong>Data Manager:</strong> {{ "Available" if diagnostic_info.data_manager_available else "Unavailable" }}</p>
+                        </div>
+
+                        <div class="action-buttons" style="margin-top: 20px;">
+                            <p><strong>What you can do:</strong></p>
+                            <button onclick="window.location.reload()" class="btn btn-primary">Refresh Page</button>
+                            <button onclick="testScraper()" class="btn btn-secondary" style="margin-left: 10px;">Test BBC Scraper</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -198,5 +230,39 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+
+    <script>
+        // Function to test BBC scraper
+        async function testScraper() {
+            try {
+                const response = await fetch('/api/bbc-fixtures');
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`BBC Scraper Test Results:\n\n` +
+                          `Target Date: ${data.next_saturday}\n` +
+                          `Matches Found: ${data.total_matches}\n` +
+                          `Scraping Date: ${data.scraping_date}\n\n` +
+                          `The scraper is working correctly. No matches means either:\n` +
+                          `• International break\n` +
+                          `• No 15:00 matches scheduled\n` +
+                          `• Date too far in future`);
+                } else {
+                    alert(`BBC Scraper Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`Error testing scraper: ${error.message}`);
+            }
+        }
+
+        // Auto-refresh diagnostic info every 5 minutes
+        setInterval(() => {
+            const debugInfo = document.querySelector('.debug-info');
+            if (debugInfo && !document.querySelector('.no-matches')) {
+                // Only refresh if we're still on the no-matches page
+                window.location.reload();
+            }
+        }, 300000); // 5 minutes
+    </script>
 </body>
 </html>
