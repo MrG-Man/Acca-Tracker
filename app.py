@@ -29,6 +29,7 @@ Updated: 2025 - Enhanced with safer weekly transition logic and selection-only t
 import os
 import sys
 import logging
+import traceback
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
@@ -41,19 +42,26 @@ from flask_limiter.util import get_remote_address
 # Import configuration first for logging
 from config import get_config
 
-# Import custom modules with error handling
+# Import custom modules with enhanced error handling for production
 try:
     from bbc_scraper import BBCSportScraper
     print("BBC scraper imported successfully")
 except Exception as e:
     print(f"ERROR: Failed to import BBC scraper: {e}")
+    print(f"Traceback: {traceback.format_exc()}")
     BBCSportScraper = None
 
 try:
     from data_manager import data_manager
     print("Data manager imported successfully")
+
+    # Log initialization status for production debugging
+    if hasattr(data_manager, 'initialization_errors') and data_manager.initialization_errors:
+        print(f"WARNING: DataManager initialized with errors: {data_manager.initialization_errors}")
+
 except Exception as e:
     print(f"ERROR: Failed to import data manager: {e}")
+    print(f"Traceback: {traceback.format_exc()}")
     data_manager = None
 
 # Initialize configuration
@@ -517,9 +525,35 @@ def admin():
         else:
             app.logger.warning("BBC scraper not available - showing admin interface without live data")
 
-        # Load existing selections
+        # Load existing selections with enhanced error handling
         if data_manager is None:
-            return "Error: Data manager module not available", 500
+            error_msg = "Data manager module not available - check filesystem permissions and directory creation"
+            app.logger.error(error_msg)
+            return f"""
+            <html><head><title>Admin Interface - Error</title></head><body>
+            <h1>Football Predictions Admin</h1>
+            <div style="background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                <h2 style="color: #c33;">⚠️ System Error</h2>
+                <p><strong>Error:</strong> {error_msg}</p>
+                <p><strong>Debug Info:</strong></p>
+                <ul>
+                    <li>BBC Scraper: {"Available" if BBCSportScraper else "Unavailable"}</li>
+                    <li>Data Manager: {"Available" if data_manager else "Unavailable"}</li>
+                    <li>Current Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</li>
+                    <li>Target Date: {get_current_prediction_week()}</li>
+                </ul>
+            </div>
+            <div style="margin: 20px 0;">
+                <h3>🔧 Troubleshooting:</h3>
+                <ul>
+                    <li>Check filesystem permissions in production environment</li>
+                    <li>Verify all required directories can be created</li>
+                    <li>Check Railway deployment logs for detailed errors</li>
+                    <li><a href="/health">Check Health Status</a></li>
+                </ul>
+            </div>
+            </body></html>
+            """, 500
 
         selections_data = load_selections()
 
@@ -2050,27 +2084,65 @@ def update_score_test():
 
 @app.route('/health')
 def health_check():
-    """Health check endpoint for monitoring"""
+    """Enhanced health check endpoint for monitoring with production debugging info"""
     try:
+        # Enhanced service status checking
+        services = {
+            'bbc_scraper': BBCSportScraper is not None,
+            'sofascore_api': SOFASCORE_AVAILABLE,
+            'btts_detector': BTTS_DETECTOR_AVAILABLE,
+            'data_manager': data_manager is not None
+        }
+
+        # Check filesystem permissions
+        filesystem_status = {}
+        test_directories = ['data', 'logs']
+        for directory in test_directories:
+            try:
+                os.makedirs(directory, exist_ok=True)
+                test_file = os.path.join(directory, '.health_check_test')
+                with open(test_file, 'w') as f:
+                    f.write('test')
+                os.remove(test_file)
+                filesystem_status[directory] = 'writable'
+            except Exception as e:
+                filesystem_status[directory] = f'error: {e}'
+
+        # Check data_manager initialization errors
+        data_manager_errors = []
+        if data_manager and hasattr(data_manager, 'initialization_errors'):
+            data_manager_errors = data_manager.initialization_errors
+
         health_status = {
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
             'version': '1.0.0',
-            'services': {
-                'bbc_scraper': config.ENABLE_BBC_SCRAPER,
-                'sofascore_api': SOFASCORE_AVAILABLE,
-                'btts_detector': BTTS_DETECTOR_AVAILABLE,
-                'data_manager': True
-            }
+            'environment': 'production' if not config.DEBUG else 'development',
+            'services': services,
+            'filesystem': filesystem_status,
+            'data_manager_errors': data_manager_errors,
+            'working_directory': os.getcwd(),
+            'python_path': sys.executable
         }
 
-        # Check if critical services are available
+        # Determine overall health
         critical_issues = []
-        if config.ENABLE_BBC_SCRAPER and not data_manager:
-            critical_issues.append('DataManager not available')
 
-        if config.ENABLE_SOFA_SCORE_API and not SOFASCORE_AVAILABLE:
-            critical_issues.append('Sofascore API not available')
+        # Check if required services are missing
+        if config.ENABLE_BBC_SCRAPER and not services['bbc_scraper']:
+            critical_issues.append('BBC scraper not available but enabled')
+
+        if not services['data_manager']:
+            critical_issues.append('Data manager not available')
+
+        # Check filesystem issues
+        for directory, status in filesystem_status.items():
+            if 'error' in status:
+                critical_issues.append(f'Filesystem issue with {directory}: {status}')
+
+        # Check data manager initialization issues
+        if data_manager_errors:
+            critical_issues.extend([f'DataManager: {error}' for error in data_manager_errors])
 
         if critical_issues:
             health_status['status'] = 'degraded'
@@ -2084,7 +2156,8 @@ def health_check():
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'traceback': traceback.format_exc()
         }), 500
 
 @app.route('/metrics')

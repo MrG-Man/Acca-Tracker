@@ -28,7 +28,7 @@ class DataManager:
 
     def __init__(self, base_path: str = "data"):
         """
-        Initialize DataManager with base data path.
+        Initialize DataManager with base data path and fallback options.
 
         Args:
             base_path: Base directory for all data operations
@@ -38,11 +38,14 @@ class DataManager:
         self.fixtures_path = os.path.join(base_path, "fixtures")
         self.backups_path = os.path.join(base_path, "backups")
 
-        # Create necessary directories
-        self._ensure_directories()
-
-        # Setup logging
+        # Setup logging first (before directory creation)
         self.logger = self._setup_logging()
+
+        # Create necessary directories with fallback options
+        self._ensure_directories_with_fallback()
+
+        # Track initialization status for production debugging
+        self.initialization_errors = []
 
         # Cache TTL for BBC fixtures - MORE AGGRESSIVE (was 24 hours)
         self.bbc_cache_ttl = timedelta(hours=72)  # 3 days for BBC fixtures
@@ -79,7 +82,75 @@ class DataManager:
         ]
 
         for directory in directories:
-            os.makedirs(directory, exist_ok=True)
+            try:
+                os.makedirs(directory, exist_ok=True)
+                self.logger.debug(f"Created/verified directory: {directory}")
+            except Exception as e:
+                self.logger.error(f"Failed to create directory {directory}: {e}")
+                raise
+
+    def _ensure_directories_with_fallback(self):
+        """Create necessary data directories with fallback options for production environments."""
+        directories = [
+            self.selections_path,
+            self.fixtures_path,
+            self.backups_path
+        ]
+
+        # Try primary locations first
+        success = True
+        for directory in directories:
+            try:
+                os.makedirs(directory, exist_ok=True)
+                self.logger.debug(f"Created/verified directory: {directory}")
+            except Exception as e:
+                self.logger.error(f"Failed to create directory {directory}: {e}")
+                self.initialization_errors.append(f"Directory creation failed for {directory}: {e}")
+                success = False
+
+        # If primary locations failed, try fallback locations
+        if not success:
+            self.logger.warning("Primary directory creation failed, trying fallback locations...")
+            self._try_fallback_directories()
+
+    def _try_fallback_directories(self):
+        """Try alternative directory locations for production environments."""
+        fallback_paths = [
+            "/tmp/football_data",
+            "/tmp/app_data",
+            "./tmp_data",
+            "/var/tmp/football_data"
+        ]
+
+        for fallback_base in fallback_paths:
+            try:
+                self.logger.info(f"Trying fallback directory: {fallback_base}")
+
+                # Update paths to use fallback location
+                self.base_path = fallback_base
+                self.selections_path = os.path.join(fallback_base, "selections")
+                self.fixtures_path = os.path.join(fallback_base, "fixtures")
+                self.backups_path = os.path.join(fallback_base, "backups")
+
+                # Try to create fallback directories
+                directories = [self.selections_path, self.fixtures_path, self.backups_path]
+                for directory in directories:
+                    os.makedirs(directory, exist_ok=True)
+
+                self.logger.info(f"Successfully created fallback directories in {fallback_base}")
+                self.initialization_errors.append(f"Using fallback directories: {fallback_base}")
+                return True
+
+            except Exception as e:
+                self.logger.warning(f"Fallback directory {fallback_base} also failed: {e}")
+                self.initialization_errors.append(f"Fallback {fallback_base} failed: {e}")
+                continue
+
+        # If all fallbacks failed, log critical error but don't crash
+        critical_error = "All directory creation attempts failed. Application may not function correctly."
+        self.logger.critical(critical_error)
+        self.initialization_errors.append(critical_error)
+        return False
 
     def _setup_logging(self) -> logging.Logger:
         """Setup logging for data operations."""

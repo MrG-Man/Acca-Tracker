@@ -62,8 +62,25 @@ import os
 from urllib.parse import urljoin, urlparse
 import logging
 
-# Import DataManager for caching
-from data_manager import data_manager
+# Import DataManager for caching with fallback handling
+try:
+    from data_manager import data_manager
+    print("DataManager imported successfully in BBC scraper")
+except Exception as e:
+    print(f"ERROR: Failed to import DataManager in BBC scraper: {e}")
+    # Create a minimal fallback data_manager for basic functionality
+    class FallbackDataManager:
+        def get_bbc_fixtures(self, date, league=None):
+            print(f"FALLBACK: get_bbc_fixtures called for {date}, {league}")
+            return None
+        def cache_bbc_fixtures(self, fixtures, date):
+            print(f"FALLBACK: cache_bbc_fixtures called for {date}")
+            return False
+        @property
+        def fixtures_path(self):
+            return "data/fixtures"
+
+    data_manager = FallbackDataManager()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
