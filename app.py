@@ -263,7 +263,9 @@ def get_current_prediction_week():
 
         target_date = now.date() + timedelta(days=days_until_saturday)
 
-    return target_date.strftime('%Y-%m-%d')
+    week_str = target_date.strftime('%Y-%m-%d')
+    print(f"[DEBUG] get_current_prediction_week() - Current day: {current_day}, Target date: {week_str}")
+    return week_str
 
 def find_next_available_fixtures_date(target_date=None, max_days_ahead=14):
     """Find the next date that has available fixtures, within a reasonable range.
@@ -390,6 +392,7 @@ def map_selections_to_sofascore_ids(selections):
 def load_selections():
     """Load existing selections for the current week using DataManager."""
     week = get_current_prediction_week()
+    print(f"[DEBUG] load_selections() - Loading selections for week: {week}")
 
     # Check if data_manager is available before calling methods
     if data_manager is None:
@@ -397,10 +400,15 @@ def load_selections():
         return {"selectors": {}, "matches": [], "last_updated": None}
 
     # Load selections using DataManager
+    print(f"[DEBUG] load_selections() - Calling data_manager.load_weekly_selections({week})")
     selections = data_manager.load_weekly_selections(week)
+    print(f"[DEBUG] load_selections() - DataManager returned: {selections}")
 
     if selections is None:
+        print(f"[DEBUG] load_selections() - No selections found for week {week}")
         return {"selectors": {}, "matches": [], "last_updated": None}
+
+    print(f"[DEBUG] load_selections() - Found {len(selections)} selections: {list(selections.keys())}")
 
     # Convert DataManager format to expected format for template
     # Add assigned_at field for template compatibility
@@ -412,15 +420,19 @@ def load_selections():
             enhanced_match_data['assigned_at'] = datetime.now().isoformat()
         enhanced_selections[selector] = enhanced_match_data
 
-    return {
+    result = {
         "selectors": enhanced_selections,
         "matches": [],  # This will be populated from scraper data
         "last_updated": None  # Could be enhanced to track this
     }
+    print(f"[DEBUG] load_selections() - Returning: {len(enhanced_selections)} enhanced selections")
+    return result
 
 def save_selections(selections_data):
     """Save selections using DataManager."""
     week = get_current_prediction_week()
+    print(f"[DEBUG] save_selections() - Saving selections for week: {week}")
+    print(f"[DEBUG] save_selections() - Input data: {selections_data}")
 
     # Check if data_manager is available before calling methods
     if data_manager is None:
@@ -429,15 +441,20 @@ def save_selections(selections_data):
 
     # Extract just the selections part for DataManager
     selections_only = selections_data.get("selectors", {})
+    print(f"[DEBUG] save_selections() - Extracted {len(selections_only)} selections: {list(selections_only.keys())}")
 
     # Save using DataManager
+    print(f"[DEBUG] save_selections() - Calling data_manager.save_weekly_selections() with {len(selections_only)} selections")
     success = data_manager.save_weekly_selections(selections_only, week)
+    print(f"[DEBUG] save_selections() - DataManager save returned: {success}")
 
     if success:
         # Update the last_updated timestamp in the original data
         selections_data["last_updated"] = datetime.now().isoformat()
+        print(f"[DEBUG] save_selections() - Successfully saved selections for week {week}")
         return True
     else:
+        print(f"[DEBUG] save_selections() - Failed to save selections for week {week}")
         return False
 
 @app.route('/')
@@ -653,22 +670,22 @@ def admin():
 def assign_match():
     """API endpoint for assigning a match to a selector."""
     try:
-        app.logger.info("[API DEBUG] /api/assign endpoint called")
+        print("[DEBUG] /api/assign endpoint called")
         data = request.get_json()
-        app.logger.info(f"[API DEBUG] Request data: {data}")
+        print(f"[DEBUG] /api/assign - Request data: {data}")
 
         match_id = data.get('match_id')
         selector = data.get('selector')
-        app.logger.info(f"[API DEBUG] Extracted match_id: {match_id}, selector: {selector}")
+        print(f"[DEBUG] /api/assign - Extracted match_id: {match_id}, selector: {selector}")
 
         if not match_id or not selector:
-            app.logger.error("[API DEBUG] Missing match_id or selector")
+            print("[DEBUG] /api/assign - Missing match_id or selector")
             return jsonify({"success": False, "error": "Missing match_id or selector"}), 400
 
         # Load current selections
-        app.logger.info("[API DEBUG] Loading current selections")
+        print("[DEBUG] /api/assign - Loading current selections")
         selections_data = load_selections()
-        app.logger.info(f"[API DEBUG] Current selections loaded: {len(selections_data.get('selectors', {}))} selectors")
+        print(f"[DEBUG] /api/assign - Current selections loaded: {len(selections_data.get('selectors', {}))} selectors")
 
         # Check if selector already has a match - allow reassignment
         if selector in selections_data.get("selectors", {}):
@@ -879,6 +896,7 @@ def get_btts_status():
     try:
         # Load current week's selections
         week = get_current_prediction_week()
+        print(f"[DEBUG] /api/btts-status - Loading BTTS status for week: {week}")
 
         # Check if data_manager is available before calling methods
         if data_manager is None:
@@ -896,9 +914,12 @@ def get_btts_status():
                 "last_updated": datetime.now().isoformat()
             })
 
+        print(f"[DEBUG] /api/btts-status - Calling data_manager.load_weekly_selections({week})")
         selections = data_manager.load_weekly_selections(week)
+        print(f"[DEBUG] /api/btts-status - DataManager returned: {len(selections) if selections else 0} selections")
 
         if not selections:
+            print(f"[DEBUG] /api/btts-status - No selections found for week {week}")
             return jsonify({
                 "status": "NO_SELECTIONS",
                 "message": "No selections found for current week",
