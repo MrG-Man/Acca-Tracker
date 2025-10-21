@@ -160,19 +160,8 @@ class BTTSTracker {
             console.log('📡 Fetching BTTS data...');
             this.updateConnectionStatus('loading');
 
-            // Check if we're in test mode by looking for test_mode parameter or test path
-            const urlParams = new URLSearchParams(window.location.search);
-            const isTestMode = urlParams.get('test') === 'true' ||
-                              window.location.pathname.includes('test') ||
-                              window.location.pathname.endsWith('test-tracker.html');
-
-            const endpoint = isTestMode ? '/api/btts-status-test' : '/api/btts-status';
-            console.log(`📡 Using endpoint: ${endpoint} (Test Mode: ${isTestMode})`);
-
-            // Update connection status for test mode
-            if (isTestMode) {
-                this.updateConnectionStatus('test');
-            }
+            const endpoint = '/api/btts-status';
+            console.log(`📡 Using endpoint: ${endpoint}`);
 
             const response = await fetch(endpoint);
 
@@ -990,8 +979,8 @@ class BTTSTracker {
             statusDot.className = 'status-dot';
             statusText.textContent = 'Loading...';
         } else if (connected === 'test') {
-            statusDot.className = 'status-dot test-mode';
-            statusText.textContent = 'Test Mode';
+            statusDot.className = 'status-dot connected';
+            statusText.textContent = 'Connected';
             this.isConnected = true;
         } else if (connected) {
             statusDot.className = 'status-dot connected';
