@@ -580,3 +580,11 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-21 11:07:47,090 - app - INFO - BTTS detector loaded successfully
 2025-10-21 11:07:47,090 - app - WARNING - Sofascore API key not configured - live scores disabled
 2025-10-21 11:07:47,093 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:18:30,110 - app - INFO - GET http://127.0.0.1:5001/btts-tracker from 127.0.0.1
+2025-10-21 11:18:30,110 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:18:30,112 - app - INFO - Response: 200
+2025-10-21 11:18:36,778 - app - INFO - GET http://127.0.0.1:5001/api/btts-status from 127.0.0.1
+2025-10-21 11:18:36,778 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:18:36,779 - app - INFO - Response: 200
+2025-10-21 11:18:43,400 - app - INFO - GET http://127.0.0.1:5001/api/btts-status-test from 127.0.0.1
+2025-10-21 11:18:43,400 - app - INFO - Response: 200

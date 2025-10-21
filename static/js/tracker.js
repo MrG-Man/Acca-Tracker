@@ -208,6 +208,12 @@ class BTTSTracker {
             this.metrics.averageUpdateTime = performance.now() - startTime;
         }
 
+        // Handle different data statuses
+        if (data.status === 'NO_SELECTIONS') {
+            this.handleNoSelections(data);
+            return;
+        }
+
         // Update last updated timestamp
         const now = new Date();
         this.lastUpdated.textContent = now.toLocaleTimeString();
@@ -229,6 +235,19 @@ class BTTSTracker {
     }
 
     updateAccumulatorSummary(data) {
+        // Handle no selections case
+        if (data.status === 'NO_SELECTIONS') {
+            this.accumulatorStatus.innerHTML = `
+                <span class="status-badge pending">
+                    AWAITING SELECTIONS
+                </span>
+            `;
+            this.bttsSuccessCount.textContent = '0';
+            this.bttsPendingCount.textContent = '0';
+            this.bttsFailedCount.textContent = '0';
+            return;
+        }
+
         const stats = data.statistics || {};
         const accumulatorStatus = data.accumulator_status || 'PENDING';
 
@@ -900,6 +919,57 @@ class BTTSTracker {
 
     hideError() {
         this.errorState.style.display = 'none';
+    }
+
+    handleNoSelections(data) {
+        // Handle case when no selections have been made yet
+        this.updateConnectionStatus(true);
+
+        // Update accumulator summary for no selections state
+        this.accumulatorStatus.innerHTML = `
+            <span class="status-badge pending">
+                AWAITING SELECTIONS
+            </span>
+        `;
+
+        // Reset statistics
+        this.bttsSuccessCount.textContent = '0';
+        this.bttsPendingCount.textContent = '0';
+        this.bttsFailedCount.textContent = '0';
+
+        // Show no selections message
+        this.showNoSelections();
+
+        // Hide loading/error states
+        this.hideLoading();
+        this.hideError();
+
+        console.log('ℹ️ No selections found - showing awaiting selections state');
+    }
+
+    showNoSelections() {
+        this.matchesContainer.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">⚽</div>
+                <h3>Awaiting Match Selections</h3>
+                <p style="color: #6c757d; margin-bottom: 20px;">
+                    No matches have been selected yet for this week's BTTS accumulator.
+                </p>
+                <div style="background: rgba(255, 255, 255, 0.8); border-radius: 10px; padding: 20px; margin: 20px 0; border: 2px solid rgba(23, 162, 184, 0.2);">
+                    <h4 style="margin-top: 0; color: #17a2b8;">How to get started:</h4>
+                    <ol style="text-align: left; max-width: 400px; margin: 0 auto; color: #495057;">
+                        <li>Visit the <strong>Admin Interface</strong> to select matches</li>
+                        <li>Assign <strong>8 matches</strong> to different selectors</li>
+                        <li>Return here to <strong>track live BTTS results</strong></li>
+                    </ol>
+                </div>
+                <div style="margin-top: 20px;">
+                    <a href="/admin" style="background: #17a2b8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s ease;">
+                        Go to Admin Interface →
+                    </a>
+                </div>
+            </div>
+        `;
     }
 
     showNoMatches() {
