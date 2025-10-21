@@ -1,0 +1,571 @@
+2025-10-21 10:24:12,724 - app - INFO - BTTS detector loaded successfully
+2025-10-21 10:24:12,724 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 10:26:39,231 - app - INFO - BTTS detector loaded successfully
+2025-10-21 10:26:39,232 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 10:26:42,089 - app - INFO - GET http://127.0.0.1:5001/health from 127.0.0.1
+2025-10-21 10:26:42,090 - app - INFO - Response: 200
+2025-10-21 10:27:16,926 - app - INFO - GET http://127.0.0.1:5001/api/btts-status-test from 127.0.0.1
+2025-10-21 10:27:16,927 - app - INFO - Response: 200
+2025-10-21 10:27:29,214 - app - INFO - GET http://127.0.0.1:5001/api/bbc-fixtures from 127.0.0.1
+2025-10-21 10:27:29,214 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:27:29,214 - app - INFO - Response: 200
+2025-10-21 10:28:20,624 - app - INFO - GET http://127.0.0.1:5001/admin from 127.0.0.1
+2025-10-21 10:28:20,625 - app - INFO - Attempting to load cached fixtures for 2025-10-25
+2025-10-21 10:28:20,625 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:28:20,625 - app - INFO - DataManager returned: 0 fixtures
+2025-10-21 10:28:20,625 - app - WARNING - No cached fixtures found for 2025-10-25
+2025-10-21 10:28:20,625 - bbc_scraper - INFO - Scraping unified BBC fixtures for Saturday 2025-10-25
+2025-10-21 10:28:20,625 - bbc_scraper - INFO - Scraping unified BBC page for 2025-10-25 in fixtures mode
+2025-10-21 10:28:20,625 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:28:20,625 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Extracted 61 matches from JSON data
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Parsed 61 matches from unified BBC page
+2025-10-21 10:28:21,128 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-21 10:28:21,128 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Cached 61 unified matches for 2025-10-25
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Found 61 matches across all supported leagues
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Total matches found: 61 (50 at 15:00)
+2025-10-21 10:28:21,128 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:28:21,128 - app - INFO - Scraped 50 matches for 2025-10-25
+2025-10-21 10:28:21,128 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:28:21,136 - app - INFO - Response: 200
+2025-10-21 10:30:15,422 - app - INFO - BTTS detector loaded successfully
+2025-10-21 10:30:15,422 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 10:30:26,201 - app - INFO - BTTS detector loaded successfully
+2025-10-21 10:30:26,201 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 10:30:45,588 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:30:45,588 - app - INFO - Response: 200
+2025-10-21 10:30:52,315 - app - INFO - GET http://127.0.0.1:5002/api/fixtures from 127.0.0.1
+2025-10-21 10:30:52,315 - app - WARNING - 404 error: http://127.0.0.1:5002/api/fixtures
+2025-10-21 10:30:52,315 - app - INFO - Response: 404
+2025-10-21 10:30:59,564 - app - INFO - GET http://127.0.0.1:5002/api/scrape from 127.0.0.1
+2025-10-21 10:30:59,564 - app - WARNING - 404 error: http://127.0.0.1:5002/api/scrape
+2025-10-21 10:30:59,564 - app - INFO - Response: 404
+2025-10-21 10:31:05,021 - app - INFO - POST http://127.0.0.1:5002/api/scrape from 127.0.0.1
+2025-10-21 10:31:05,021 - app - WARNING - 404 error: http://127.0.0.1:5002/api/scrape
+2025-10-21 10:31:05,021 - app - INFO - Response: 404
+2025-10-21 10:31:34,594 - app - INFO - GET http://127.0.0.1:5002/admin from 127.0.0.1
+2025-10-21 10:31:34,594 - app - INFO - Attempting to load cached fixtures for 2025-10-25
+2025-10-21 10:31:34,594 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:31:34,595 - app - INFO - DataManager returned: 0 fixtures
+2025-10-21 10:31:34,595 - app - WARNING - No cached fixtures found for 2025-10-25
+2025-10-21 10:31:34,595 - bbc_scraper - INFO - Scraping unified BBC fixtures for Saturday 2025-10-25
+2025-10-21 10:31:34,595 - bbc_scraper - INFO - Scraping unified BBC page for 2025-10-25 in fixtures mode
+2025-10-21 10:31:34,595 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:31:34,595 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+2025-10-21 10:31:35,214 - bbc_scraper - INFO - Extracted 61 matches from JSON data
+2025-10-21 10:31:35,214 - bbc_scraper - INFO - Parsed 61 matches from unified BBC page
+2025-10-21 10:31:35,214 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-21 10:31:35,214 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-21 10:31:35,214 - bbc_scraper - INFO - Cached 61 unified matches for 2025-10-25
+2025-10-21 10:31:35,214 - bbc_scraper - INFO - Found 61 matches across all supported leagues
+2025-10-21 10:31:35,215 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:31:35,215 - bbc_scraper - INFO - Total matches found: 61 (50 at 15:00)
+2025-10-21 10:31:35,215 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:31:35,215 - app - INFO - Scraped 50 matches for 2025-10-25
+2025-10-21 10:31:35,215 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:31:35,223 - app - INFO - Response: 200
+2025-10-21 10:32:40,327 - app - INFO - GET http://127.0.0.1:5002/btts-tracker from 127.0.0.1
+2025-10-21 10:32:40,327 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:32:40,329 - app - INFO - Response: 200
+2025-10-21 10:33:14,181 - app - INFO - GET http://127.0.0.1:5002/api/btts-status from 127.0.0.1
+2025-10-21 10:33:14,181 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:33:14,181 - app - INFO - Response: 200
+2025-10-21 10:34:02,615 - app - INFO - GET http://127.0.0.1:5002/api/bbc-fixtures from 127.0.0.1
+2025-10-21 10:34:02,615 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:34:02,615 - app - INFO - Response: 200
+2025-10-21 10:35:04,011 - app - INFO - GET http://127.0.0.1:5002/api/bbc-live-scores from 127.0.0.1
+2025-10-21 10:35:04,011 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:35:04,011 - app - INFO - Response: 200
+2025-10-21 10:35:33,125 - app - INFO - GET http://127.0.0.1:5002/api/tracker-data from 127.0.0.1
+2025-10-21 10:35:33,125 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:35:33,125 - app - INFO - Response: 200
+2025-10-21 10:36:08,409 - app - INFO - GET http://127.0.0.1:5002/api/selections from 127.0.0.1
+2025-10-21 10:36:08,409 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:36:08,409 - app - INFO - Response: 200
+2025-10-21 10:36:24,768 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:36:24,768 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:36:24,768 - app - INFO - [API DEBUG] Request data: {'match_id': 'Premier League_Chelsea_Sunderland', 'selector': 'Glynny'}
+2025-10-21 10:36:24,768 - app - INFO - [API DEBUG] Extracted match_id: Premier League_Chelsea_Sunderland, selector: Glynny
+2025-10-21 10:36:24,768 - app - INFO - [API DEBUG] Loading current selections
+2025-10-21 10:36:24,768 - DataManager - WARNING - No selections file found for date 2025-10-25
+2025-10-21 10:36:24,769 - app - INFO - [API DEBUG] Current selections loaded: 0 selectors
+2025-10-21 10:36:24,769 - app - INFO - [API DEBUG] Looking for match details for match_id: Premier League_Chelsea_Sunderland
+2025-10-21 10:36:24,769 - app - INFO - [API DEBUG] Current prediction week: 2025-10-25
+2025-10-21 10:36:24,769 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:36:24,769 - app - INFO - [API DEBUG] Cached fixtures loaded: 0 matches
+2025-10-21 10:36:24,769 - app - INFO - [API DEBUG] Match not found in cache, trying scraper
+2025-10-21 10:36:24,769 - bbc_scraper - INFO - Scraping unified BBC fixtures for Saturday 2025-10-25
+2025-10-21 10:36:24,769 - bbc_scraper - INFO - Scraping unified BBC page for 2025-10-25 in fixtures mode
+2025-10-21 10:36:24,769 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:36:24,769 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Extracted 61 matches from JSON data
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Parsed 61 matches from unified BBC page
+2025-10-21 10:36:25,274 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-21 10:36:25,274 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Cached 61 unified matches for 2025-10-25
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Found 61 matches across all supported leagues
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Total matches found: 61 (50 at 15:00)
+2025-10-21 10:36:25,274 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:36:25,275 - app - INFO - [API DEBUG] Scraped 50 matches
+2025-10-21 10:36:25,275 - app - DEBUG - [API DEBUG] Checking scraped match: Premier League_Chelsea_Sunderland
+2025-10-21 10:36:25,275 - app - INFO - [API DEBUG] Match found in scraped data: {'league': 'Premier League', 'home_team': 'Chelsea', 'away_team': 'Sunderland', 'kickoff': '15:00', 'venue': 'TBC', 'home_score': 0, 'away_score': 0, 'status': 'not_started', 'match_time': "0'"}
+2025-10-21 10:36:25,275 - app - INFO - [API DEBUG] Assignment prepared: Glynny -> {'home_team': 'Chelsea', 'away_team': 'Sunderland', 'prediction': 'TBD', 'confidence': 5}
+2025-10-21 10:36:25,275 - app - INFO - [API DEBUG] Calling save_selections()
+2025-10-21 10:36:25,275 - DataManager - INFO - Weekly selections saved successfully for 2025-10-25
+2025-10-21 10:36:25,275 - app - INFO - [API DEBUG] save_selections() returned: True
+2025-10-21 10:36:25,275 - app - INFO - [API DEBUG] Assignment successful for Glynny
+2025-10-21 10:36:25,275 - app - INFO - Response: 200
+2025-10-21 10:36:33,776 - app - INFO - GET http://127.0.0.1:5002/api/selections from 127.0.0.1
+2025-10-21 10:36:33,776 - app - INFO - Response: 200
+2025-10-21 10:36:40,485 - app - INFO - GET http://127.0.0.1:5002/api/bbc-fixtures from 127.0.0.1
+2025-10-21 10:36:40,485 - app - INFO - Attempting to load cached fixtures for 2025-10-25
+2025-10-21 10:36:40,485 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:36:40,485 - app - INFO - DataManager returned: 0 fixtures
+2025-10-21 10:36:40,485 - app - WARNING - No cached fixtures found for 2025-10-25
+2025-10-21 10:36:40,485 - bbc_scraper - INFO - Scraping unified BBC fixtures for Saturday 2025-10-25
+2025-10-21 10:36:40,485 - bbc_scraper - INFO - Scraping unified BBC page for 2025-10-25 in fixtures mode
+2025-10-21 10:36:40,485 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:36:40,485 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+2025-10-21 10:36:40,676 - bbc_scraper - INFO - Extracted 61 matches from JSON data
+2025-10-21 10:36:40,676 - bbc_scraper - INFO - Parsed 61 matches from unified BBC page
+2025-10-21 10:36:40,676 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-21 10:36:40,676 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-21 10:36:40,677 - bbc_scraper - INFO - Cached 61 unified matches for 2025-10-25
+2025-10-21 10:36:40,677 - bbc_scraper - INFO - Found 61 matches across all supported leagues
+2025-10-21 10:36:40,677 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:36:40,677 - bbc_scraper - INFO - Total matches found: 61 (50 at 15:00)
+2025-10-21 10:36:40,677 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:36:40,677 - app - INFO - Scraped 50 matches for 2025-10-25
+2025-10-21 10:36:40,677 - DataManager - INFO - BBC fixtures cached successfully for 2025-10-25
+2025-10-21 10:36:40,677 - app - INFO - Cached 50 scraped fixtures for 2025-10-25
+2025-10-21 10:36:40,678 - app - INFO - Response: 200
+2025-10-21 10:36:46,368 - app - INFO - GET http://127.0.0.1:5002/api/btts-status from 127.0.0.1
+2025-10-21 10:36:46,368 - app - INFO - Response: 200
+2025-10-21 10:36:54,114 - app - INFO - POST http://127.0.0.1:5002/api/unassign from 127.0.0.1
+2025-10-21 10:36:54,114 - DataManager - INFO - Weekly selections saved successfully for 2025-10-25
+2025-10-21 10:36:54,114 - app - INFO - Response: 200
+2025-10-21 10:37:01,275 - app - INFO - GET http://127.0.0.1:5002/api/selections from 127.0.0.1
+2025-10-21 10:37:01,275 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 10:37:01,275 - app - INFO - Response: 200
+2025-10-21 10:42:37,604 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] Request data: {'match_id': 'invalid_match', 'selector': 'Glynny'}
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] Extracted match_id: invalid_match, selector: Glynny
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] Loading current selections
+2025-10-21 10:42:37,605 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] Current selections loaded: 0 selectors
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] Looking for match details for match_id: invalid_match
+2025-10-21 10:42:37,605 - app - INFO - [API DEBUG] Current prediction week: 2025-10-25
+2025-10-21 10:42:37,606 - DataManager - INFO - BBC fixtures retrieved from validated cache for 2025-10-25
+2025-10-21 10:42:37,606 - app - INFO - [API DEBUG] Cached fixtures loaded: 50 matches
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: Premier League_Chelsea_Sunderland
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: Premier League_Newcastle United_Fulham
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: Scottish Premiership_Dundee United_St. Mirren
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: Scottish Premiership_Falkirk_Dundee
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: Scottish Premiership_Livingston_Motherwell
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Blackburn Rovers_Southampton
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Bristol City_Birmingham City
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Derby County_Queens Park Rangers
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Hull City_Charlton Athletic
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Middlesbrough_Wrexham
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Millwall_Leicester City
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Sheffield Wednesday_Oxford United
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English Championship_Swansea City_Norwich City
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_AFC Wimbledon_Burton Albion
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Barnsley_Rotherham United
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Leyton Orient_Lincoln City
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Northampton Town_Luton Town
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Peterborough United_Blackpool
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Reading_Doncaster Rovers
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Stevenage_Bradford City
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League One_Wycombe Wanderers_Huddersfield Town
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League Two_Barrow_Barnet
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League Two_Bromley_Milton Keynes Dons
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League Two_Crawley Town_Bristol Rovers
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League Two_Crewe Alexandra_Grimsby Town
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League Two_Gillingham_Salford City
+2025-10-21 10:42:37,606 - app - DEBUG - [API DEBUG] Checking match: English League Two_Harrogate Town_Newport County
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English League Two_Notts County_Cambridge United
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English League Two_Oldham Athletic_Shrewsbury Town
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English League Two_Swindon Town_Colchester United
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English League Two_Tranmere Rovers_Chesterfield
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Braintree Town_Altrincham
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Eastleigh_Morecambe
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Forest Green Rovers_Boreham Wood
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Gateshead_Truro City
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Hartlepool United_Solihull Moors
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Scunthorpe United_Aldershot Town
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Southend United_Brackley Town
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Wealdstone_Sutton United
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Woking_Rochdale
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: English National League_Yeovil Town_Carlisle United
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Airdrieonians_Arbroath
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Greenock Morton_St. Johnstone
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Queen's Park_Ayr United
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Raith Rovers_Partick Thistle
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Ross County_Dunfermline Athletic
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Alloa Athletic_Stenhousemuir
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Kelty Hearts_East Fife
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Montrose_Cove Rangers
+2025-10-21 10:42:37,607 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Peterhead_Inverness CT
+2025-10-21 10:42:37,607 - app - INFO - [API DEBUG] Match not found in cache, trying scraper
+2025-10-21 10:42:37,607 - bbc_scraper - INFO - Scraping unified BBC fixtures for Saturday 2025-10-25
+2025-10-21 10:42:37,607 - bbc_scraper - INFO - Scraping unified BBC page for 2025-10-25 in fixtures mode
+2025-10-21 10:42:37,607 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:42:37,607 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Extracted 61 matches from JSON data
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Parsed 61 matches from unified BBC page
+2025-10-21 10:42:38,224 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-21 10:42:38,224 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Cached 61 unified matches for 2025-10-25
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Found 61 matches across all supported leagues
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Total matches found: 61 (50 at 15:00)
+2025-10-21 10:42:38,224 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:42:38,224 - app - INFO - [API DEBUG] Scraped 50 matches
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: Premier League_Chelsea_Sunderland
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: Premier League_Newcastle United_Fulham
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Premiership_Dundee United_St. Mirren
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Premiership_Falkirk_Dundee
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Premiership_Livingston_Motherwell
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Blackburn Rovers_Southampton
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Bristol City_Birmingham City
+2025-10-21 10:42:38,224 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Derby County_Queens Park Rangers
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Hull City_Charlton Athletic
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Middlesbrough_Wrexham
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Millwall_Leicester City
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Sheffield Wednesday_Oxford United
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Swansea City_Norwich City
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_AFC Wimbledon_Burton Albion
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Barnsley_Rotherham United
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Leyton Orient_Lincoln City
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Northampton Town_Luton Town
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Peterborough United_Blackpool
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Reading_Doncaster Rovers
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Stevenage_Bradford City
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Wycombe Wanderers_Huddersfield Town
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Barrow_Barnet
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Bromley_Milton Keynes Dons
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Crawley Town_Bristol Rovers
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Crewe Alexandra_Grimsby Town
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Gillingham_Salford City
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Harrogate Town_Newport County
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Notts County_Cambridge United
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Oldham Athletic_Shrewsbury Town
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Swindon Town_Colchester United
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Tranmere Rovers_Chesterfield
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Braintree Town_Altrincham
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Eastleigh_Morecambe
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Forest Green Rovers_Boreham Wood
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Gateshead_Truro City
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Hartlepool United_Solihull Moors
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Scunthorpe United_Aldershot Town
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Southend United_Brackley Town
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Wealdstone_Sutton United
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Woking_Rochdale
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Yeovil Town_Carlisle United
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Airdrieonians_Arbroath
+2025-10-21 10:42:38,225 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Greenock Morton_St. Johnstone
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Queen's Park_Ayr United
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Raith Rovers_Partick Thistle
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Ross County_Dunfermline Athletic
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Alloa Athletic_Stenhousemuir
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Kelty Hearts_East Fife
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Montrose_Cove Rangers
+2025-10-21 10:42:38,226 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Peterhead_Inverness CT
+2025-10-21 10:42:38,226 - app - ERROR - [API DEBUG] Match invalid_match not found in any data source
+2025-10-21 10:42:38,226 - app - INFO - Response: 404
+2025-10-21 10:42:46,258 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] Request data: {'match_id': 'Premier League_Chelsea_Sunderland', 'selector': 'InvalidSelector'}
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] Extracted match_id: Premier League_Chelsea_Sunderland, selector: InvalidSelector
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] Loading current selections
+2025-10-21 10:42:46,258 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] Current selections loaded: 0 selectors
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] Looking for match details for match_id: Premier League_Chelsea_Sunderland
+2025-10-21 10:42:46,258 - app - INFO - [API DEBUG] Current prediction week: 2025-10-25
+2025-10-21 10:42:46,259 - DataManager - INFO - BBC fixtures retrieved from validated cache for 2025-10-25
+2025-10-21 10:42:46,259 - app - INFO - [API DEBUG] Cached fixtures loaded: 50 matches
+2025-10-21 10:42:46,259 - app - DEBUG - [API DEBUG] Checking match: Premier League_Chelsea_Sunderland
+2025-10-21 10:42:46,259 - app - INFO - [API DEBUG] Match found in cache: {'league': 'Premier League', 'home_team': 'Chelsea', 'away_team': 'Sunderland', 'kickoff': '15:00', 'venue': 'TBC', 'home_score': 0, 'away_score': 0, 'status': 'not_started', 'match_time': "0'", 'id': 'Premier League_Chelsea_Sunderland'}
+2025-10-21 10:42:46,259 - app - INFO - [API DEBUG] Assignment prepared: InvalidSelector -> {'home_team': 'Chelsea', 'away_team': 'Sunderland', 'prediction': 'TBD', 'confidence': 5}
+2025-10-21 10:42:46,259 - app - INFO - [API DEBUG] Calling save_selections()
+2025-10-21 10:42:46,259 - DataManager - INFO - Weekly selections saved successfully for 2025-10-25
+2025-10-21 10:42:46,259 - app - INFO - [API DEBUG] save_selections() returned: True
+2025-10-21 10:42:46,259 - app - INFO - [API DEBUG] Assignment successful for InvalidSelector
+2025-10-21 10:42:46,259 - app - INFO - Response: 200
+2025-10-21 10:42:52,258 - app - INFO - GET http://127.0.0.1:5002/api/selections from 127.0.0.1
+2025-10-21 10:42:52,258 - app - INFO - Response: 200
+2025-10-21 10:42:57,959 - app - INFO - POST http://127.0.0.1:5002/api/unassign from 127.0.0.1
+2025-10-21 10:42:57,960 - DataManager - INFO - Weekly selections saved successfully for 2025-10-25
+2025-10-21 10:42:57,960 - app - INFO - Response: 200
+2025-10-21 10:43:03,504 - app - INFO - POST http://127.0.0.1:5002/api/unassign from 127.0.0.1
+2025-10-21 10:43:03,504 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 10:43:03,504 - app - INFO - Response: 404
+2025-10-21 10:43:09,307 - app - INFO - GET http://127.0.0.1:5002/api/btts-test-scenarios from 127.0.0.1
+2025-10-21 10:43:09,307 - app - INFO - Response: 200
+2025-10-21 10:43:16,467 - app - INFO - GET http://127.0.0.1:5002/api/btts-test-scenarios?scenario=mixed-results from 127.0.0.1
+2025-10-21 10:43:16,467 - app - INFO - Response: 200
+2025-10-21 10:43:21,758 - app - INFO - GET http://127.0.0.1:5002/api/btts-test-scenarios?scenario=invalid from 127.0.0.1
+2025-10-21 10:43:21,758 - app - INFO - Response: 400
+2025-10-21 10:43:27,200 - app - INFO - GET http://127.0.0.1:5002/api/bbc-matches/2025-10-25 from 127.0.0.1
+2025-10-21 10:43:27,200 - app - INFO - Attempting to load cached fixtures for 2025-10-25
+2025-10-21 10:43:27,200 - DataManager - INFO - BBC fixtures retrieved from validated cache for 2025-10-25
+2025-10-21 10:43:27,200 - app - INFO - DataManager returned: 50 fixtures
+2025-10-21 10:43:27,200 - app - INFO - Using cached fixtures for 2025-10-25
+2025-10-21 10:43:27,200 - app - INFO - Response: 200
+2025-10-21 10:43:33,027 - app - INFO - GET http://127.0.0.1:5002/api/bbc-matches/invalid-date from 127.0.0.1
+2025-10-21 10:43:33,027 - app - INFO - Response: 400
+2025-10-21 10:43:38,174 - app - INFO - GET http://127.0.0.1:5002/api/bbc-matches/2025-12-31 from 127.0.0.1
+2025-10-21 10:43:38,174 - app - INFO - Attempting to load cached fixtures for 2025-12-31
+2025-10-21 10:43:38,174 - DataManager - WARNING - No BBC cache file found for date 2025-12-31
+2025-10-21 10:43:38,174 - app - INFO - DataManager returned: 0 fixtures
+2025-10-21 10:43:38,174 - app - WARNING - No cached fixtures found for 2025-12-31
+2025-10-21 10:43:38,174 - bbc_scraper - INFO - Scraping unified BBC page for 2025-12-31 in fixtures mode
+2025-10-21 10:43:38,174 - DataManager - WARNING - No BBC cache file found for date 2025-12-31
+2025-10-21 10:43:38,174 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-12-31
+2025-10-21 10:43:38,373 - bbc_scraper - WARNING - JSON extraction failed, falling back to HTML parsing
+2025-10-21 10:43:38,374 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Equatorial Guinea' vs 'Algeria' (detected: 'None')
+2025-10-21 10:43:38,374 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Sudan' vs 'Burkina Faso' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Gabon' vs 'Ivory Coast' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Mozambique' vs 'Cameroon' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Bala Town' vs 'Caernarfon Town' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Briton Ferry Llansawel' vs 'Barry Town United' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Connah's Quay Nomads' vs 'The New Saints' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Central Coast Mariners' vs 'Brisbane Roar' (detected: 'None')
+2025-10-21 10:43:38,375 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'NEOM' vs 'Al Ittihad' (detected: 'None')
+2025-10-21 10:43:38,376 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Al Kholood' vs 'Al Hilal' (detected: 'None')
+2025-10-21 10:43:38,376 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Al Shabab' vs 'Al-Qadsiah' (detected: 'None')
+2025-10-21 10:43:38,376 - bbc_scraper - INFO - Parsed 0 matches from unified BBC page
+2025-10-21 10:43:38,376 - bbc_scraper - INFO - Found 0 matches across all supported leagues
+2025-10-21 10:43:38,376 - bbc_scraper - INFO - Matches by league: {'Premier League': 0, 'English Championship': 0, 'English League One': 0, 'English League Two': 0, 'English National League': 0, 'Scottish Premiership': 0, 'Scottish Championship': 0, 'Scottish League One': 0, 'Scottish League Two': 0}
+2025-10-21 10:43:38,376 - bbc_scraper - INFO - Scraping unified BBC page for 2025-12-31 in live mode
+2025-10-21 10:43:38,376 - DataManager - WARNING - No BBC cache file found for date 2025-12-31
+2025-10-21 10:43:38,376 - bbc_scraper - INFO - Rate limiting: sleeping for 0.80 seconds
+2025-10-21 10:43:39,175 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-12-31?filter=results
+2025-10-21 10:43:39,254 - bbc_scraper - WARNING - JSON extraction failed, falling back to HTML parsing
+2025-10-21 10:43:39,255 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Equatorial Guinea' vs 'Algeria' (detected: 'None')
+2025-10-21 10:43:39,255 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Sudan' vs 'Burkina Faso' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Gabon' vs 'Ivory Coast' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Mozambique' vs 'Cameroon' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Bala Town' vs 'Caernarfon Town' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Briton Ferry Llansawel' vs 'Barry Town United' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Connah's Quay Nomads' vs 'The New Saints' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Central Coast Mariners' vs 'Brisbane Roar' (detected: 'None')
+2025-10-21 10:43:39,256 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'NEOM' vs 'Al Ittihad' (detected: 'None')
+2025-10-21 10:43:39,257 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Al Kholood' vs 'Al Hilal' (detected: 'None')
+2025-10-21 10:43:39,257 - bbc_scraper - DEBUG - Unsupported or unidentified league for match: 'Al Shabab' vs 'Al-Qadsiah' (detected: 'None')
+2025-10-21 10:43:39,257 - bbc_scraper - INFO - Parsed 0 matches from unified BBC page
+2025-10-21 10:43:39,257 - bbc_scraper - INFO - Found 0 matches across all supported leagues
+2025-10-21 10:43:39,257 - bbc_scraper - INFO - Matches by league: {'Premier League': 0, 'English Championship': 0, 'English League One': 0, 'English League Two': 0, 'English National League': 0, 'Scottish Premiership': 0, 'Scottish Championship': 0, 'Scottish League One': 0, 'Scottish League Two': 0}
+2025-10-21 10:43:39,258 - app - INFO - Response: 200
+2025-10-21 10:44:09,047 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,047 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,047 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,047 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,048 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,054 - app - INFO - Response: 200
+2025-10-21 10:44:09,054 - app - INFO - Response: 503
+2025-10-21 10:44:09,054 - app - INFO - Response: 503
+2025-10-21 10:44:09,054 - app - INFO - Response: 503
+2025-10-21 10:44:09,055 - app - INFO - Response: 503
+2025-10-21 10:44:09,056 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,056 - app - INFO - Response: 200
+2025-10-21 10:44:09,057 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,057 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,058 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,058 - app - INFO - GET http://127.0.0.1:5002/health from 127.0.0.1
+2025-10-21 10:44:09,058 - app - INFO - Response: 503
+2025-10-21 10:44:09,058 - app - INFO - Response: 503
+2025-10-21 10:44:09,059 - app - INFO - Response: 503
+2025-10-21 10:44:09,059 - app - INFO - Response: 503
+2025-10-21 10:44:21,544 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:44:21,544 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:44:21,544 - app - ERROR - [API DEBUG] Exception in assign_match: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-10-21 10:44:21,545 - app - ERROR - [API DEBUG] Traceback: Traceback (most recent call last):
+  File "/home/jmg/.local/lib/python3.13/site-packages/werkzeug/wrappers/request.py", line 611, in get_json
+    rv = self.json_module.loads(data)
+  File "/home/jmg/.local/lib/python3.13/site-packages/flask/json/provider.py", line 187, in loads
+    return json.loads(s, **kwargs)
+           ~~~~~~~~~~^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/usr/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jmg/.local/lib/python3.13/site-packages/flask/wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/home/jmg/.local/lib/python3.13/site-packages/werkzeug/wrappers/request.py", line 645, in on_json_loading_failed
+    raise BadRequest(f"Failed to decode JSON object: {e}")
+werkzeug.exceptions.BadRequest: 400 Bad Request: Failed to decode JSON object: Expecting value: line 1 column 1 (char 0)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/run/media/jmg/WIN LINUX SHARE 1TB - 3/JG-WEBSITES/FOOTBALL PREDICTIONS/Acca-Tracker/app.py", line 657, in assign_match
+    data = request.get_json()
+  File "/home/jmg/.local/lib/python3.13/site-packages/werkzeug/wrappers/request.py", line 620, in get_json
+    rv = self.on_json_loading_failed(e)
+  File "/home/jmg/.local/lib/python3.13/site-packages/flask/wrappers.py", line 219, in on_json_loading_failed
+    raise BadRequest() from ebr
+werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+
+2025-10-21 10:44:21,545 - app - INFO - Response: 500
+2025-10-21 10:44:31,693 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:44:31,693 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:44:31,693 - app - INFO - [API DEBUG] Request data: {}
+2025-10-21 10:44:31,693 - app - INFO - [API DEBUG] Extracted match_id: None, selector: None
+2025-10-21 10:44:31,693 - app - ERROR - [API DEBUG] Missing match_id or selector
+2025-10-21 10:44:31,693 - app - INFO - Response: 400
+2025-10-21 10:44:41,816 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:44:41,816 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:44:41,816 - app - INFO - [API DEBUG] Request data: {'match_id': 'test'}
+2025-10-21 10:44:41,816 - app - INFO - [API DEBUG] Extracted match_id: test, selector: None
+2025-10-21 10:44:41,816 - app - ERROR - [API DEBUG] Missing match_id or selector
+2025-10-21 10:44:41,816 - app - INFO - Response: 400
+2025-10-21 10:44:54,920 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:44:54,920 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:44:54,921 - app - INFO - [API DEBUG] Request data: {'selector': 'test'}
+2025-10-21 10:44:54,921 - app - INFO - [API DEBUG] Extracted match_id: None, selector: test
+2025-10-21 10:44:54,921 - app - ERROR - [API DEBUG] Missing match_id or selector
+2025-10-21 10:44:54,921 - app - INFO - Response: 400
+2025-10-21 10:45:05,351 - app - INFO - POST http://127.0.0.1:5002/api/assign from 127.0.0.1
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] /api/assign endpoint called
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Request data: {'match_id': 'test<script>alert(1)</script>', 'selector': 'test'}
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Extracted match_id: test<script>alert(1)</script>, selector: test
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Loading current selections
+2025-10-21 10:45:05,351 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Current selections loaded: 0 selectors
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Looking for match details for match_id: test<script>alert(1)</script>
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Current prediction week: 2025-10-25
+2025-10-21 10:45:05,351 - DataManager - INFO - BBC fixtures retrieved from validated cache for 2025-10-25
+2025-10-21 10:45:05,351 - app - INFO - [API DEBUG] Cached fixtures loaded: 50 matches
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: Premier League_Chelsea_Sunderland
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: Premier League_Newcastle United_Fulham
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: Scottish Premiership_Dundee United_St. Mirren
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: Scottish Premiership_Falkirk_Dundee
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: Scottish Premiership_Livingston_Motherwell
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Blackburn Rovers_Southampton
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Bristol City_Birmingham City
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Derby County_Queens Park Rangers
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Hull City_Charlton Athletic
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Middlesbrough_Wrexham
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Millwall_Leicester City
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Sheffield Wednesday_Oxford United
+2025-10-21 10:45:05,351 - app - DEBUG - [API DEBUG] Checking match: English Championship_Swansea City_Norwich City
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_AFC Wimbledon_Burton Albion
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Barnsley_Rotherham United
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Leyton Orient_Lincoln City
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Northampton Town_Luton Town
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Peterborough United_Blackpool
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Reading_Doncaster Rovers
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Stevenage_Bradford City
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League One_Wycombe Wanderers_Huddersfield Town
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Barrow_Barnet
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Bromley_Milton Keynes Dons
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Crawley Town_Bristol Rovers
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Crewe Alexandra_Grimsby Town
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Gillingham_Salford City
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Harrogate Town_Newport County
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Notts County_Cambridge United
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Oldham Athletic_Shrewsbury Town
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Swindon Town_Colchester United
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English League Two_Tranmere Rovers_Chesterfield
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Braintree Town_Altrincham
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Eastleigh_Morecambe
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Forest Green Rovers_Boreham Wood
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Gateshead_Truro City
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Hartlepool United_Solihull Moors
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Scunthorpe United_Aldershot Town
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Southend United_Brackley Town
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Wealdstone_Sutton United
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Woking_Rochdale
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: English National League_Yeovil Town_Carlisle United
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Airdrieonians_Arbroath
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Greenock Morton_St. Johnstone
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Queen's Park_Ayr United
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Raith Rovers_Partick Thistle
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish Championship_Ross County_Dunfermline Athletic
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Alloa Athletic_Stenhousemuir
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Kelty Hearts_East Fife
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Montrose_Cove Rangers
+2025-10-21 10:45:05,352 - app - DEBUG - [API DEBUG] Checking match: Scottish League One_Peterhead_Inverness CT
+2025-10-21 10:45:05,352 - app - INFO - [API DEBUG] Match not found in cache, trying scraper
+2025-10-21 10:45:05,352 - bbc_scraper - INFO - Scraping unified BBC fixtures for Saturday 2025-10-25
+2025-10-21 10:45:05,352 - bbc_scraper - INFO - Scraping unified BBC page for 2025-10-25 in fixtures mode
+2025-10-21 10:45:05,352 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-21 10:45:05,352 - bbc_scraper - INFO - Requesting: https://www.bbc.co.uk/sport/football/scores-fixtures/2025-10-25
+2025-10-21 10:45:05,861 - bbc_scraper - INFO - Extracted 61 matches from JSON data
+2025-10-21 10:45:05,861 - bbc_scraper - INFO - Parsed 61 matches from unified BBC page
+2025-10-21 10:45:05,861 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-21 10:45:05,862 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-21 10:45:05,862 - bbc_scraper - INFO - Cached 61 unified matches for 2025-10-25
+2025-10-21 10:45:05,862 - bbc_scraper - INFO - Found 61 matches across all supported leagues
+2025-10-21 10:45:05,862 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:45:05,862 - bbc_scraper - INFO - Total matches found: 61 (50 at 15:00)
+2025-10-21 10:45:05,862 - bbc_scraper - INFO - Matches by league: {'Premier League': 4, 'English Championship': 11, 'English League One': 10, 'English League Two': 12, 'English National League': 12, 'Scottish Premiership': 3, 'Scottish Championship': 5, 'Scottish League One': 4, 'Scottish League Two': 0}
+2025-10-21 10:45:05,862 - app - INFO - [API DEBUG] Scraped 50 matches
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Premier League_Chelsea_Sunderland
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Premier League_Newcastle United_Fulham
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Premiership_Dundee United_St. Mirren
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Premiership_Falkirk_Dundee
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Premiership_Livingston_Motherwell
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Blackburn Rovers_Southampton
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Bristol City_Birmingham City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Derby County_Queens Park Rangers
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Hull City_Charlton Athletic
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Middlesbrough_Wrexham
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Millwall_Leicester City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Sheffield Wednesday_Oxford United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English Championship_Swansea City_Norwich City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_AFC Wimbledon_Burton Albion
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Barnsley_Rotherham United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Leyton Orient_Lincoln City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Northampton Town_Luton Town
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Peterborough United_Blackpool
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Reading_Doncaster Rovers
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Stevenage_Bradford City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League One_Wycombe Wanderers_Huddersfield Town
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Barrow_Barnet
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Bromley_Milton Keynes Dons
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Crawley Town_Bristol Rovers
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Crewe Alexandra_Grimsby Town
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Gillingham_Salford City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Harrogate Town_Newport County
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Notts County_Cambridge United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Oldham Athletic_Shrewsbury Town
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Swindon Town_Colchester United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English League Two_Tranmere Rovers_Chesterfield
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Braintree Town_Altrincham
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Eastleigh_Morecambe
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Forest Green Rovers_Boreham Wood
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Gateshead_Truro City
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Hartlepool United_Solihull Moors
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Scunthorpe United_Aldershot Town
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Southend United_Brackley Town
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Wealdstone_Sutton United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Woking_Rochdale
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: English National League_Yeovil Town_Carlisle United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Airdrieonians_Arbroath
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Greenock Morton_St. Johnstone
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Queen's Park_Ayr United
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Raith Rovers_Partick Thistle
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish Championship_Ross County_Dunfermline Athletic
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Alloa Athletic_Stenhousemuir
+2025-10-21 10:45:05,862 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Kelty Hearts_East Fife
+2025-10-21 10:45:05,863 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Montrose_Cove Rangers
+2025-10-21 10:45:05,863 - app - DEBUG - [API DEBUG] Checking scraped match: Scottish League One_Peterhead_Inverness CT
+2025-10-21 10:45:05,863 - app - ERROR - [API DEBUG] Match test<script>alert(1)</script> not found in any data source
+2025-10-21 10:45:05,863 - app - INFO - Response: 404
