@@ -653,106 +653,119 @@ def admin():
 def assign_match():
     """API endpoint for assigning a match to a selector."""
     try:
+        app.logger.info("[API DEBUG] /api/assign endpoint called")
         data = request.get_json()
+        app.logger.info(f"[API DEBUG] Request data: {data}")
+
         match_id = data.get('match_id')
         selector = data.get('selector')
+        app.logger.info(f"[API DEBUG] Extracted match_id: {match_id}, selector: {selector}")
 
         if not match_id or not selector:
+            app.logger.error("[API DEBUG] Missing match_id or selector")
             return jsonify({"success": False, "error": "Missing match_id or selector"}), 400
 
         # Load current selections
+        app.logger.info("[API DEBUG] Loading current selections")
         selections_data = load_selections()
+        app.logger.info(f"[API DEBUG] Current selections loaded: {len(selections_data.get('selectors', {}))} selectors")
 
         # Check if selector already has a match - allow reassignment
         if selector in selections_data.get("selectors", {}):
+            app.logger.info(f"[API DEBUG] Selector {selector} already has assignment, removing existing")
             # Remove the existing assignment to allow reassignment
             del selections_data["selectors"][selector]
 
         # Check if match is already assigned
         for sel, match in selections_data.get("selectors", {}).items():
             if match.get("id") == match_id:
+                app.logger.error(f"[API DEBUG] Match {match_id} already assigned to {sel}")
                 return jsonify({"success": False, "error": "Match already assigned to another selector"}), 400
 
         # Find the match details - try to use cached data first
         match_details = None
+        app.logger.info(f"[API DEBUG] Looking for match details for match_id: {match_id}")
 
         # First, try to get cached match data from DataManager
         try:
             week = get_current_prediction_week()
+            app.logger.info(f"[API DEBUG] Current prediction week: {week}")
 
             # Check if data_manager is available before calling methods
             if data_manager is None:
-                print("ERROR: data_manager is None - cannot get cached fixtures")
+                app.logger.error("ERROR: data_manager is None - cannot get cached fixtures")
             else:
                 cached_fixtures = data_manager.get_bbc_fixtures(week)
+                app.logger.info(f"[API DEBUG] Cached fixtures loaded: {len(cached_fixtures) if cached_fixtures else 0} matches")
                 if cached_fixtures:
                     for match in cached_fixtures:
                         current_id = f"{match['league']}_{match['home_team']}_{match['away_team']}"
+                        app.logger.debug(f"[API DEBUG] Checking match: {current_id}")
                         if current_id == match_id:
                             match_details = match
+                            app.logger.info(f"[API DEBUG] Match found in cache: {match_details}")
                             break
         except Exception as e:
-            print(f"Error loading cached fixtures: {e}")
+            app.logger.error(f"[API DEBUG] Error loading cached fixtures: {e}")
 
         # If no cached data or match not found, try scraping (but handle errors gracefully)
         if not match_details:
+            app.logger.info("[API DEBUG] Match not found in cache, trying scraper")
             try:
                 if BBCSportScraper is None:
+                    app.logger.error("[API DEBUG] BBC scraper not available")
                     return jsonify({"success": False, "error": "BBC scraper not available"}), 500
 
                 scraper = BBCSportScraper()
                 scraper_result = scraper.scrape_saturday_3pm_fixtures()
                 matches = scraper_result.get("matches_3pm", [])
+                app.logger.info(f"[API DEBUG] Scraped {len(matches)} matches")
 
                 for match in matches:
                     current_id = f"{match['league']}_{match['home_team']}_{match['away_team']}"
+                    app.logger.debug(f"[API DEBUG] Checking scraped match: {current_id}")
                     if current_id == match_id:
                         match_details = match
+                        app.logger.info(f"[API DEBUG] Match found in scraped data: {match_details}")
                         break
             except Exception as e:
-                print(f"Error scraping fixtures: {e}")
-                return jsonify({"success": False, "error": "Unable to retrieve match data. Please try again later."}), 500
-
-        # If no cached data or match not found, try scraping (but handle errors gracefully)
-        if not match_details:
-            try:
-                if BBCSportScraper is None:
-                    return jsonify({"success": False, "error": "BBC scraper not available"}), 500
-
-                scraper = BBCSportScraper()
-                scraper_result = scraper.scrape_saturday_3pm_fixtures()
-                matches = scraper_result.get("matches_3pm", [])
-
-                for match in matches:
-                    current_id = f"{match['league']}_{match['home_team']}_{match['away_team']}"
-                    if current_id == match_id:
-                        match_details = match
-                        break
-            except Exception as e:
-                print(f"Error scraping fixtures: {e}")
+                app.logger.error(f"[API DEBUG] Error scraping fixtures: {e}")
                 return jsonify({"success": False, "error": "Unable to retrieve match data. Please try again later."}), 500
 
         if not match_details:
+            app.logger.error(f"[API DEBUG] Match {match_id} not found in any data source")
             return jsonify({"success": False, "error": "Match not found"}), 404
 
         # Assign the match - update selections_data for API compatibility
         if "selectors" not in selections_data:
             selections_data["selectors"] = {}
 
-        selections_data["selectors"][selector] = {
+        new_assignment = {
             "home_team": match_details["home_team"],
             "away_team": match_details["away_team"],
             "prediction": "TBD",  # Required by DataManager validation
             "confidence": 5       # Required by DataManager validation
         }
 
+        selections_data["selectors"][selector] = new_assignment
+        app.logger.info(f"[API DEBUG] Assignment prepared: {selector} -> {new_assignment}")
+
         # Save selections using DataManager
-        if save_selections(selections_data):
+        app.logger.info("[API DEBUG] Calling save_selections()")
+        save_result = save_selections(selections_data)
+        app.logger.info(f"[API DEBUG] save_selections() returned: {save_result}")
+
+        if save_result:
+            app.logger.info(f"[API DEBUG] Assignment successful for {selector}")
             return jsonify({"success": True, "message": f"Match assigned to {selector}"})
         else:
+            app.logger.error("[API DEBUG] Failed to save selections")
             return jsonify({"success": False, "error": "Failed to save selections"}), 500
 
     except Exception as e:
+        app.logger.error(f"[API DEBUG] Exception in assign_match: {str(e)}")
+        import traceback
+        app.logger.error(f"[API DEBUG] Traceback: {traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/unassign', methods=['POST'])
