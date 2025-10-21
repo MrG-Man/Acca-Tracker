@@ -731,3 +731,30 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-21 11:47:17,240 - app - INFO - GET http://127.0.0.1:5026/api/btts-status from 127.0.0.1
 2025-10-21 11:47:17,240 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
 2025-10-21 11:47:17,240 - app - INFO - Response: 200
+2025-10-21 11:53:38,422 - app - INFO - GET http://127.0.0.1:5002/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:53:38,422 - app - WARNING - 404 error: http://127.0.0.1:5002/api/selections/week_2025-10-25
+2025-10-21 11:53:38,422 - app - INFO - Response: 404
+2025-10-21 11:56:40,688 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:56:40,689 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:56:40,692 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:56:50,117 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:56:50,117 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:56:50,121 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:57:11,857 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:57:11,857 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:57:11,861 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:57:27,922 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:57:27,922 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:57:27,925 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:58:14,891 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:58:14,891 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:58:17,742 - app - INFO - GET http://127.0.0.1:5027/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:58:17,743 - app - INFO - Response: 400
+2025-10-21 11:58:39,256 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:58:39,256 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:58:42,110 - app - INFO - GET http://127.0.0.1:5028/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:58:42,111 - app - INFO - Response: 400
+2025-10-21 11:58:59,237 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:58:59,237 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:59:02,097 - app - INFO - GET http://127.0.0.1:5029/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:59:02,098 - app - INFO - Response: 400

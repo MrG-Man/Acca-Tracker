@@ -889,6 +889,52 @@ def get_selections():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/selections/<week>')
+def get_selections_for_week(week):
+    """API endpoint to get selections for a specific week."""
+    try:
+        # Validate week format (YYYY-MM-DD)
+        try:
+            datetime.strptime(week, '%Y-%m-%d')
+        except ValueError:
+            return jsonify({"error": "Invalid week format. Use YYYY-MM-DD"}), 400
+
+        # Check if data_manager is available before calling methods
+        if data_manager is None:
+            return jsonify({"error": "Data manager not available"}), 500
+
+        # Load selections for the specific week
+        selections = data_manager.load_weekly_selections(week)
+
+        if selections is None:
+            return jsonify({
+                "selectors": {},
+                "matches": [],
+                "last_updated": None,
+                "message": f"No selections found for week {week}"
+            }), 404
+
+        # Convert DataManager format to expected format for API
+        enhanced_selections = {}
+        for selector, match_data in selections.items():
+            enhanced_match_data = match_data.copy()
+            # Add assigned_at field if missing (for API compatibility)
+            if 'assigned_at' not in enhanced_match_data:
+                enhanced_match_data['assigned_at'] = datetime.now().isoformat()
+            enhanced_selections[selector] = enhanced_match_data
+
+        result = {
+            "selectors": enhanced_selections,
+            "matches": [],  # This will be populated from scraper data if needed
+            "last_updated": None,  # Could be enhanced to track this
+            "week": week
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": f"Error getting selections for week {week}: {str(e)}"}), 500
+
 @app.route('/api/override', methods=['POST'])
 def override_selections():
     """API endpoint for overriding with less than 8 selections."""
