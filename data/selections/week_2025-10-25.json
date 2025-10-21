@@ -4,5 +4,34 @@
     "version": "1.0",
     "date": "2025-10-25"
   },
-  "selections": {}
+  "selections": {
+    "Mickey D": {
+      "home_team": "Chelsea",
+      "away_team": "Sunderland",
+      "prediction": "BTTS_YES",
+      "confidence": 7,
+      "assigned_at": "2025-10-21T10:43:00.000000"
+    },
+    "Steve H": {
+      "home_team": "Newcastle United",
+      "away_team": "Fulham",
+      "prediction": "BTTS_YES",
+      "confidence": 6,
+      "assigned_at": "2025-10-21T10:43:05.000000"
+    },
+    "John S": {
+      "home_team": "Blackburn Rovers",
+      "away_team": "Southampton",
+      "prediction": "BTTS_YES",
+      "confidence": 8,
+      "assigned_at": "2025-10-21T10:43:10.000000"
+    },
+    "Paul K": {
+      "home_team": "Dundee United",
+      "away_team": "St. Mirren",
+      "prediction": "BTTS_YES",
+      "confidence": 5,
+      "assigned_at": "2025-10-21T10:43:15.000000"
+    }
+  }
 }

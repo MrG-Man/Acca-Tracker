@@ -606,3 +606,128 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-21 11:32:25,522 - app - INFO - Response: 405
 2025-10-21 11:32:31,383 - app - INFO - POST http://127.0.0.1:5001/api/btts-start-monitoring from 127.0.0.1
 2025-10-21 11:32:31,383 - app - INFO - Response: 503
+2025-10-21 11:42:08,518 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:42:08,519 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:42:11,369 - app - INFO - GET http://127.0.0.1:5003/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:42:11,369 - app - WARNING - 404 error: http://127.0.0.1:5003/api/selections/week_2025-10-25
+2025-10-21 11:42:11,370 - app - INFO - Response: 404
+2025-10-21 11:42:23,772 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:42:23,772 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:42:26,625 - app - INFO - GET http://127.0.0.1:5004/api/btts-status from 127.0.0.1
+2025-10-21 11:42:26,625 - DataManager - ERROR - Invalid selections data in file for date 2025-10-25
+2025-10-21 11:42:26,625 - app - INFO - Response: 200
+2025-10-21 11:42:39,159 - app - INFO - GET http://127.0.0.1:5004/api/btts-status from 127.0.0.1
+2025-10-21 11:42:39,160 - DataManager - ERROR - Invalid selections data in file for date 2025-10-25
+2025-10-21 11:42:39,160 - app - INFO - Response: 200
+2025-10-21 11:43:20,006 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:43:20,006 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:43:22,862 - app - INFO - GET http://127.0.0.1:5005/api/btts-status from 127.0.0.1
+2025-10-21 11:43:22,862 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:43:22,862 - app - INFO - Response: 200
+2025-10-21 11:43:54,675 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:43:54,675 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:43:57,530 - app - INFO - GET http://127.0.0.1:5006/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:43:57,530 - app - WARNING - 404 error: http://127.0.0.1:5006/api/selections/week_2025-10-25
+2025-10-21 11:43:57,530 - app - INFO - Response: 404
+2025-10-21 11:44:04,138 - app - INFO - GET http://127.0.0.1:5006/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:44:04,138 - app - WARNING - 404 error: http://127.0.0.1:5006/api/selections/week_2025-10-25
+2025-10-21 11:44:04,138 - app - INFO - Response: 404
+2025-10-21 11:44:48,833 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:44:48,833 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:44:51,686 - app - INFO - GET http://127.0.0.1:5007/api/btts-status from 127.0.0.1
+2025-10-21 11:44:51,687 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:44:51,687 - app - INFO - Response: 200
+2025-10-21 11:45:09,386 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:09,386 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:12,243 - app - INFO - GET http://127.0.0.1:5008/api/btts-status-test from 127.0.0.1
+2025-10-21 11:45:12,243 - app - INFO - Response: 200
+2025-10-21 11:45:21,870 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:21,870 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:24,724 - app - INFO - GET http://127.0.0.1:5009/api/selections/week_2025-10-25 from 127.0.0.1
+2025-10-21 11:45:24,724 - app - WARNING - 404 error: http://127.0.0.1:5009/api/selections/week_2025-10-25
+2025-10-21 11:45:24,724 - app - INFO - Response: 404
+2025-10-21 11:45:27,985 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:27,985 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:30,845 - app - INFO - GET http://127.0.0.1:5010/btts-tracker from 127.0.0.1
+2025-10-21 11:45:30,845 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:45:30,848 - app - INFO - Response: 200
+2025-10-21 11:45:33,258 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:33,259 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:36,118 - app - INFO - GET http://127.0.0.1:5011/btts-tracker?test=true from 127.0.0.1
+2025-10-21 11:45:36,118 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:45:36,120 - app - INFO - Response: 200
+2025-10-21 11:45:44,713 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:44,713 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:47,568 - app - INFO - GET http://127.0.0.1:5012/api/btts-status from 127.0.0.1
+2025-10-21 11:45:47,568 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:45:47,568 - app - INFO - Response: 200
+2025-10-21 11:45:50,436 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:50,436 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:53,292 - app - INFO - GET http://127.0.0.1:5013/api/btts-status from 127.0.0.1
+2025-10-21 11:45:53,292 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:45:53,292 - app - INFO - Response: 200
+2025-10-21 11:45:55,706 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:45:55,707 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:45:58,562 - app - INFO - GET http://127.0.0.1:5014/api/btts-status from 127.0.0.1
+2025-10-21 11:45:58,562 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:45:58,562 - app - INFO - Response: 200
+2025-10-21 11:46:02,645 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:02,645 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:05,502 - app - INFO - GET http://127.0.0.1:5015/api/btts-status from 127.0.0.1
+2025-10-21 11:46:05,502 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:05,502 - app - INFO - Response: 200
+2025-10-21 11:46:09,749 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:09,749 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:12,607 - app - INFO - GET http://127.0.0.1:5016/api/btts-status from 127.0.0.1
+2025-10-21 11:46:12,607 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:12,607 - app - INFO - Response: 200
+2025-10-21 11:46:16,363 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:16,363 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:19,221 - app - INFO - GET http://127.0.0.1:5017/api/btts-status from 127.0.0.1
+2025-10-21 11:46:19,222 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:19,222 - app - INFO - Response: 200
+2025-10-21 11:46:23,619 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:23,619 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:26,478 - app - INFO - GET http://127.0.0.1:5018/api/btts-status from 127.0.0.1
+2025-10-21 11:46:26,478 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:26,478 - app - INFO - Response: 200
+2025-10-21 11:46:29,482 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:29,483 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:32,339 - app - INFO - GET http://127.0.0.1:5019/api/btts-status from 127.0.0.1
+2025-10-21 11:46:32,340 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:32,340 - app - INFO - Response: 200
+2025-10-21 11:46:35,634 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:35,634 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:38,493 - app - INFO - GET http://127.0.0.1:5020/api/btts-status from 127.0.0.1
+2025-10-21 11:46:38,493 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:38,493 - app - INFO - Response: 200
+2025-10-21 11:46:41,438 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:41,439 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:44,296 - app - INFO - GET http://127.0.0.1:5021/api/btts-status from 127.0.0.1
+2025-10-21 11:46:44,296 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:44,297 - app - INFO - Response: 200
+2025-10-21 11:46:47,231 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:47,232 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:50,087 - app - INFO - GET http://127.0.0.1:5022/api/btts-status from 127.0.0.1
+2025-10-21 11:46:50,087 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:50,087 - app - INFO - Response: 200
+2025-10-21 11:46:53,042 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:53,042 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:46:55,901 - app - INFO - GET http://127.0.0.1:5023/api/btts-status from 127.0.0.1
+2025-10-21 11:46:55,901 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:46:55,902 - app - INFO - Response: 200
+2025-10-21 11:46:59,326 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:46:59,327 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:47:02,181 - app - INFO - GET http://127.0.0.1:5024/api/btts-status from 127.0.0.1
+2025-10-21 11:47:02,182 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:47:02,182 - app - INFO - Response: 200
+2025-10-21 11:47:05,307 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:47:05,307 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:47:08,166 - app - INFO - GET http://127.0.0.1:5025/api/btts-status from 127.0.0.1
+2025-10-21 11:47:08,166 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:47:08,166 - app - INFO - Response: 200
+2025-10-21 11:47:14,382 - app - INFO - BTTS detector loaded successfully
+2025-10-21 11:47:14,382 - app - WARNING - Sofascore API key not configured - live scores disabled
+2025-10-21 11:47:17,240 - app - INFO - GET http://127.0.0.1:5026/api/btts-status from 127.0.0.1
+2025-10-21 11:47:17,240 - DataManager - INFO - Weekly selections loaded successfully for 2025-10-25
+2025-10-21 11:47:17,240 - app - INFO - Response: 200
