@@ -1,15 +1,32 @@
 // Football Predictions Admin Interface JavaScript
+// Enhanced with improved error handling, logging, and debugging
 
 class AdminInterface {
     constructor() {
         this.overrideModal = null;
         this.selectedReason = null;
+        this.requestQueue = new Map(); // Track ongoing requests to prevent race conditions
+        this.debugMode = localStorage.getItem('admin_debug_mode') === 'true';
         this.init();
     }
 
     init() {
         this.setupEventListeners();
         this.updateAllDropdowns();
+        this.logDebug('AdminInterface initialized');
+    }
+
+    logDebug(message, data = null) {
+        if (this.debugMode) {
+            const timestamp = new Date().toISOString();
+            console.log(`[ADMIN_DEBUG ${timestamp}] ${message}`, data || '');
+        }
+    }
+
+    logError(message, error = null) {
+        const timestamp = new Date().toISOString();
+        console.error(`[ADMIN_ERROR ${timestamp}] ${message}`, error || '');
+        this.logDebug('Error occurred', { message, error: error?.stack || error });
     }
 
     setupEventListeners() {
@@ -130,64 +147,154 @@ class AdminInterface {
             return;
         }
 
+        // Get match ID from the dropdown's data attribute
+        const matchId = dropdown.dataset.matchId;
+        const requestKey = `${matchId}_${selector}`;
+
+        // Prevent race conditions by checking if request is already in progress
+        if (this.requestQueue.has(requestKey)) {
+            this.logDebug(`Request already in progress for ${requestKey}, ignoring duplicate`);
+            return;
+        }
+
+        // Add to request queue
+        this.requestQueue.set(requestKey, { dropdown, matchCard, statusDiv, statusText, statusSpinner });
+        this.logDebug(`Added request to queue: ${requestKey}`);
+
         // Show loading state
         statusDiv.style.display = 'flex';
         statusText.textContent = `Assigning to ${selector}...`;
         statusSpinner.style.display = 'inline-block';
 
         try {
-            // Get match ID from the dropdown's data attribute
-            const matchId = dropdown.dataset.matchId;
+            await this.performAssignmentWithRetry(dropdown, matchId, selector, requestKey);
+        } catch (error) {
+            this.handleAssignmentError(dropdown, statusDiv, statusText, statusSpinner, error, requestKey);
+        } finally {
+            // Remove from request queue
+            this.requestQueue.delete(requestKey);
+            this.logDebug(`Removed request from queue: ${requestKey}`);
+        }
+    }
 
-            // Make the assignment API call
-            const response = await fetch('/api/assign', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    match_id: matchId,
-                    selector: selector
-                })
-            });
+    async performAssignmentWithRetry(dropdown, matchId, selector, requestKey, maxRetries = 3) {
+        let lastError;
 
-            const result = await response.json();
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                this.logDebug(`Assignment attempt ${attempt}/${maxRetries} for ${requestKey}`);
 
-            if (result.success) {
-                // Show success state briefly
+                // Make the assignment API call with cache-busting
+                const response = await fetch(`/api/assign?_t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        match_id: matchId,
+                        selector: selector,
+                        timestamp: Date.now(),
+                        attempt: attempt
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.handleAssignmentSuccess(dropdown, selector, requestKey);
+                    return; // Success, exit retry loop
+                } else {
+                    // Server returned error
+                    throw new Error(result.error || 'Unknown server error');
+                }
+
+            } catch (error) {
+                lastError = error;
+                this.logError(`Assignment attempt ${attempt} failed for ${requestKey}`, error);
+
+                // If this isn't the last attempt, wait before retrying
+                if (attempt < maxRetries) {
+                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
+                    this.logDebug(`Waiting ${delay}ms before retry ${attempt + 1}`);
+                    await this.delay(delay);
+                }
+            }
+        }
+
+        // All retries failed
+        throw lastError;
+    }
+
+    handleAssignmentSuccess(dropdown, selector, requestKey) {
+        // Update UI for all queued requests for this dropdown
+        this.requestQueue.forEach((requestData, key) => {
+            if (key.startsWith(requestKey.split('_')[0])) {
+                const { statusDiv, statusText, statusSpinner } = requestData;
                 statusText.textContent = `✓ Assigned to ${selector}`;
                 statusSpinner.style.display = 'none';
                 statusText.style.color = '#4caf50';
-
-                // Refresh the page after a short delay to show the success message
-                setTimeout(() => {
-                    this.refreshPage();
-                }, 1000);
-            } else {
-                // Show error state
-                statusText.textContent = `✗ ${result.error}`;
-                statusSpinner.style.display = 'none';
-                statusText.style.color = '#f44336';
-
-                // Reset dropdown after error
-                setTimeout(() => {
-                    dropdown.value = '';
-                    statusDiv.style.display = 'none';
-                }, 2000);
             }
-        } catch (error) {
-            // Show error state
-            statusText.textContent = '✗ Network error';
-            statusSpinner.style.display = 'none';
-            statusText.style.color = '#f44336';
-            console.error('Assignment error:', error);
+        });
 
-            // Reset dropdown after error
-            setTimeout(() => {
-                dropdown.value = '';
-                statusDiv.style.display = 'none';
-            }, 2000);
+        this.logDebug(`Assignment successful for ${requestKey}`);
+
+        // Refresh the page after a short delay to show the success message
+        setTimeout(() => {
+            this.refreshPage();
+        }, 1000);
+    }
+
+    handleAssignmentError(dropdown, statusDiv, statusText, statusSpinner, error, requestKey) {
+        const errorMessage = this.getDetailedErrorMessage(error);
+
+        // Update UI for all queued requests for this dropdown
+        this.requestQueue.forEach((requestData, key) => {
+            if (key.startsWith(requestKey.split('_')[0])) {
+                const { statusText: reqStatusText, statusSpinner: reqStatusSpinner } = requestData;
+                reqStatusText.textContent = `✗ ${errorMessage}`;
+                reqStatusSpinner.style.display = 'none';
+                reqStatusText.style.color = '#f44336';
+            }
+        });
+
+        this.logError(`Assignment failed for ${requestKey}`, error);
+
+        // Reset dropdown after error
+        setTimeout(() => {
+            dropdown.value = '';
+            statusDiv.style.display = 'none';
+
+            // Clear any remaining requests for this dropdown
+            this.requestQueue.forEach((_, key) => {
+                if (key.startsWith(requestKey.split('_')[0])) {
+                    this.requestQueue.delete(key);
+                }
+            });
+        }, 3000);
+    }
+
+    getDetailedErrorMessage(error) {
+        if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+            return 'Network error - please check connection';
+        } else if (error.message.includes('HTTP 5')) {
+            return 'Server error - please try again later';
+        } else if (error.message.includes('HTTP 4')) {
+            return 'Request error - please check your input';
+        } else if (error.message.includes('timeout')) {
+            return 'Request timeout - please try again';
+        } else {
+            return 'Assignment failed - please try again';
         }
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     updateAllDropdowns() {
@@ -271,11 +378,25 @@ class AdminInterface {
         }
     }
 
-    showMessage(message, type) {
+    showMessage(message, type, options = {}) {
+        const {
+            duration = 3000,
+            persistent = false,
+            debugInfo = null,
+            actionButton = null
+        } = options;
+
         // Create and show a temporary message
         const messageDiv = document.createElement('div');
         messageDiv.className = `message message-${type}`;
-        messageDiv.textContent = message;
+
+        // Add debug information if available
+        let displayMessage = message;
+        if (debugInfo && this.debugMode) {
+            displayMessage += `\n[Debug: ${debugInfo}]`;
+        }
+
+        messageDiv.textContent = displayMessage;
 
         // Style the message
         Object.assign(messageDiv.style, {
@@ -289,13 +410,38 @@ class AdminInterface {
             zIndex: '9999',
             opacity: '0',
             transform: 'translateY(-20px)',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            maxWidth: '400px',
+            wordWrap: 'break-word',
+            whiteSpace: 'pre-line'
         });
 
         if (type === 'success') {
             messageDiv.style.backgroundColor = '#4caf50';
+        } else if (type === 'warning') {
+            messageDiv.style.backgroundColor = '#ff9800';
         } else {
             messageDiv.style.backgroundColor = '#f44336';
+        }
+
+        // Add action button if provided
+        if (actionButton) {
+            const button = document.createElement('button');
+            button.textContent = actionButton.text;
+            button.className = 'message-action-btn';
+            button.onclick = actionButton.onClick;
+            Object.assign(button.style, {
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: 'white',
+                padding: '0.25rem 0.5rem',
+                marginTop: '0.5rem',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontSize: '0.8em'
+            });
+            messageDiv.appendChild(document.createElement('br'));
+            messageDiv.appendChild(button);
         }
 
         document.body.appendChild(messageDiv);
@@ -306,8 +452,21 @@ class AdminInterface {
             messageDiv.style.transform = 'translateY(0)';
         }, 10);
 
-        // Remove after 3 seconds
-        setTimeout(() => {
+        // Auto-remove after duration (unless persistent)
+        if (!persistent) {
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                messageDiv.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, duration);
+        }
+
+        // Store reference for potential manual removal
+        messageDiv.remove = () => {
             messageDiv.style.opacity = '0';
             messageDiv.style.transform = 'translateY(-20px)';
             setTimeout(() => {
@@ -315,7 +474,91 @@ class AdminInterface {
                     messageDiv.parentNode.removeChild(messageDiv);
                 }
             }, 300);
-        }, 3000);
+        };
+
+        return messageDiv;
+    }
+
+    validateFormData(data) {
+        const errors = [];
+
+        if (!data.match_id || typeof data.match_id !== 'string') {
+            errors.push('Invalid match ID');
+        }
+
+        if (!data.selector || typeof data.selector !== 'string') {
+            errors.push('Invalid selector');
+        }
+
+        if (data.selector && !this.isValidSelector(data.selector)) {
+            errors.push(`Invalid selector: ${data.selector}`);
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors: errors
+        };
+    }
+
+    isValidSelector(selector) {
+        // This should match the SELECTORS array from the backend
+        const validSelectors = [
+            "Glynny", "Eamonn Bone", "Mickey D", "Rob Carney",
+            "Steve H", "Danny", "Eddie Lee", "Fran Radar"
+        ];
+        return validSelectors.includes(selector);
+    }
+
+    showDebugPanel() {
+        if (!this.debugMode) return;
+
+        // Create debug panel
+        const debugPanel = document.createElement('div');
+        debugPanel.id = 'admin-debug-panel';
+        debugPanel.innerHTML = `
+            <div style="position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 1rem; border-radius: 5px; font-family: monospace; font-size: 0.8em; max-width: 300px; z-index: 10000;">
+                <div><strong>Admin Debug Panel</strong></div>
+                <div>Requests in queue: <span id="debug-queue-count">${this.requestQueue.size}</span></div>
+                <div>Debug mode: <span id="debug-mode-status">ON</span></div>
+                <div>Last error: <span id="debug-last-error">None</span></div>
+                <button onclick="adminInterface.clearDebugInfo()" style="margin-top: 0.5rem; padding: 0.25rem;">Clear</button>
+                <button onclick="adminInterface.toggleDebugMode()" style="margin-top: 0.25rem; padding: 0.25rem;">Toggle Debug</button>
+            </div>
+        `;
+
+        document.body.appendChild(debugPanel);
+
+        // Update debug info periodically
+        this.debugInterval = setInterval(() => {
+            const queueCountEl = document.getElementById('debug-queue-count');
+            if (queueCountEl) queueCountEl.textContent = this.requestQueue.size;
+        }, 1000);
+    }
+
+    clearDebugInfo() {
+        const lastErrorEl = document.getElementById('debug-last-error');
+        if (lastErrorEl) lastErrorEl.textContent = 'None';
+        this.logDebug('Debug info cleared');
+    }
+
+    toggleDebugMode() {
+        this.debugMode = !this.debugMode;
+        localStorage.setItem('admin_debug_mode', this.debugMode.toString());
+
+        const debugPanel = document.getElementById('admin-debug-panel');
+        const modeStatusEl = document.getElementById('debug-mode-status');
+
+        if (this.debugMode) {
+            if (!debugPanel) this.showDebugPanel();
+            if (modeStatusEl) modeStatusEl.textContent = 'ON';
+            this.showMessage('Debug mode enabled', 'success');
+        } else {
+            if (debugPanel) debugPanel.remove();
+            if (modeStatusEl) modeStatusEl.textContent = 'OFF';
+            this.showMessage('Debug mode disabled', 'warning');
+        }
+
+        this.logDebug(`Debug mode ${this.debugMode ? 'enabled' : 'disabled'}`);
     }
 
     refreshPage() {
@@ -323,6 +566,79 @@ class AdminInterface {
         setTimeout(() => {
             window.location.reload();
         }, 1000);
+    }
+
+    refreshPageWithCacheBust() {
+        // Force cache-busting refresh
+        const timestamp = Date.now();
+        window.location.href = `${window.location.pathname}?_cb=${timestamp}`;
+    }
+
+    startConnectionMonitoring() {
+        // Monitor connection status and show warnings for offline mode
+        this.connectionCheckInterval = setInterval(() => {
+            if (!navigator.onLine) {
+                this.showMessage(
+                    'Connection lost - changes may not be saved',
+                    'warning',
+                    {
+                        persistent: true,
+                        actionButton: {
+                            text: 'Retry Connection',
+                            onClick: () => window.location.reload()
+                        }
+                    }
+                );
+            }
+        }, 5000);
+
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            this.showMessage('Connection restored', 'success');
+            this.logDebug('Connection restored');
+        });
+
+        window.addEventListener('offline', () => {
+            this.showMessage('Connection lost', 'warning', { persistent: true });
+            this.logDebug('Connection lost');
+        });
+    }
+
+    // Enhanced error reporting for debugging save failures
+    reportSaveFailure(error, requestData) {
+        const errorReport = {
+            timestamp: new Date().toISOString(),
+            error: error.message || error,
+            stack: error.stack,
+            requestData: requestData,
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            online: navigator.onLine,
+            requestQueueSize: this.requestQueue.size
+        };
+
+        this.logError('Save failure report', errorReport);
+
+        // Send error report to server if connection is available
+        if (navigator.onLine) {
+            this.sendErrorReport(errorReport);
+        }
+    }
+
+    async sendErrorReport(errorReport) {
+        try {
+            await fetch('/api/report-error', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify(errorReport)
+            });
+            this.logDebug('Error report sent to server');
+        } catch (reportError) {
+            this.logError('Failed to send error report', reportError);
+        }
     }
 
     updateSummaryPanel() {
@@ -407,12 +723,39 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update override button state
     admin.updateOverrideButtonState();
 
-    // Add keyboard shortcuts
+    // Show debug panel if debug mode is enabled
+    if (admin.debugMode) {
+        admin.showDebugPanel();
+    }
+
+    // Add enhanced keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         // ESC key to close modal
         if (e.key === 'Escape') {
             admin.hideOverrideModal();
         }
+
+        // Ctrl/Cmd + D to toggle debug mode
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            admin.toggleDebugMode();
+        }
+
+        // Ctrl/Cmd + R to refresh with cache busting
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            admin.refreshPageWithCacheBust();
+        }
+    });
+
+    // Add connection status monitoring
+    admin.startConnectionMonitoring();
+
+    // Log initialization completion
+    admin.logDebug('Admin interface fully initialized', {
+        debugMode: admin.debugMode,
+        requestQueueSize: admin.requestQueue.size,
+        timestamp: new Date().toISOString()
     });
 });
 

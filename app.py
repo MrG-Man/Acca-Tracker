@@ -28,6 +28,7 @@ Updated: 2025 - Enhanced with safer weekly transition logic and selection-only t
 
 import os
 import sys
+import json
 import logging
 import traceback
 from datetime import datetime, timedelta
@@ -668,7 +669,13 @@ def admin():
 
 @app.route('/api/assign', methods=['POST'])
 def assign_match():
-    """API endpoint for assigning a match to a selector."""
+    """API endpoint for assigning a match to a selector with enhanced error handling and debugging."""
+    # Initialize variables for error handling
+    match_id = None
+    selector = None
+    timestamp = datetime.now().isoformat()
+    attempt = 1
+
     try:
         print("[DEBUG] /api/assign endpoint called")
         data = request.get_json()
@@ -676,11 +683,40 @@ def assign_match():
 
         match_id = data.get('match_id')
         selector = data.get('selector')
-        print(f"[DEBUG] /api/assign - Extracted match_id: {match_id}, selector: {selector}")
+        timestamp = data.get('timestamp', timestamp)
+        attempt = data.get('attempt', attempt)
 
+        print(f"[DEBUG] /api/assign - Extracted match_id: {match_id}, selector: {selector}, attempt: {attempt}")
+
+        # Enhanced validation with detailed error messages
         if not match_id or not selector:
-            print("[DEBUG] /api/assign - Missing match_id or selector")
-            return jsonify({"success": False, "error": "Missing match_id or selector"}), 400
+            error_msg = "Missing required parameters"
+            print(f"[DEBUG] /api/assign - {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": error_msg,
+                "debug_info": {
+                    "received_match_id": match_id,
+                    "received_selector": selector,
+                    "timestamp": timestamp,
+                    "attempt": attempt
+                }
+            }), 400
+
+        # Validate selector against allowed list
+        if selector not in SELECTORS:
+            error_msg = f"Invalid selector: {selector}"
+            print(f"[DEBUG] /api/assign - {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": error_msg,
+                "debug_info": {
+                    "valid_selectors": SELECTORS,
+                    "received_selector": selector,
+                    "timestamp": timestamp,
+                    "attempt": attempt
+                }
+            }), 400
 
         # Load current selections
         print("[DEBUG] /api/assign - Loading current selections")
@@ -774,16 +810,47 @@ def assign_match():
 
         if save_result:
             app.logger.info(f"[API DEBUG] Assignment successful for {selector}")
-            return jsonify({"success": True, "message": f"Match assigned to {selector}"})
+            return jsonify({
+                "success": True,
+                "message": f"Match assigned to {selector}",
+                "debug_info": {
+                    "selector": selector,
+                    "match_id": match_id,
+                    "timestamp": timestamp,
+                    "attempt": attempt,
+                    "save_result": save_result
+                }
+            })
         else:
-            app.logger.error("[API DEBUG] Failed to save selections")
-            return jsonify({"success": False, "error": "Failed to save selections"}), 500
+            app.logger.error(f"[API DEBUG] Failed to save selections for {selector}")
+            return jsonify({
+                "success": False,
+                "error": "Failed to save selections",
+                "debug_info": {
+                    "selector": selector,
+                    "match_id": match_id,
+                    "timestamp": timestamp,
+                    "attempt": attempt,
+                    "data_manager_available": data_manager is not None
+                }
+            }), 500
 
     except Exception as e:
         app.logger.error(f"[API DEBUG] Exception in assign_match: {str(e)}")
         import traceback
         app.logger.error(f"[API DEBUG] Traceback: {traceback.format_exc()}")
-        return jsonify({"success": False, "error": str(e)}), 500
+
+        return jsonify({
+            "success": False,
+            "error": "Internal server error",
+            "debug_info": {
+                "exception_type": type(e).__name__,
+                "exception_message": str(e),
+                "timestamp": timestamp,
+                "attempt": attempt,
+                "traceback_available": True
+            }
+        }), 500
 
 @app.route('/api/unassign', methods=['POST'])
 def unassign_match():
@@ -850,6 +917,37 @@ def override_selections():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/report-error', methods=['POST'])
+def report_error():
+    """API endpoint for client-side error reporting and debugging."""
+    try:
+        error_data = request.get_json()
+
+        # Log the error report for debugging
+        app.logger.error(f"Client-side error report received: {error_data}")
+
+        # Store error report for analysis
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        error_filename = f"client_error_{timestamp}.json"
+
+        # Save to logs directory for analysis
+        error_filepath = os.path.join('logs', error_filename)
+        with open(error_filepath, 'w', encoding='utf-8') as f:
+            json.dump(error_data, f, indent=2, ensure_ascii=False)
+
+        return jsonify({
+            "success": True,
+            "message": "Error report received and logged",
+            "error_id": timestamp
+        })
+
+    except Exception as e:
+        app.logger.error(f"Failed to process error report: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to process error report"
+        }), 500
 
 # ===== BTTS TRACKER ROUTES =====
 
