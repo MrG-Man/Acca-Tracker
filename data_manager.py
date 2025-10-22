@@ -404,18 +404,21 @@ class DataManager:
 
             filename = f"week_{date}.json"
             filepath = os.path.join(self.selections_path, filename)
+            self.logger.info(f"[DEBUG] DataManager: Checking file path: {filepath}")
 
             if not os.path.exists(filepath) and not os.path.exists(filepath + '.gz'):
-                self.logger.warning(f"[DEBUG] DataManager: No selections file found for date {date}")
+                self.logger.warning(f"[DEBUG] DataManager: No selections file found for date {date} at {filepath}")
                 return None
 
             # Load using optimized method
             data = self._load_json_file(filepath)
             if data is None:
+                self.logger.warning(f"[DEBUG] DataManager: Failed to load JSON from {filepath}")
                 return None
 
             # Validate loaded data
             selections = data.get("selections", {})
+            self.logger.info(f"[DEBUG] DataManager: Loaded selections from file: {list(selections.keys())}")
             if not self.validate_selections(selections):
                 self.logger.error(f"[DEBUG] DataManager: Invalid selections data in file for date {date}")
                 return None

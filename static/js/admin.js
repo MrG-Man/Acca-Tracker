@@ -14,10 +14,15 @@ class AdminInterface {
         this.setupEventListeners();
         this.updateAllDropdowns();
         this.logDebug('AdminInterface initialized');
+
+        // Add mobile detection and logging
+        this.logMobileInfo();
+        this.logElementVisibility();
     }
 
     logDebug(message, data = null) {
-        if (this.debugMode) {
+        const isMobile = window.innerWidth <= 768;
+        if (this.debugMode || isMobile) {
             const timestamp = new Date().toISOString();
             console.log(`[ADMIN_DEBUG ${timestamp}] ${message}`, data || '');
         }
@@ -27,6 +32,48 @@ class AdminInterface {
         const timestamp = new Date().toISOString();
         console.error(`[ADMIN_ERROR ${timestamp}] ${message}`, error || '');
         this.logDebug('Error occurred', { message, error: error?.stack || error });
+    }
+
+    logMobileInfo() {
+        const isMobile = window.innerWidth <= 768;
+        const screenInfo = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio,
+            userAgent: navigator.userAgent
+        };
+        this.logDebug('Screen and device info', screenInfo);
+        if (isMobile) {
+            this.logDebug('Mobile device detected - potential visibility issues may occur');
+        }
+    }
+
+    logElementVisibility() {
+        const assignedSelectors = document.querySelectorAll('.selector-item.assigned');
+        const assignedBadges = document.querySelectorAll('.assigned-badge');
+        const matchesGrid = document.querySelector('.matches-grid');
+        const selectorSummary = document.querySelector('.selector-summary-panel');
+
+        const visibilityInfo = {
+            assignedSelectorsCount: assignedSelectors.length,
+            assignedBadgesCount: assignedBadges.length,
+            matchesGridChildren: matchesGrid ? matchesGrid.children.length : 0,
+            selectorSummaryVisible: selectorSummary ? getComputedStyle(selectorSummary).display !== 'none' : false
+        };
+
+        this.logDebug('Element visibility check', visibilityInfo);
+
+        // Log styles for assigned elements
+        assignedSelectors.forEach((el, index) => {
+            const style = getComputedStyle(el);
+            this.logDebug(`Assigned selector ${index} styles`, {
+                display: style.display,
+                visibility: style.visibility,
+                opacity: style.opacity,
+                height: style.height,
+                width: style.width
+            });
+        });
     }
 
     setupEventListeners() {
@@ -300,9 +347,11 @@ class AdminInterface {
     updateAllDropdowns() {
         // Reset all assignment status displays
         const statusDivs = document.querySelectorAll('.assignment-status');
+        this.logDebug('Updating all dropdowns', { statusDivsCount: statusDivs.length });
         statusDivs.forEach(statusDiv => {
             statusDiv.style.display = 'none';
         });
+        this.logElementVisibility(); // Re-check visibility after update
     }
 
     showOverrideModal() {

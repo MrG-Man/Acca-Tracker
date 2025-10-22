@@ -1,1 +1,15 @@
-{}
+{
+  "metadata": {
+    "created_at": "2025-10-22T15:41:59.437385",
+    "version": "1.0",
+    "date": "2025-10-25"
+  },
+  "selections": {
+    "Glynny": {
+      "home_team": "Chelsea",
+      "away_team": "Sunderland",
+      "prediction": "TBD",
+      "confidence": 5
+    }
+  }
+}

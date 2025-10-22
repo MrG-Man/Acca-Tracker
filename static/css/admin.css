@@ -802,8 +802,8 @@ header h1 {
     }
 
     .selector-item {
-        padding: 0.75rem;
-        min-height: 60px;
+        padding: 1rem;
+        min-height: 80px;
     }
 
     .selector-name {
@@ -811,11 +811,12 @@ header h1 {
     }
 
     .assignment-details {
-        font-size: 0.75rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
     }
 
     .assignment-time {
-        font-size: 0.65rem;
+        font-size: 0.75rem;
     }
 
     .matches-section h2 {
@@ -853,8 +854,11 @@ header h1 {
     }
 
     .assigned-badge {
-        padding: 0.5rem;
-        font-size: 0.85rem;
+        padding: 0.75rem;
+        font-size: 1rem;
+        background: #e8f5e8 !important;
+        border: 2px solid #4caf50 !important;
+        border-radius: 8px;
     }
 
     .assignment-status {
@@ -922,6 +926,60 @@ header h1 {
     .stat-value {
         font-size: 1.1rem;
     }
+
+    /* Mobile visibility improvements for selected matches and pending elements */
+    .assigned-badge {
+        font-size: 1.1rem !important;
+        padding: 1rem !important;
+        background: #4caf50 !important;
+        color: white !important;
+        border: 2px solid #2e7d32 !important;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+
+    .selector-item.available {
+        background: #fff3cd !important;
+        border: 2px solid #ffc107 !important;
+        font-weight: bold;
+    }
+
+    .selector-item.assigned {
+        background: #d4edda !important;
+        border: 2px solid #28a745 !important;
+        font-weight: bold;
+    }
+
+    .assignment-details {
+        font-size: 1rem !important;
+        font-weight: 500;
+    }
+
+    .selector-dropdown {
+        font-size: 1rem !important;
+        padding: 0.75rem !important;
+        border: 2px solid #007bff !important;
+        border-radius: 6px;
+        background: white;
+    }
+
+    .assignment-status {
+        font-size: 1rem !important;
+        font-weight: 500;
+        color: #007bff !important;
+    }
+
+    .match-info {
+        font-size: 1rem !important;
+        font-weight: bold;
+        color: #2e7d32 !important;
+    }
+
+    .btn-small {
+        padding: 0.6rem 1rem !important;
+        font-size: 0.9rem !important;
+        min-height: 44px; /* Touch-friendly */
+    }
 }
 
 /* Small tablets and large phones */
@@ -980,11 +1038,12 @@ header h1 {
     }
 
     .assignment-details {
-        font-size: 0.7rem;
+        font-size: 0.85rem;
+        line-height: 1.4;
     }
 
     .assignment-time {
-        font-size: 0.6rem;
+        font-size: 0.7rem;
     }
 
     .matches-section h2 {
@@ -1045,6 +1104,60 @@ header h1 {
 
     .stat-value {
         font-size: 1rem;
+    }
+
+    /* Mobile visibility improvements for small tablets and large phones */
+    .assigned-badge {
+        font-size: 1rem !important;
+        padding: 0.8rem !important;
+        background: #4caf50 !important;
+        color: white !important;
+        border: 2px solid #2e7d32 !important;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .selector-item.available {
+        background: #fff3cd !important;
+        border: 2px solid #ffc107 !important;
+        font-weight: bold;
+    }
+
+    .selector-item.assigned {
+        background: #d4edda !important;
+        border: 2px solid #28a745 !important;
+        font-weight: bold;
+    }
+
+    .assignment-details {
+        font-size: 0.95rem !important;
+        font-weight: 500;
+    }
+
+    .selector-dropdown {
+        font-size: 0.95rem !important;
+        padding: 0.6rem !important;
+        border: 2px solid #007bff !important;
+        border-radius: 5px;
+        background: white;
+    }
+
+    .assignment-status {
+        font-size: 0.95rem !important;
+        font-weight: 500;
+        color: #007bff !important;
+    }
+
+    .match-info {
+        font-size: 0.95rem !important;
+        font-weight: bold;
+        color: #2e7d32 !important;
+    }
+
+    .btn-small {
+        padding: 0.55rem 0.9rem !important;
+        font-size: 0.85rem !important;
+        min-height: 42px; /* Touch-friendly */
     }
 }
 
@@ -1115,11 +1228,12 @@ header h1 {
     }
 
     .assignment-details {
-        font-size: 0.65rem;
+        font-size: 0.8rem;
+        line-height: 1.4;
     }
 
     .assignment-time {
-        font-size: 0.55rem;
+        font-size: 0.65rem;
     }
 
     .matches-section h2 {
@@ -1208,6 +1322,60 @@ header h1 {
 
     .stat-value {
         font-size: 0.9rem;
+    }
+
+    /* Enhanced mobile visibility for selected matches and pending elements on small phones */
+    .assigned-badge {
+        font-size: 0.9rem !important;
+        padding: 0.75rem !important;
+        background: #4caf50 !important;
+        color: white !important;
+        border: 2px solid #2e7d32 !important;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .selector-item.available {
+        background: #fff3cd !important;
+        border: 2px solid #ffc107 !important;
+        font-weight: bold;
+    }
+
+    .selector-item.assigned {
+        background: #d4edda !important;
+        border: 2px solid #28a745 !important;
+        font-weight: bold;
+    }
+
+    .assignment-details {
+        font-size: 0.9rem !important;
+        font-weight: 500;
+    }
+
+    .selector-dropdown {
+        font-size: 0.9rem !important;
+        padding: 0.6rem !important;
+        border: 2px solid #007bff !important;
+        border-radius: 4px;
+        background: white;
+    }
+
+    .assignment-status {
+        font-size: 0.9rem !important;
+        font-weight: 500;
+        color: #007bff !important;
+    }
+
+    .match-info {
+        font-size: 0.9rem !important;
+        font-weight: bold;
+        color: #2e7d32 !important;
+    }
+
+    .btn-small {
+        padding: 0.5rem 0.8rem !important;
+        font-size: 0.8rem !important;
+        min-height: 40px; /* Touch-friendly */
     }
 }
 
@@ -1316,5 +1484,59 @@ header h1 {
 
     .stat-value {
         font-size: 0.8rem;
+    }
+
+    /* Enhanced mobile visibility for very small phones */
+    .assigned-badge {
+        font-size: 0.8rem !important;
+        padding: 0.5rem !important;
+        background: #4caf50 !important;
+        color: white !important;
+        border: 2px solid #2e7d32 !important;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    .selector-item.available {
+        background: #fff3cd !important;
+        border: 2px solid #ffc107 !important;
+        font-weight: bold;
+    }
+
+    .selector-item.assigned {
+        background: #d4edda !important;
+        border: 2px solid #28a745 !important;
+        font-weight: bold;
+    }
+
+    .assignment-details {
+        font-size: 0.8rem !important;
+        font-weight: 500;
+    }
+
+    .selector-dropdown {
+        font-size: 0.8rem !important;
+        padding: 0.5rem !important;
+        border: 2px solid #007bff !important;
+        border-radius: 4px;
+        background: white;
+    }
+
+    .assignment-status {
+        font-size: 0.8rem !important;
+        font-weight: 500;
+        color: #007bff !important;
+    }
+
+    .match-info {
+        font-size: 0.8rem !important;
+        font-weight: bold;
+        color: #2e7d32 !important;
+    }
+
+    .btn-small {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.75rem !important;
+        min-height: 36px; /* Touch-friendly */
     }
 }
