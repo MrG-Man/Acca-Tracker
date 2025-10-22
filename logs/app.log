@@ -903,3 +903,9 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-22 11:07:00,477 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
 2025-10-22 11:07:00,478 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
 2025-10-22 11:07:14,655 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-22 11:18:50,742 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-22 11:18:50,742 - app - WARNING - No cached fixtures found for 2025-10-25
+2025-10-22 11:18:50,742 - DataManager - WARNING - No BBC cache file found for date 2025-10-25
+2025-10-22 11:18:51,285 - bbc_scraper - ERROR - Found invalid team name(s) 'Scunthorpe United' vs 'Aldershot Town' - appears to be international/other sport match
+2025-10-22 11:18:51,285 - bbc_scraper - ERROR - Scraped data validation failed for 2025-10-25 - ALL_LEAGUES. Not caching corrupted data.
+2025-10-22 11:18:51,385 - app - WARNING - 404 error: http://localhost:5000/favicon.ico

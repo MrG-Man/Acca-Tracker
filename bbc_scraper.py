@@ -26,13 +26,14 @@ NEW FUNCTIONALITY:
 - Dynamic URL construction using BBC's date-based format
 
 LEAGUES SUPPORTED:
-- Premier League, English Championship, League One, League Two, National League
-- Scottish Premiership, Championship, League One, League Two
+- Premier League, English Championship (top-tier leagues only)
+- Restricted to prevent lower league matches from being included
 
 SCRAPING METHODOLOGY:
 - Uses https://www.bbc.co.uk/sport/football/scores-fixtures/YYYY-MM-DD
 - Parses ALL matches from this single page
-- Filters to only supported leagues
+- Filters to only top-tier leagues (Premier League and Championship)
+- Strictly enforces 15:00 kickoff times for fixtures
 - Handles both fixture and live score modes
 
 USAGE:
@@ -101,25 +102,14 @@ class BBCSportScraper:
     MODE_FIXTURES = "fixtures"
     MODE_LIVE = "live"
 
-    # League configurations with their BBC Sport URLs
+    # League configurations with their BBC Sport URLs - RESTRICTED to top-tier leagues only
     LEAGUES = {
-        # English Leagues
+        # English Leagues - Top Tier Only
         "Premier League": "/sport/football/premier-league/scores-fixtures",
         "English Championship": "/sport/football/championship/scores-fixtures",
-        "English League One": "/sport/football/league-one/scores-fixtures",
-        "English League Two": "/sport/football/league-two/scores-fixtures",
-        "English National League": "/sport/football/national-league/scores-fixtures",
 
-        # Scottish Leagues
-        "Scottish Premiership": "/sport/football/scottish-premiership/scores-fixtures",
-        "Scottish Championship": "/sport/football/scottish-championship/scores-fixtures",
-        "Scottish League One": "/sport/football/scottish-league-one/scores-fixtures",
-        "Scottish League Two": "/sport/football/scottish-league-two/scores-fixtures",
-
-        # Example: Adding a new league would be this simple:
-        # "Italian Serie A": "/sport/football/italian-serie-a/scores-fixtures",
-        # "German Bundesliga": "/sport/football/german-bundesliga/scores-fixtures",
-        # "French Ligue 1": "/sport/football/french-ligue-1/scores-fixtures",
+        # Note: Removed lower leagues (League One, League Two, etc.) to prevent incorrect matches
+        # Note: Removed Scottish leagues as they are not top-tier English leagues
     }
 
     def __init__(self, rate_limit: float = 1.0):
@@ -311,17 +301,18 @@ class BBCSportScraper:
             # CRITICAL VALIDATION: Ensure league is in our supported leagues
             league_name = match.get('league', '')
             if league_name not in self.LEAGUES.keys():
-                logger.error(f"Found unsupported league '{league_name}' in match data. Supported leagues: {list(self.LEAGUES.keys())}")
+                logger.error(f"DEBUG: Validation failed - unsupported league '{league_name}' in match data. Supported leagues: {list(self.LEAGUES.keys())}")
                 return False
 
             # Validate team names are reasonable (not international teams or other invalid entries)
             home_team = match.get('home_team', '').strip()
             away_team = match.get('away_team', '').strip()
 
-            # Check for international teams or non-football teams
+            # Check for international teams or non-football teams - updated for top-tier English leagues
             invalid_indicators = [
                 'wales', 'australia', 'ukraine', 'kharkiv', 'lviv', 'vynnyky',
-                'miami', 'nashville', 'sc', 'kyiv', 'polissya', 'cherkasy'
+                'miami', 'nashville', 'kyiv', 'polissya', 'cherkasy',
+                'scotland', 'scottish', 'celtic', 'hibernian', 'dundee'  # Exclude Scottish teams
             ]
 
             home_lower = home_team.lower()
@@ -696,6 +687,7 @@ class BBCSportScraper:
 
             # Parse all matches from the unified page
             matches = self._parse_unified_matches(soup, mode)
+            logger.info(f"DEBUG: Parsed {len(matches)} total matches from BBC page")
 
             # Filter to only our supported leagues
             supported_matches = []
@@ -703,6 +695,8 @@ class BBCSportScraper:
                 league_name = match.get('league', '')
                 if league_name in self.LEAGUES.keys():
                     supported_matches.append(match)
+                else:
+                    logger.info(f"DEBUG: Filtering out match from unsupported league '{league_name}': {match.get('home_team', 'Unknown')} vs {match.get('away_team', 'Unknown')}")
 
             # Cache the results
             if supported_matches:
@@ -842,17 +836,11 @@ class BBCSportScraper:
         """
         matches = []
         
-        # BBC to internal league name mapping
+        # BBC to internal league name mapping - RESTRICTED to top-tier leagues only
         league_mapping = {
             'Premier League': 'Premier League',
             'Championship': 'English Championship',
-            'League One': 'English League One',
-            'League Two': 'English League Two',
-            'National League': 'English National League',
-            'Scottish Premiership': 'Scottish Premiership',
-            'Scottish Championship': 'Scottish Championship',
-            'Scottish League One': 'Scottish League One',
-            'Scottish League Two': 'Scottish League Two',
+            # Removed lower leagues and Scottish leagues to prevent incorrect matches
         }
         
         try:
@@ -865,6 +853,7 @@ class BBCSportScraper:
                 
                 # Skip if not a supported league
                 if not league_name:
+                    logger.info(f"DEBUG: Skipping unsupported league '{bbc_league_name}' from BBC data")
                     continue
                 
                 # Process events in this group
@@ -923,16 +912,21 @@ class BBCSportScraper:
                 kickoff = event['date']['time']
             elif 'time' in event and 'displayTimeUK' in event['time']:
                 kickoff = event['time']['displayTimeUK']
-            
+
+            # CRITICAL: Only include matches at exactly 15:00 for fixtures
+            if kickoff != "15:00":
+                logger.info(f"DEBUG: Skipping match {home_team} vs {away_team} in {league_name} due to kickoff time {kickoff} (not 15:00)")
+                return None
+
             # Extract venue if available
             venue = event.get('venue', {}).get('name', 'TBC') if 'venue' in event else "TBC"
-            
+
             # Extract scores and status for live matches
             home_score = 0
             away_score = 0
             status = "not_started"
             match_time = "0'"
-            
+
             if 'status' in event:
                 event_status = event['status']
                 if event_status in ['InProgress', 'Live']:
@@ -944,13 +938,13 @@ class BBCSportScraper:
                 elif event_status == 'HalfTime':
                     status = "halftime"
                     match_time = "HT"
-            
+
             # Extract scores if available
             if 'home' in event and 'score' in event['home']:
                 home_score = int(event['home']['score'])
             if 'away' in event and 'score' in event['away']:
                 away_score = int(event['away']['score'])
-            
+
             return {
                 "league": league_name,
                 "home_team": home_team,
@@ -1059,11 +1053,12 @@ class BBCSportScraper:
                 len(home_team) > 50 or len(away_team) > 50):
                 return None
 
-            # CRITICAL: Filter out international teams and invalid matches
+            # CRITICAL: Filter out international teams and invalid matches - updated for top-tier English leagues
             invalid_indicators = [
                 'wales', 'australia', 'ukraine', 'kharkiv', 'lviv', 'vynnyky',
-                'miami', 'nashville', 'sc', 'kyiv', 'polissya', 'cherkasy',
-                'international', 'world cup', 'euro', 'olympic'
+                'miami', 'nashville', 'kyiv', 'polissya', 'cherkasy',
+                'international', 'world cup', 'euro', 'olympic',
+                'scotland', 'scottish', 'celtic', 'hibernian', 'dundee'  # Exclude Scottish teams
             ]
 
             home_lower = home_team.lower()
@@ -1107,12 +1102,9 @@ class BBCSportScraper:
 
     def _identify_league_from_element(self, element) -> Optional[str]:
         """Identify the league name from a match element."""
-        # Look for league headers above the match
+        # Look for league headers above the match - RESTRICTED to top-tier leagues only
         league_headers = [
-            "Premier League", "English Championship", "English League One",
-            "English League Two", "English National League",
-            "Scottish Premiership", "Scottish Championship",
-            "Scottish League One", "Scottish League Two"
+            "Premier League", "English Championship"
         ]
 
         # Check the element text for league names
@@ -1127,12 +1119,10 @@ class BBCSportScraper:
         """Identify the league name from the broader context around a match element."""
         # NEW APPROACH: Use document structure to find league headers
         # Look backwards from the match element to find the nearest league header
+        # RESTRICTED to top-tier leagues only
 
         league_headers = [
-            "Premier League", "English Championship", "English League One",
-            "English League Two", "English National League",
-            "Scottish Premiership", "Scottish Championship",
-            "Scottish League One", "Scottish League Two"
+            "Premier League", "English Championship"
         ]
 
         # Start from the match element and look backwards through the document

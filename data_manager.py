@@ -393,18 +393,20 @@ class DataManager:
             Dictionary containing selections or None if not found/error
         """
         try:
+            self.logger.info(f"[DEBUG] DataManager: Loading selections for date {date}")
+
             # Check memory cache first
             cache_key = self._get_memory_cache_key("selections", date)
             cached_data = self._get_memory_cache(cache_key)
             if cached_data:
-                self.logger.debug(f"Returning cached selections for {date}")
+                self.logger.debug(f"[DEBUG] DataManager: Returning cached selections for {date}")
                 return cached_data
 
             filename = f"week_{date}.json"
             filepath = os.path.join(self.selections_path, filename)
 
             if not os.path.exists(filepath) and not os.path.exists(filepath + '.gz'):
-                self.logger.warning(f"No selections file found for date {date}")
+                self.logger.warning(f"[DEBUG] DataManager: No selections file found for date {date}")
                 return None
 
             # Load using optimized method
@@ -415,17 +417,17 @@ class DataManager:
             # Validate loaded data
             selections = data.get("selections", {})
             if not self.validate_selections(selections):
-                self.logger.error(f"Invalid selections data in file for date {date}")
+                self.logger.error(f"[DEBUG] DataManager: Invalid selections data in file for date {date}")
                 return None
 
             # Update memory cache
             self._set_memory_cache(cache_key, selections)
 
-            self.logger.info(f"Weekly selections loaded successfully for {date}")
+            self.logger.info(f"[DEBUG] DataManager: Weekly selections loaded successfully for {date}: {list(selections.keys())}")
             return selections
 
         except Exception as e:
-            self.logger.error(f"Error loading weekly selections for {date}: {str(e)}")
+            self.logger.error(f"[DEBUG] DataManager: Error loading weekly selections for {date}: {str(e)}")
             return None
 
     def cache_bbc_fixtures(self, fixtures_data: List[Dict[str, Any]], date: Optional[str] = None) -> bool:

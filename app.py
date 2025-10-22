@@ -393,23 +393,23 @@ def map_selections_to_sofascore_ids(selections):
 def load_selections():
     """Load existing selections for the current week using DataManager."""
     week = get_current_prediction_week()
-    print(f"[DEBUG] load_selections() - Loading selections for week: {week}")
+    app.logger.info(f"[DEBUG] load_selections() - Loading selections for week: {week}")
 
     # Check if data_manager is available before calling methods
     if data_manager is None:
-        print("ERROR: data_manager is None - cannot load selections")
+        app.logger.error("ERROR: data_manager is None - cannot load selections")
         return {"selectors": {}, "matches": [], "last_updated": None}
 
     # Load selections using DataManager
-    print(f"[DEBUG] load_selections() - Calling data_manager.load_weekly_selections({week})")
+    app.logger.info(f"[DEBUG] load_selections() - Calling data_manager.load_weekly_selections({week})")
     selections = data_manager.load_weekly_selections(week)
-    print(f"[DEBUG] load_selections() - DataManager returned: {selections}")
+    app.logger.info(f"[DEBUG] load_selections() - DataManager returned: {selections}")
 
     if selections is None:
-        print(f"[DEBUG] load_selections() - No selections found for week {week}")
+        app.logger.info(f"[DEBUG] load_selections() - No selections found for week {week}")
         return {"selectors": {}, "matches": [], "last_updated": None}
 
-    print(f"[DEBUG] load_selections() - Found {len(selections)} selections: {list(selections.keys())}")
+    app.logger.info(f"[DEBUG] load_selections() - Found {len(selections)} selections: {list(selections.keys())}")
 
     # Convert DataManager format to expected format for template
     # Add assigned_at field for template compatibility
@@ -426,36 +426,36 @@ def load_selections():
         "matches": [],  # This will be populated from scraper data
         "last_updated": None  # Could be enhanced to track this
     }
-    print(f"[DEBUG] load_selections() - Returning: {len(enhanced_selections)} enhanced selections")
+    app.logger.info(f"[DEBUG] load_selections() - Returning: {len(enhanced_selections)} enhanced selections")
     return result
 
 def save_selections(selections_data):
     """Save selections using DataManager."""
     week = get_current_prediction_week()
-    print(f"[DEBUG] save_selections() - Saving selections for week: {week}")
-    print(f"[DEBUG] save_selections() - Input data: {selections_data}")
+    app.logger.info(f"[DEBUG] save_selections() - Saving selections for week: {week}")
+    app.logger.info(f"[DEBUG] save_selections() - Input data: {selections_data}")
 
     # Check if data_manager is available before calling methods
     if data_manager is None:
-        print("ERROR: data_manager is None - cannot save selections")
+        app.logger.error("ERROR: data_manager is None - cannot save selections")
         return False
 
     # Extract just the selections part for DataManager
     selections_only = selections_data.get("selectors", {})
-    print(f"[DEBUG] save_selections() - Extracted {len(selections_only)} selections: {list(selections_only.keys())}")
+    app.logger.info(f"[DEBUG] save_selections() - Extracted {len(selections_only)} selections: {list(selections_only.keys())}")
 
     # Save using DataManager
-    print(f"[DEBUG] save_selections() - Calling data_manager.save_weekly_selections() with {len(selections_only)} selections")
+    app.logger.info(f"[DEBUG] save_selections() - Calling data_manager.save_weekly_selections() with {len(selections_only)} selections")
     success = data_manager.save_weekly_selections(selections_only, week)
-    print(f"[DEBUG] save_selections() - DataManager save returned: {success}")
+    app.logger.info(f"[DEBUG] save_selections() - DataManager save returned: {success}")
 
     if success:
         # Update the last_updated timestamp in the original data
         selections_data["last_updated"] = datetime.now().isoformat()
-        print(f"[DEBUG] save_selections() - Successfully saved selections for week {week}")
+        app.logger.info(f"[DEBUG] save_selections() - Successfully saved selections for week {week}")
         return True
     else:
-        print(f"[DEBUG] save_selections() - Failed to save selections for week {week}")
+        app.logger.error(f"[DEBUG] save_selections() - Failed to save selections for week {week}")
         return False
 
 @app.route('/')
@@ -486,44 +486,48 @@ def admin():
         matches = []
         if data_manager is not None:
             try:
-                app.logger.info(f"Attempting to load cached fixtures for {target_date}")
+                app.logger.info(f"[DEBUG] Admin route: Attempting to load cached fixtures for {target_date}")
                 cached_fixtures = data_manager.get_bbc_fixtures(target_date)
-                app.logger.info(f"DataManager returned: {len(cached_fixtures) if cached_fixtures else 0} fixtures")
+                app.logger.info(f"[DEBUG] Admin route: DataManager returned: {len(cached_fixtures) if cached_fixtures else 0} fixtures")
 
                 if cached_fixtures:
                     # Filter for 15:00 matches only
                     matches = [match for match in cached_fixtures if match.get('kickoff') == '15:00']
-                    app.logger.info(f"Filtered to {len(matches)} 15:00 matches for {target_date}")
+                    app.logger.info(f"[DEBUG] Admin route: Filtered to {len(matches)} 15:00 matches for {target_date}")
 
-                    # Debug: Show sample matches
-                    if matches:
-                        sample_match = matches[0]
-                        app.logger.info(f"Sample match: {sample_match['league']} - {sample_match['home_team']} vs {sample_match['away_team']} at {sample_match['kickoff']}")
+                    # Debug: Show all matches
+                    for i, match in enumerate(matches):
+                        app.logger.info(f"[DEBUG] Admin route: Match {i+1}: {match['league']} - {match['home_team']} vs {match['away_team']} at {match['kickoff']}")
                 else:
-                    app.logger.warning(f"No cached fixtures found for {target_date}")
+                    app.logger.warning(f"[DEBUG] Admin route: No cached fixtures found for {target_date}")
             except Exception as e:
-                app.logger.error(f"Error loading cached fixtures: {e}")
+                app.logger.error(f"[DEBUG] Admin route: Error loading cached fixtures: {e}")
                 import traceback
-                app.logger.error(f"Traceback: {traceback.format_exc()}")
+                app.logger.error(f"[DEBUG] Admin route: Traceback: {traceback.format_exc()}")
 
         # If no cached data, fall back to scraping
         if not matches:
             if BBCSportScraper is not None:
                 try:
+                    app.logger.info(f"[DEBUG] Admin route: Starting BBC scraping for {target_date}")
                     scraper = BBCSportScraper()
                     scraper_result = scraper.scrape_saturday_3pm_fixtures()
                     matches = scraper_result.get("matches_3pm", [])
                     target_date = scraper_result.get("next_saturday", target_date)
-                    app.logger.info(f"Scraped {len(matches)} matches for {target_date}")
+                    app.logger.info(f"[DEBUG] Admin route: Scraped {len(matches)} matches for {target_date}")
+
+                    # Debug: Show all scraped matches
+                    for i, match in enumerate(matches):
+                        app.logger.info(f"[DEBUG] Admin route: Scraped match {i+1}: {match['league']} - {match['home_team']} vs {match['away_team']} at {match['kickoff']}")
 
                     # If no matches found, try to find an alternative date
                     if not matches:
-                        app.logger.info(f"No matches found for {target_date}, searching for alternative date")
+                        app.logger.info(f"[DEBUG] Admin route: No matches found for {target_date}, searching for alternative date")
                         try:
                             alternative_date = find_next_available_fixtures_date(target_date, max_days_ahead=14)
 
                             if alternative_date and alternative_date != target_date:
-                                app.logger.info(f"Found alternative date with matches: {alternative_date}")
+                                app.logger.info(f"[DEBUG] Admin route: Found alternative date with matches: {alternative_date}")
                                 try:
                                     # Re-scrape for the alternative date
                                     alt_scraper_result = scraper.scrape_unified_bbc_matches(alternative_date, 'fixtures')
@@ -543,17 +547,18 @@ def admin():
                                         }
                                         matches = alt_matches
                                         target_date = alternative_date
+                                        app.logger.info(f"[DEBUG] Admin route: Using alternative date {alternative_date} with {len(matches)} matches")
                                 except Exception as e:
-                                    app.logger.warning(f"Error scraping alternative date {alternative_date}: {e}")
+                                    app.logger.warning(f"[DEBUG] Admin route: Error scraping alternative date {alternative_date}: {e}")
                                     # Continue with empty matches list
                         except Exception as e:
-                            app.logger.warning(f"Error finding alternative date: {e}")
+                            app.logger.warning(f"[DEBUG] Admin route: Error finding alternative date: {e}")
                             # Continue with empty matches list
                 except Exception as e:
-                    app.logger.error(f"Error with BBC scraper: {e}")
+                    app.logger.error(f"[DEBUG] Admin route: Error with BBC scraper: {e}")
                     # Continue with empty matches list - don't fail completely
             else:
-                app.logger.warning("BBC scraper not available - showing admin interface without live data")
+                app.logger.warning("[DEBUG] Admin route: BBC scraper not available - showing admin interface without live data")
 
         # Load existing selections with enhanced error handling
         if data_manager is None:
@@ -585,7 +590,9 @@ def admin():
             </body></html>
             """, 500
 
+        app.logger.info(f"[DEBUG] Admin route: Loading selections for week {target_date}")
         selections_data = load_selections()
+        app.logger.info(f"[DEBUG] Admin route: Loaded {len(selections_data.get('selectors', {}))} selections")
 
         # Get available selectors (those not yet assigned)
         assigned_selectors = set(selections_data.get("selectors", {}).keys())
