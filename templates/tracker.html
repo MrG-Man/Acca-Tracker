@@ -9,16 +9,32 @@
         /* Enhanced Live Tracker Styles */
         .live-tracker-container {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             position: relative;
+        }
+        .enhanced-header {
+            flex-shrink: 0;
+        }
+
+        .enhanced-summary {
+            flex-shrink: 0;
+        }
+
+        .enhanced-matches-grid {
+            flex: 1;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
         }
 
         .enhanced-header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 15px 20px;
-            margin-bottom: 10px;
+            padding: 5px;
+            margin-bottom: 2px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -67,22 +83,22 @@
         }
 
         .enhanced-summary {
-            margin-bottom: 10px;
+            margin-bottom: 2px;
         }
 
         .summary-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 15px;
+            padding: 5px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .summary-card h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 2px 0;
             color: #212529;
-            font-size: 1.4rem;
+            font-size: 1rem;
             text-align: center;
             font-weight: 600;
         }
@@ -90,14 +106,14 @@
         .accumulator-status {
             display: flex;
             justify-content: center;
-            margin-bottom: 25px;
+            margin-bottom: 2px;
         }
 
         .status-badge {
-            padding: 12px 24px;
+            padding: 4px 8px;
             border-radius: 25px;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -124,12 +140,12 @@
         .enhanced-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            gap: 2px;
         }
 
         .stat-item {
             text-align: center;
-            padding: 15px;
+            padding: 4px;
             background: rgba(255, 255, 255, 0.8);
             border-radius: 10px;
             border: 2px solid rgba(0,0,0,0.1);
@@ -143,14 +159,14 @@
         .stat-label {
             display: block;
             color: #6c757d;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
+            font-size: 0.6rem;
+            margin-bottom: 2px;
             font-weight: 600;
         }
 
         .stat-value {
             display: block;
-            font-size: 2rem;
+            font-size: 1rem;
             font-weight: 900;
             line-height: 1;
         }
@@ -173,21 +189,22 @@
         .enhanced-matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 15px;
-            margin-bottom: 10px;
+            gap: 2px;
+            margin-bottom: 2px;
         }
 
         .enhanced-match-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 15px;
+            padding: 4px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             border: 3px solid transparent;
             position: relative;
             overflow: hidden;
-            min-height: 150px;
+            min-height: 50px;
+            height: 50px;
         }
 
         .enhanced-match-card:hover {
@@ -211,10 +228,10 @@
         }
 
         .selector-name {
-            font-size: 1.3rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: #212529;
-            margin-bottom: 8px;
+            margin-bottom: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -223,41 +240,41 @@
             display: inline-block;
             background: linear-gradient(135deg, #17a2b8, #20c997);
             color: white;
-            font-size: 0.75rem;
+            font-size: 0.5rem;
             font-weight: 600;
-            padding: 4px 10px;
+            padding: 1px 3px;
             border-radius: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .teams {
-            font-size: 1.1rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: #212529;
-            margin-bottom: 8px;
-            line-height: 1.2;
+            margin-bottom: 2px;
+            line-height: 1.1;
         }
 
         .score-display {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 2px;
         }
 
         .score {
-            font-size: 2.5rem;
+            font-size: 1rem;
             font-weight: 900;
             color: white;
-            margin-bottom: 5px;
+            margin-bottom: 1px;
             font-family: 'Courier New', monospace;
             text-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
         }
 
         .time {
-            font-size: 1.1rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: white;
             text-align: center;
@@ -267,12 +284,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            font-size: 0.9rem;
+            gap: 2px;
+            font-size: 0.6rem;
             font-weight: 700;
-            padding: 8px 16px;
+            padding: 2px 4px;
             border-radius: 20px;
-            margin-bottom: 10px;
+            margin-bottom: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -293,8 +310,8 @@
         }
 
         .match-status {
-            font-size: 0.85rem;
-            padding: 4px 8px;
+            font-size: 0.6rem;
+            padding: 1px 2px;
             border-radius: 12px;
             font-weight: 500;
             text-align: center;
@@ -325,7 +342,7 @@
         /* Loading and error states */
         .enhanced-loading {
             text-align: center;
-            padding: 60px 20px;
+            padding: 20px 5px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
@@ -349,7 +366,7 @@
 
         .enhanced-error {
             text-align: center;
-            padding: 60px 20px;
+            padding: 20px 5px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
@@ -357,27 +374,27 @@
         }
 
         .error-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+            font-size: 2rem;
+            margin-bottom: 5px;
         }
 
         .enhanced-error h3 {
             color: #dc3545;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
 
         .enhanced-error button {
             background: #17a2b8;
             color: white;
             border: none;
-            padding: 16px 32px;
+            padding: 8px 16px;
             border-radius: 25px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             min-height: 44px;
             min-width: 120px;
-            font-size: 1rem;
+            font-size: 0.8rem;
         }
 
         .enhanced-error button:hover {
@@ -388,141 +405,143 @@
         /* Responsive design */
         @media (max-width: 768px) {
             .live-tracker-container {
-                padding: 5px;
+                padding: 2px;
             }
 
             .enhanced-header {
-                padding: 10px;
-                margin-bottom: 10px;
+                padding: 5px;
+                margin-bottom: 2px;
             }
 
             .enhanced-status {
                 flex-direction: column;
-                gap: 5px;
+                gap: 2px;
             }
 
             .enhanced-summary {
-                margin-bottom: 10px;
+                margin-bottom: 2px;
             }
 
             .summary-card {
-                padding: 10px;
+                padding: 5px;
             }
 
             .enhanced-matches-grid {
                 grid-template-columns: 1fr;
-                gap: 10px;
-                margin-bottom: 10px;
+                gap: 2px;
+                margin-bottom: 2px;
             }
 
             .enhanced-match-card {
-                padding: 10px;
-                min-height: 150px;
+                padding: 4px;
+                min-height: 50px;
+                height: 50px;
             }
 
             .score {
-                font-size: 1.5rem;
+                font-size: 1rem;
             }
 
             .enhanced-stats {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 5px;
-            }
-
-            .stat-value {
-                font-size: 1.2rem;
-            }
-
-            .stat-item {
-                padding: 8px;
-            }
-
-            .teams {
-                font-size: 0.8rem;
-                line-height: 1.1;
-                margin-bottom: 5px;
-            }
-
-            .selector-name {
-                font-size: 0.9rem;
-                margin-bottom: 5px;
-            }
-
-            .league-badge {
-                font-size: 0.6rem;
-                padding: 2px 6px;
-                margin-bottom: 5px;
-            }
-
-            .btts-status {
-                font-size: 0.7rem;
-                padding: 4px 8px;
-                margin-bottom: 5px;
-            }
-
-            .match-status {
-                font-size: 0.7rem;
-                padding: 2px 4px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .enhanced-stats {
-                grid-template-columns: 1fr;
-                gap: 3px;
-            }
-
-            .stat-item {
-                padding: 5px;
+                gap: 2px;
             }
 
             .stat-value {
                 font-size: 1rem;
             }
 
-            .score {
-                font-size: 1.2rem;
-            }
-
-            .enhanced-match-card {
-                padding: 8px;
-                min-height: 120px;
+            .stat-item {
+                padding: 4px;
             }
 
             .teams {
                 font-size: 0.7rem;
-                line-height: 1;
+                line-height: 1.1;
+                margin-bottom: 2px;
             }
 
             .selector-name {
                 font-size: 0.8rem;
+                margin-bottom: 2px;
             }
 
             .league-badge {
-                font-size: 0.55rem;
-                padding: 1px 4px;
+                font-size: 0.5rem;
+                padding: 1px 3px;
+                margin-bottom: 2px;
             }
 
             .btts-status {
-                font-size: 0.65rem;
-                padding: 3px 6px;
+                font-size: 0.6rem;
+                padding: 2px 4px;
+                margin-bottom: 2px;
             }
 
             .match-status {
-                font-size: 0.65rem;
-                padding: 1px 3px;
+                font-size: 0.6rem;
+                padding: 1px 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .enhanced-stats {
+                grid-template-columns: 1fr;
+                gap: 1px;
+            }
+
+            .stat-item {
+                padding: 3px;
+            }
+
+            .stat-value {
+                font-size: 0.8rem;
+            }
+
+            .score {
+                font-size: 0.8rem;
+            }
+
+            .enhanced-match-card {
+                padding: 2px;
+                min-height: 40px;
+                height: 40px;
+            }
+
+            .teams {
+                font-size: 0.6rem;
+                line-height: 1;
+            }
+
+            .selector-name {
+                font-size: 0.7rem;
+            }
+
+            .league-badge {
+                font-size: 0.4rem;
+                padding: 1px 2px;
+            }
+
+            .btts-status {
+                font-size: 0.5rem;
+                padding: 1px 2px;
+            }
+
+            .match-status {
+                font-size: 0.5rem;
+                padding: 1px 2px;
             }
 
             .summary-card {
-                padding: 8px;
+                padding: 3px;
             }
 
             .enhanced-header {
-                padding: 5px;
+                padding: 3px;
             }
 
             .live-tracker-container {
-                padding: 2px;
+                padding: 1px;
             }
         }
     </style>
