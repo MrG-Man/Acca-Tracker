@@ -1048,14 +1048,29 @@ def get_btts_status():
 
         if not selections:
             print(f"[DEBUG] /api/btts-status - No selections found for week {week}")
+            # Generate placeholders for all selectors
+            placeholder_matches = {}
+            for selector in SELECTORS:
+                placeholder_matches[selector] = {
+                    "home_team": None,
+                    "away_team": None,
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "no_selection",
+                    "league": None,
+                    "btts_detected": False,
+                    "placeholder": True,
+                    "placeholder_text": "Awaiting Match Assignment",
+                    "last_updated": datetime.now().isoformat()
+                }
             return jsonify({
                 "status": "NO_SELECTIONS",
                 "message": "No selections found for current week",
-                "matches": {},
+                "matches": placeholder_matches,
                 "statistics": {
-                    "total_matches_tracked": 0,
+                    "total_matches_tracked": len(SELECTORS),
                     "btts_detected": 0,
-                    "btts_pending": 0,
+                    "btts_pending": len(SELECTORS),
                     "last_update": datetime.now().isoformat()
                 },
                 "last_updated": datetime.now().isoformat()

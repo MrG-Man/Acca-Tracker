@@ -171,6 +171,7 @@ class BTTSTracker {
 
             const data = await response.json();
             console.log('✅ BTTS data received:', data);
+            console.log('🔍 DEBUG: Full data object:', JSON.stringify(data, null, 2));
 
             this.retryCount = 0;
             this.isConnected = true;
@@ -185,6 +186,9 @@ class BTTSTracker {
 
     processData(data) {
         const startTime = performance.now();
+        console.log('🔍 DEBUG: processData called with data:', data);
+        console.log('🔍 DEBUG: data.status:', data.status);
+        console.log('🔍 DEBUG: data.matches:', data.matches);
         this.currentData = data;
 
         // Update performance metrics
@@ -198,7 +202,7 @@ class BTTSTracker {
         }
 
         // Handle different data statuses
-        if (data.status === 'NO_SELECTIONS') {
+        if (data.status === 'NO_SELECTIONS' && (!data.matches || Object.keys(data.matches).length === 0)) {
             this.handleNoSelections(data);
             return;
         }
@@ -460,13 +464,17 @@ class BTTSTracker {
 
     updateMatchesDisplay(data) {
         const matches = data.matches || {};
+        console.log('🔍 DEBUG: updateMatchesDisplay called with matches:', matches);
+        console.log('🔍 DEBUG: Number of matches:', Object.keys(matches).length);
 
         // Sort matches by selector name for consistent display
         const sortedMatches = Object.entries(matches).sort((a, b) => {
             return a[0].localeCompare(b[0]); // a[0] is the selector name (key)
         });
 
+        console.log('🔍 DEBUG: sortedMatches length:', sortedMatches.length);
         if (sortedMatches.length === 0) {
+            console.log('🔍 DEBUG: No matches found, calling showNoMatches');
             this.showNoMatches();
             return;
         }
@@ -573,13 +581,25 @@ class BTTSTracker {
         const scoreLine = this.formatScoreLine(matchData);
         const matchTime = this.getEnhancedMatchTime(matchData);
 
+        let teamsText = `${matchData.home_team || 'TBD'} vs ${matchData.away_team || 'TBD'}`;
+        let leagueText = matchData.league || 'Unknown League';
+        let scoreText = scoreLine;
+        let timeText = matchTime;
+
+        if (matchData.placeholder) {
+            teamsText = matchData.placeholder_text || 'Awaiting Match Assignment';
+            leagueText = '—';
+            scoreText = '—';
+            timeText = '—';
+        }
+
         card.innerHTML = `
             <div class="selector-name">${selectorName}</div>
-            <div class="league-badge">${matchData.league || 'Unknown League'}</div>
-            <div class="teams">${matchData.home_team || 'TBD'} vs ${matchData.away_team || 'TBD'}</div>
+            <div class="league-badge">${leagueText}</div>
+            <div class="teams">${teamsText}</div>
             <div class="score-display">
-                <div class="score">${scoreLine}</div>
-                <div class="time">${matchTime}</div>
+                <div class="score">${scoreText}</div>
+                <div class="time">${timeText}</div>
             </div>
             <div class="btts-status ${bttsStatus.class}">
                 ${bttsStatus.text}
@@ -623,7 +643,9 @@ class BTTSTracker {
     }
 
     getMatchCardClass(matchData) {
-        if (matchData.btts_detected) {
+        if (matchData.placeholder) {
+            return 'btts-pending placeholder';
+        } else if (matchData.btts_detected) {
             return 'btts-success';
         } else if (matchData.status === 'finished') {
             return 'btts-failed';
@@ -633,7 +655,14 @@ class BTTSTracker {
     }
 
     getBTTSStatusInfo(matchData) {
-        if (matchData.btts_detected) {
+        if (matchData.placeholder) {
+            return {
+                class: 'pending',
+                text: 'AWAITING ASSIGNMENT',
+                icon: '⏳',
+                key: 'placeholder'
+            };
+        } else if (matchData.btts_detected) {
             return {
                 class: 'success',
                 text: 'BOTH SCORED',
@@ -685,7 +714,9 @@ class BTTSTracker {
 
     getMatchStatus(matchData) {
         const status = matchData.status;
-        if (status === 'not_started') {
+        if (status === 'no_selection') {
+            return { class: 'pending', text: 'AWAITING SELECTION' };
+        } else if (status === 'not_started') {
             return { class: 'pending', text: 'NOT STARTED' };
         } else if (status === 'finished') {
             return { class: 'finished', text: 'FINISHED' };
