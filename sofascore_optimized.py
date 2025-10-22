@@ -25,22 +25,56 @@ from collections import defaultdict
 import threading
 import logging
 
+# Import configuration for API key management
+try:
+    from config import get_config
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+
 class SofascoreLiveScoresAPI:
     """
     Ultra-optimized Sofascore API client for live scores only.
     Designed for minimal API usage with event-driven updates.
     """
 
-    def __init__(self, api_key="475ce1cf36msh165ba4080f79ebbp19eaefjsneae402d6d136",
-                 base_url="sofascore.p.rapidapi.com", cache_dir="cache"):
+    def __init__(self, api_key=None,
+                  base_url="sofascore.p.rapidapi.com", cache_dir="cache"):
         """
         Initialize the live scores optimized API client
 
         Args:
-            api_key (str): RapidAPI key
+            api_key (str): RapidAPI key (if None, will try to load from config)
             base_url (str): Base API URL
             cache_dir (str): Directory to store cache files
         """
+        # Setup logging FIRST before any other operations
+        self.logger = self._setup_logging()
+
+        # Load API key from configuration if not provided
+        if api_key is None:
+            if CONFIG_AVAILABLE:
+                try:
+                    # Import get_config function locally to avoid unbound variable issues
+                    from config import get_config as config_getter
+                    config = config_getter()
+                    api_key = config.SOFASCORE_API_KEY
+                    if api_key:
+                        self.logger.info("Loaded Sofascore API key from configuration")
+                    else:
+                        self.logger.error("SOFASCORE_API_KEY not configured in environment variables")
+                        raise ValueError("Sofascore API key not configured")
+                except Exception as e:
+                    self.logger.error(f"Error loading configuration: {e}")
+                    raise ValueError(f"Cannot load Sofascore API configuration: {e}")
+            else:
+                # Fallback to hardcoded key for backward compatibility (NOT RECOMMENDED)
+                self.logger.warning("Configuration module not available, using fallback API key")
+                api_key = "475ce1cf36msh165ba4080f79ebbp19eaefjsneae402d6d136"
+
+        if not api_key:
+            raise ValueError("Sofascore API key is required but not provided")
+
         self.api_key = api_key
         self.base_url = base_url
         self.cache_dir = cache_dir
@@ -102,9 +136,6 @@ class SofascoreLiveScoresAPI:
         self.cache_dependencies = {
             '/events/live': ['match_events', 'scores'],  # Invalidate when these change
         }
-
-        # Setup logging
-        self.logger = self._setup_logging()
 
     def _setup_logging(self) -> logging.Logger:
         """Setup logging for live scores operations."""

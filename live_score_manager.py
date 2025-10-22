@@ -21,8 +21,8 @@ from typing import Dict, List, Optional, Callable, Any
 import json
 import os
 
-# SOFASCORE API TEMPORARILY DISABLED FOR TESTING
-# from sofascore_optimized import SofascoreLiveScoresAPI
+# SOFASCORE API ENABLED FOR PRODUCTION
+from sofascore_optimized import SofascoreLiveScoresAPI
 from data_manager import data_manager
 
 # Import BTTS detector for integration
@@ -110,9 +110,8 @@ class LiveScoreManager:
         """
         self.data_manager = data_manager_instance or data_manager
 
-        # SOFASCORE API TEMPORARILY DISABLED - Using mock API for testing
-        # self.live_api = SofascoreLiveScoresAPI(cache_dir=cache_dir)
-        self.live_api = MockLiveScoresAPI(cache_dir=cache_dir)
+        # SOFASCORE API ENABLED FOR PRODUCTION - Using real API
+        self.live_api = SofascoreLiveScoresAPI(cache_dir=cache_dir)
 
         # Event callbacks
         self.event_callbacks = {

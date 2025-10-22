@@ -1076,14 +1076,40 @@ def get_btts_status():
                 "last_updated": datetime.now().isoformat()
             })
 
+        # Populate matches_data with selections first
+        matches_data = {}
+        for selector, match_data in selections.items():
+            matches_data[selector] = {
+                "home_team": match_data.get('home_team'),
+                "away_team": match_data.get('away_team'),
+                "home_score": 0,
+                "away_score": 0,
+                "status": "not_started",
+                "league": "Unknown",
+                "btts_detected": False,
+                "last_updated": datetime.now().isoformat()
+            }
+
+        # Add placeholders for unselected selectors
+        for selector in SELECTORS:
+            if selector not in matches_data:
+                matches_data[selector] = {
+                    "home_team": None,
+                    "away_team": None,
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "no_selection",
+                    "league": None,
+                    "btts_detected": False,
+                    "placeholder": True,
+                    "placeholder_text": "Awaiting Match Assignment",
+                    "last_updated": datetime.now().isoformat()
+                }
+
         # Map selections to Sofascore match IDs
         match_mapping = map_selections_to_sofascore_ids(selections)
 
         # Get live scores and detect events
-        matches_data = {}
-        btts_detected = 0
-        btts_pending = 0
-
         if SOFASCORE_AVAILABLE and sofascore_api:
             try:
                 # Get live scores data
@@ -1126,14 +1152,18 @@ def get_btts_status():
                                 "last_updated": datetime.now().isoformat()
                             }
 
-                            if is_btts:
-                                btts_detected += 1
-                            else:
-                                btts_pending += 1
-
             except Exception as e:
                 print(f"Error getting live scores: {e}")
                 # Continue with cached/empty data if Sofascore fails
+
+        # Calculate statistics for all matches
+        btts_detected = 0
+        btts_pending = 0
+        for selector, match_data in matches_data.items():
+            if match_data.get('btts_detected'):
+                btts_detected += 1
+            elif match_data.get('status') in ['not_started', 'live', 'no_selection']:
+                btts_pending += 1
 
         # Get API usage statistics
         api_stats = {}
@@ -1145,7 +1175,7 @@ def get_btts_status():
             "message": f"Tracking {len(matches_data)} matches with Sofascore integration",
             "matches": matches_data,
             "statistics": {
-                "total_matches_tracked": len(match_mapping),
+                "total_matches_tracked": len(matches_data),
                 "btts_detected": btts_detected,
                 "btts_pending": btts_pending,
                 "last_update": datetime.now().isoformat(),
