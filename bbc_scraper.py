@@ -26,13 +26,13 @@ NEW FUNCTIONALITY:
 - Dynamic URL construction using BBC's date-based format
 
 LEAGUES SUPPORTED:
-- Premier League, English Championship (top-tier leagues only)
-- Restricted to prevent lower league matches from being included
+- All English Leagues: Premier League, English Championship, League One, League Two, National League
+- All Scottish Leagues: Scottish Premiership, Scottish Championship, Scottish League One, Scottish League Two
 
 SCRAPING METHODOLOGY:
 - Uses https://www.bbc.co.uk/sport/football/scores-fixtures/YYYY-MM-DD
 - Parses ALL matches from this single page
-- Filters to only top-tier leagues (Premier League and Championship)
+- Filters to only supported leagues (all English and Scottish leagues)
 - Strictly enforces 15:00 kickoff times for fixtures
 - Handles both fixture and live score modes
 
@@ -102,14 +102,20 @@ class BBCSportScraper:
     MODE_FIXTURES = "fixtures"
     MODE_LIVE = "live"
 
-    # League configurations with their BBC Sport URLs - RESTRICTED to top-tier leagues only
+    # League configurations with their BBC Sport URLs - ALL English and Scottish leagues supported (including National League)
     LEAGUES = {
-        # English Leagues - Top Tier Only
+        # English Leagues
         "Premier League": "/sport/football/premier-league/scores-fixtures",
         "English Championship": "/sport/football/championship/scores-fixtures",
+        "League One": "/sport/football/league-one/scores-fixtures",
+        "League Two": "/sport/football/league-two/scores-fixtures",
+        "National League": "/sport/football/national-league/scores-fixtures",
 
-        # Note: Removed lower leagues (League One, League Two, etc.) to prevent incorrect matches
-        # Note: Removed Scottish leagues as they are not top-tier English leagues
+        # Scottish Leagues
+        "Scottish Premiership": "/sport/football/scottish-premiership/scores-fixtures",
+        "Scottish Championship": "/sport/football/scottish-championship/scores-fixtures",
+        "Scottish League One": "/sport/football/scottish-league-one/scores-fixtures",
+        "Scottish League Two": "/sport/football/scottish-league-two/scores-fixtures",
     }
 
     def __init__(self, rate_limit: float = 1.0):
@@ -308,11 +314,11 @@ class BBCSportScraper:
             home_team = match.get('home_team', '').strip()
             away_team = match.get('away_team', '').strip()
 
-            # Check for international teams or non-football teams - updated for top-tier English leagues
+            # Check for international teams or non-football teams - updated for all English and Scottish leagues
             invalid_indicators = [
                 'wales', 'australia', 'ukraine', 'kharkiv', 'lviv', 'vynnyky',
                 'miami', 'nashville', 'kyiv', 'polissya', 'cherkasy',
-                'scotland', 'scottish', 'celtic', 'hibernian', 'dundee'  # Exclude Scottish teams
+                'international', 'world cup', 'euro', 'olympic'
             ]
 
             home_lower = home_team.lower()
@@ -836,11 +842,17 @@ class BBCSportScraper:
         """
         matches = []
         
-        # BBC to internal league name mapping - RESTRICTED to top-tier leagues only
+        # BBC to internal league name mapping - ALL English and Scottish leagues supported
         league_mapping = {
             'Premier League': 'Premier League',
             'Championship': 'English Championship',
-            # Removed lower leagues and Scottish leagues to prevent incorrect matches
+            'League One': 'League One',
+            'League Two': 'League Two',
+            'National League': 'National League',
+            'Scottish Premiership': 'Scottish Premiership',
+            'Scottish Championship': 'Scottish Championship',
+            'Scottish League One': 'Scottish League One',
+            'Scottish League Two': 'Scottish League Two',
         }
         
         try:
@@ -1053,12 +1065,11 @@ class BBCSportScraper:
                 len(home_team) > 50 or len(away_team) > 50):
                 return None
 
-            # CRITICAL: Filter out international teams and invalid matches - updated for top-tier English leagues
+            # CRITICAL: Filter out international teams and invalid matches - updated for all English and Scottish leagues (including National League)
             invalid_indicators = [
                 'wales', 'australia', 'ukraine', 'kharkiv', 'lviv', 'vynnyky',
                 'miami', 'nashville', 'kyiv', 'polissya', 'cherkasy',
-                'international', 'world cup', 'euro', 'olympic',
-                'scotland', 'scottish', 'celtic', 'hibernian', 'dundee'  # Exclude Scottish teams
+                'international', 'world cup', 'euro', 'olympic'
             ]
 
             home_lower = home_team.lower()
@@ -1102,9 +1113,10 @@ class BBCSportScraper:
 
     def _identify_league_from_element(self, element) -> Optional[str]:
         """Identify the league name from a match element."""
-        # Look for league headers above the match - RESTRICTED to top-tier leagues only
+        # Look for league headers above the match - ALL English and Scottish leagues supported
         league_headers = [
-            "Premier League", "English Championship"
+            "Premier League", "English Championship", "League One", "League Two", "National League",
+            "Scottish Premiership", "Scottish Championship", "Scottish League One", "Scottish League Two"
         ]
 
         # Check the element text for league names
@@ -1119,10 +1131,11 @@ class BBCSportScraper:
         """Identify the league name from the broader context around a match element."""
         # NEW APPROACH: Use document structure to find league headers
         # Look backwards from the match element to find the nearest league header
-        # RESTRICTED to top-tier leagues only
+        # ALL English and Scottish leagues supported
 
         league_headers = [
-            "Premier League", "English Championship"
+            "Premier League", "English Championship", "League One", "League Two", "National League",
+            "Scottish Premiership", "Scottish Championship", "Scottish League One", "Scottish League Two"
         ]
 
         # Start from the match element and look backwards through the document
