@@ -17,22 +17,12 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 25px 30px;
-            margin-bottom: 30px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .enhanced-header h1 {
-            background: linear-gradient(135deg, #28a745, #20c997, #17a2b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin: 0;
-            text-align: center;
-        }
 
         .enhanced-status {
             display: flex;
@@ -77,14 +67,14 @@
         }
 
         .enhanced-summary {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
 
         .summary-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 30px;
+            padding: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -134,12 +124,12 @@
         .enhanced-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 25px;
+            gap: 15px;
         }
 
         .stat-item {
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             background: rgba(255, 255, 255, 0.8);
             border-radius: 10px;
             border: 2px solid rgba(0,0,0,0.1);
@@ -160,7 +150,7 @@
 
         .stat-value {
             display: block;
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 900;
             line-height: 1;
         }
@@ -183,21 +173,21 @@
         .enhanced-matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 10px;
         }
 
         .enhanced-match-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 25px;
+            padding: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             border: 3px solid transparent;
             position: relative;
             overflow: hidden;
-            min-height: 220px;
+            min-height: 150px;
         }
 
         .enhanced-match-card:hover {
@@ -246,8 +236,8 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: #212529;
-            margin-bottom: 15px;
-            line-height: 1.4;
+            margin-bottom: 8px;
+            line-height: 1.2;
         }
 
         .score-display {
@@ -258,10 +248,10 @@
         }
 
         .score {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 900;
             color: white;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-family: 'Courier New', monospace;
             text-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
         }
@@ -398,52 +388,141 @@
         /* Responsive design */
         @media (max-width: 768px) {
             .live-tracker-container {
-                padding: 15px;
+                padding: 5px;
             }
 
             .enhanced-header {
-                padding: 20px;
-            }
-
-            .enhanced-header h1 {
-                font-size: 1.8rem;
+                padding: 10px;
+                margin-bottom: 10px;
             }
 
             .enhanced-status {
                 flex-direction: column;
-                gap: 15px;
+                gap: 5px;
+            }
+
+            .enhanced-summary {
+                margin-bottom: 10px;
+            }
+
+            .summary-card {
+                padding: 10px;
             }
 
             .enhanced-matches-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 10px;
+                margin-bottom: 10px;
             }
 
             .enhanced-match-card {
-                padding: 20px;
+                padding: 10px;
+                min-height: 150px;
             }
 
             .score {
-                font-size: 2.5rem;
+                font-size: 1.5rem;
             }
 
             .enhanced-stats {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
+                gap: 5px;
             }
 
             .stat-value {
-                font-size: 2rem;
+                font-size: 1.2rem;
+            }
+
+            .stat-item {
+                padding: 8px;
+            }
+
+            .teams {
+                font-size: 0.8rem;
+                line-height: 1.1;
+                margin-bottom: 5px;
+            }
+
+            .selector-name {
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+            }
+
+            .league-badge {
+                font-size: 0.6rem;
+                padding: 2px 6px;
+                margin-bottom: 5px;
+            }
+
+            .btts-status {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+                margin-bottom: 5px;
+            }
+
+            .match-status {
+                font-size: 0.7rem;
+                padding: 2px 4px;
             }
         }
 
         @media (max-width: 480px) {
             .enhanced-stats {
                 grid-template-columns: 1fr;
+                gap: 3px;
             }
 
             .stat-item {
-                padding: 15px;
+                padding: 5px;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .score {
+                font-size: 1.2rem;
+            }
+
+            .enhanced-match-card {
+                padding: 8px;
+                min-height: 120px;
+            }
+
+            .teams {
+                font-size: 0.7rem;
+                line-height: 1;
+            }
+
+            .selector-name {
+                font-size: 0.8rem;
+            }
+
+            .league-badge {
+                font-size: 0.55rem;
+                padding: 1px 4px;
+            }
+
+            .btts-status {
+                font-size: 0.65rem;
+                padding: 3px 6px;
+            }
+
+            .match-status {
+                font-size: 0.65rem;
+                padding: 1px 3px;
+            }
+
+            .summary-card {
+                padding: 8px;
+            }
+
+            .enhanced-header {
+                padding: 5px;
+            }
+
+            .live-tracker-container {
+                padding: 2px;
             }
         }
     </style>
@@ -452,7 +531,6 @@
     <div class="live-tracker-container">
         <!-- Enhanced Header -->
         <header class="enhanced-header">
-            <h1>🎯 The Honest Matt Cup - Acca Tracker</h1>
             <div class="enhanced-status">
                 <div class="status-indicator" id="connection-status">
                     <span class="status-dot"></span>
