@@ -74,6 +74,7 @@
         .status-text {
             font-weight: 600;
             color: #495057;
+            font-size: 0.9rem;
         }
 
         .last-updated {
@@ -414,8 +415,16 @@
             }
 
             .enhanced-status {
-                flex-direction: column;
-                gap: 2px;
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .status-text, .last-updated {
+                font-size: 0.8rem;
+            }
+
+            .status-indicator {
+                padding: 5px 10px;
             }
 
             .enhanced-summary {
@@ -538,6 +547,19 @@
 
             .enhanced-header {
                 padding: 3px;
+            }
+
+            .enhanced-status {
+                flex-direction: row;
+                gap: 5px;
+            }
+
+            .status-text, .last-updated {
+                font-size: 0.7rem;
+            }
+
+            .status-indicator {
+                padding: 3px 6px;
             }
 
             .live-tracker-container {
