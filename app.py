@@ -35,7 +35,7 @@ from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 # Import Flask and extensions
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -460,8 +460,17 @@ def save_selections(selections_data):
 
 @app.route('/')
 def index():
-    """Redirect to admin interface."""
-    return app.redirect('/admin')
+    """Redirect to modern tracker interface."""
+    return redirect('/modern')
+
+@app.route('/modern')
+def modern_tracker():
+    """Modern single-page interface for Acca Tracker."""
+    try:
+        return render_template('modern-tracker.html')
+    except Exception as e:
+        app.logger.error(f"Error loading modern tracker interface: {str(e)}")
+        return f"Error loading modern tracker interface: {str(e)}", 500
 
 @app.route('/admin')
 def admin():

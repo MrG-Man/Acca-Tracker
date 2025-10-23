@@ -1494,3 +1494,17 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-23 11:44:09,495 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
 2025-10-23 11:44:09,495 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
 2025-10-23 11:44:09,495 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,547 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,547 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,547 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,547 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,548 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,548 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,548 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 11:44:39,548 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 14:56:27,107 - app - WARNING - 404 error: http://localhost:5001/favicon.ico
+2025-10-23 14:56:32,607 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 14:56:32,607 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 14:56:52,996 - app - WARNING - 404 error: http://localhost:5001/favicon.ico
+2025-10-23 15:11:07,152 - app - WARNING - 404 error: http://localhost:5001/modern
+2025-10-23 15:11:07,183 - app - WARNING - 404 error: http://localhost:5001/favicon.ico

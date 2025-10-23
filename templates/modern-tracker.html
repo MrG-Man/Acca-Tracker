@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Honest Matt Cup - Acca Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-tracker.css') }}">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Fixed Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">
+                        <span class="title-icon">⚽</span>
+                        <span class="title-text">The Honest Matt Cup</span>
+                    </h1>
+                    <p class="app-subtitle">BTTS Accumulator Tracker</p>
+                </div>
+                <div class="header-right">
+                    <div class="connection-status" id="connectionStatus">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Connecting...</span>
+                    </div>
+                    <div class="last-update">
+                        <span class="update-label">Last Update:</span>
+                        <span class="update-time" id="lastUpdateTime">Never</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <nav class="tab-navigation">
+                <button class="tab-button active" data-tab="dashboard">
+                    <span class="tab-icon">📊</span>
+                    <span class="tab-label">Dashboard</span>
+                </button>
+                <button class="tab-button" data-tab="selection">
+                    <span class="tab-icon">⚙️</span>
+                    <span class="tab-label">Selection</span>
+                </button>
+                <button class="tab-button" data-tab="tracker">
+                    <span class="tab-icon">🎯</span>
+                    <span class="tab-label">Live Tracker</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Dashboard Section -->
+            <section class="content-section active" id="dashboardSection">
+                <div class="section-header">
+                    <h2 class="section-title">Dashboard Overview</h2>
+                    <p class="section-subtitle">Week of <span id="currentWeek">Loading...</span></p>
+                </div>
+
+                <!-- Hero Stats -->
+                <div class="hero-stats">
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon success">✓</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="dashTotalSelections">0</div>
+                            <div class="stat-label">Total Selections</div>
+                        </div>
+                        <div class="stat-progress">
+                            <div class="progress-ring">
+                                <svg width="60" height="60">
+                                    <circle cx="30" cy="30" r="26" class="progress-ring-circle-bg"></circle>
+                                    <circle cx="30" cy="30" r="26" class="progress-ring-circle" id="selectionProgressRing"></circle>
+                                </svg>
+                                <div class="progress-percentage" id="selectionProgressText">0%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon live">🎯</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="dashBttsSuccess">0</div>
+                            <div class="stat-label">BTTS Success</div>
+                        </div>
+                        <div class="stat-trend success">
+                            <span class="trend-icon">↑</span>
+                            <span class="trend-value" id="bttsSuccessRate">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon warning">⏳</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="dashBttsPending">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon danger">✗</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="dashBttsFailed">0</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3 class="actions-title">Quick Actions</h3>
+                    <div class="actions-grid">
+                        <button class="action-button" data-action="goto-selection">
+                            <span class="action-icon">➕</span>
+                            <span class="action-label">Add Selections</span>
+                        </button>
+                        <button class="action-button" data-action="goto-tracker">
+                            <span class="action-icon">📺</span>
+                            <span class="action-label">View Live Tracker</span>
+                        </button>
+                        <button class="action-button" data-action="refresh">
+                            <span class="action-icon">🔄</span>
+                            <span class="action-label">Refresh Data</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Accumulator Status -->
+                <div class="accumulator-overview glass-card">
+                    <h3 class="overview-title">Accumulator Status</h3>
+                    <div class="accumulator-status-display">
+                        <div class="status-badge-large" id="dashAccumulatorStatus">
+                            <span class="status-icon">⏳</span>
+                            <span class="status-text">PENDING</span>
+                        </div>
+                        <div class="status-message" id="dashStatusMessage">
+                            Awaiting match selections and live results
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Selection Section -->
+            <section class="content-section" id="selectionSection">
+                <div class="section-header">
+                    <h2 class="section-title">Match Selection</h2>
+                    <p class="section-subtitle">Assign matches to selectors</p>
+                </div>
+
+                <!-- Selection Progress -->
+                <div class="selection-progress glass-card">
+                    <div class="progress-header">
+                        <h3>Assignment Progress</h3>
+                        <div class="progress-stats">
+                            <span class="progress-count"><span id="assignedCount">0</span> / 8 Assigned</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="assignmentProgressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Selectors Grid -->
+                <div class="selectors-section">
+                    <h3 class="subsection-title">Selectors</h3>
+                    <div class="selectors-grid" id="selectorsGrid">
+                        <!-- Selector cards will be dynamically inserted -->
+                    </div>
+                </div>
+
+                <!-- Available Matches -->
+                <div class="matches-section">
+                    <h3 class="subsection-title">Available Matches</h3>
+                    <div class="matches-grid" id="availableMatchesGrid">
+                        <!-- Match cards will be dynamically inserted -->
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state" id="selectionLoading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading matches...</p>
+                </div>
+            </section>
+
+            <!-- Tracker Section -->
+            <section class="content-section" id="trackerSection">
+                <div class="section-header">
+                    <h2 class="section-title">Live Tracker</h2>
+                    <p class="section-subtitle">Real-time BTTS monitoring</p>
+                </div>
+
+                <!-- Accumulator Summary -->
+                <div class="tracker-summary glass-card">
+                    <div class="summary-header">
+                        <h3>Accumulator Status</h3>
+                        <div class="auto-refresh-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoRefreshToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label">Auto-refresh</span>
+                        </div>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-status">
+                            <div class="status-badge-large" id="trackerAccumulatorStatus">
+                                <span class="status-icon">⏳</span>
+                                <span class="status-text">PENDING</span>
+                            </div>
+                        </div>
+                        <div class="summary-stats-grid">
+                            <div class="summary-stat success">
+                                <div class="stat-value" id="trackerBttsSuccess">0</div>
+                                <div class="stat-label">Success</div>
+                            </div>
+                            <div class="summary-stat warning">
+                                <div class="stat-value" id="trackerBttsPending">0</div>
+                                <div class="stat-label">Pending</div>
+                            </div>
+                            <div class="summary-stat danger">
+                                <div class="stat-value" id="trackerBttsFailed">0</div>
+                                <div class="stat-label">Failed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Matches Grid -->
+                <div class="live-matches-grid" id="liveMatchesGrid">
+                    <!-- Live match cards will be dynamically inserted -->
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state" id="trackerLoading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading live data...</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-bottom-nav">
+            <button class="mobile-nav-button active" data-tab="dashboard">
+                <span class="mobile-nav-icon">📊</span>
+                <span class="mobile-nav-label">Dashboard</span>
+            </button>
+            <button class="mobile-nav-button" data-tab="selection">
+                <span class="mobile-nav-icon">⚙️</span>
+                <span class="mobile-nav-label">Selection</span>
+            </button>
+            <button class="mobile-nav-button" data-tab="tracker">
+                <span class="mobile-nav-icon">🎯</span>
+                <span class="mobile-nav-label">Tracker</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal for Match Assignment -->
+    <div class="modal-overlay" id="assignmentModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Assign Match</h3>
+                <button class="modal-close" id="closeAssignmentModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="assignment-details" id="assignmentDetails">
+                    <!-- Assignment details will be inserted here -->
+                </div>
+                <div class="selector-dropdown">
+                    <label for="selectorSelect">Select Selector:</label>
+                    <select id="selectorSelect" class="selector-select">
+                        <option value="">Choose a selector...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAssignment">Cancel</button>
+                <button class="btn btn-primary" id="confirmAssignment">Assign Match</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/modern-tracker.js') }}"></script>
+</body>
+</html>
