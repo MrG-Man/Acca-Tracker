@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "created_at": "2025-10-22T15:41:59.437385",
+    "created_at": "2025-10-22T17:16:58.720690",
     "version": "1.0",
     "date": "2025-10-25"
   },
@@ -8,6 +8,27 @@
     "Glynny": {
       "home_team": "Chelsea",
       "away_team": "Sunderland",
+      "prediction": "TBD",
+      "confidence": 5,
+      "assigned_at": "2025-10-22T17:16:46.318291"
+    },
+    "Mickey D": {
+      "home_team": "Newcastle United",
+      "away_team": "Fulham",
+      "prediction": "TBD",
+      "confidence": 5,
+      "assigned_at": "2025-10-22T17:16:51.563582"
+    },
+    "Eddie Lee": {
+      "home_team": "Falkirk",
+      "away_team": "Dundee",
+      "prediction": "TBD",
+      "confidence": 5,
+      "assigned_at": "2025-10-22T17:16:58.720362"
+    },
+    "Fran Radar": {
+      "home_team": "Blackburn Rovers",
+      "away_team": "Southampton",
       "prediction": "TBD",
       "confidence": 5
     }

@@ -1024,6 +1024,17 @@ def btts_tracker():
         return f"Error loading BTTS tracker: {str(e)}", 500
 
 
+@app.route('/mobile-test')
+def mobile_test():
+    """Mobile device testing interface for testing responsive design across multiple devices."""
+    try:
+        app.logger.info("Mobile test route accessed - rendering mobile_test.html")
+        return render_template('mobile_test.html')
+    except Exception as e:
+        app.logger.error(f"Error loading mobile test interface: {str(e)}")
+        return f"Error loading mobile test interface: {str(e)}", 500
+
+
 
 @app.route('/api/btts-status')
 def get_btts_status():

@@ -354,18 +354,39 @@ body::before {
     letter-spacing: 0.5px;
 }
 
-/* Enhanced Teams */
+/* Enhanced Teams Section with Match Names */
 .teams {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-dark);
-    margin-bottom: 15px;
-    line-height: 1.4;
-    min-height: 3.08rem;
+    margin-bottom: 12px;
+    line-height: 1.3;
+    min-height: 2.6rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    position: relative;
+}
+
+/* Match Name (League/Competition) */
+.match-name {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    opacity: 0.8;
+}
+
+/* Team Names */
+.team-names {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    line-height: 1.2;
 }
 
 /* Enhanced Score Display Container */
@@ -373,32 +394,37 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
+    margin-bottom: 15px;
+    padding: 10px 8px;
     background: rgba(23, 162, 184, 0.05);
     border: 2px solid rgba(23, 162, 184, 0.1);
+    border-radius: 8px;
+    gap: 4px;
 }
 
-/* Enhanced Score */
+/* Enhanced Score - Primary Focus */
 .score {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 900;
     color: white;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     font-family: 'Courier New', monospace;
     line-height: 1;
+    text-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
 }
 
 /* Enhanced Time */
 .time {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: white;
     text-align: center;
     line-height: 1.2;
-    padding: 5px 10px;
-    background: rgba(108, 117, 125, 0.1);
-    min-width: 80px;
+    padding: 3px 8px;
+    background: rgba(108, 117, 125, 0.15);
+    border-radius: 8px;
+    min-width: 70px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Enhanced BTTS Status */
@@ -570,27 +596,27 @@ body::before {
 
     .matches-grid, .enhanced-matches-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 15px;
+        gap: 8px;
     }
 }
 
 @media (max-width: 768px) {
     body {
-        padding: 2px;
+        padding: 1px;
         height: 100vh;
         overflow: hidden;
     }
 
     .tracker-container {
-        padding: 2px;
+        padding: 1px;
     }
 
     .tracker-header, .enhanced-header {
-        padding: 5px;
+        padding: 2px;
         flex-direction: column;
         align-items: center;
-        gap: 2px;
-        margin-bottom: 2px;
+        gap: 1px;
+        margin-bottom: 1px;
     }
 
     .tracker-header h1, .enhanced-header h1 {
@@ -611,83 +637,113 @@ body::before {
 
     .matches-grid, .enhanced-matches-grid {
         grid-template-columns: 1fr;
-        gap: 2px;
-        margin-bottom: 2px;
+        gap: 1px;
+        margin-bottom: 1px;
     }
 
     .match-card, .enhanced-match-card {
-        padding: 4px;
-        min-height: 50px;
-        height: 50px;
+        padding: 12px;
+        min-height: 120px;
+        height: auto;
     }
 
     .score {
-        font-size: 1rem;
+        font-size: 1.8rem;
     }
 
     .summary-stats, .enhanced-stats {
         grid-template-columns: repeat(3, 1fr);
-        gap: 2px;
+        gap: 1px;
     }
 
     .stat-value {
-        font-size: 1rem;
+        font-size: 0.7rem;
     }
 
     .stat-item {
-        padding: 4px;
+        padding: 2px;
     }
 
     .status-badge {
-        padding: 4px 8px;
-        font-size: 0.7rem;
+        padding: 2px 4px;
+        font-size: 0.5rem;
     }
 
     .teams {
-        font-size: 0.7rem;
-        line-height: 1.1;
-        margin-bottom: 2px;
+        font-size: 0.8rem;
+        line-height: 1.3;
+        margin-bottom: 8px;
+        min-height: 3rem;
+    }
+
+    .match-name {
+        font-size: 0.65rem;
+        margin-bottom: 4px;
+    }
+
+    .team-names {
+        font-size: 0.8rem;
+        line-height: 1.3;
     }
 
     .selector-name {
-        font-size: 0.8rem;
-        margin-bottom: 2px;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
     }
 
     .league-badge {
-        font-size: 0.5rem;
-        padding: 1px 3px;
-        margin-bottom: 2px;
+        font-size: 0.6rem;
+        padding: 3px 6px;
+        margin-bottom: 6px;
     }
 
     .btts-status {
-        font-size: 0..6rem;
-        padding: 2px 4px;
-        margin-bottom: 2px;
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        margin-bottom: 6px;
     }
 
     .match-status {
-        font-size: 0.6rem;
-        padding: 1px 2px;
+        font-size: 0.65rem;
+        padding: 3px 6px;
     }
 
     .score-display {
-        padding: 2px;
-        margin-bottom: 2px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .score {
+        font-size: 1.8rem;
+        margin-bottom: 6px;
     }
 
     .time {
-        font-size: 0.7rem;
-        padding: 1px 2px;
+        font-size: 0.75rem;
+        padding: 3px 8px;
+        min-width: 70px;
     }
 
     .summary-card {
-        padding: 5px;
-        margin-bottom: 2px;
+        padding: 2px;
+        margin-bottom: 1px;
     }
 
     .accumulator-status {
-        margin-bottom: 2px;
+        margin-bottom: 1px;
+    }
+
+    /* Optimize for larger mobile screens (tablets and large phones) to show 2 columns */
+    @media (min-width: 600px) and (max-width: 768px) {
+        .matches-grid, .enhanced-matches-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3px;
+        }
+
+        .match-card, .enhanced-match-card {
+            padding: 8px;
+            min-height: 100px;
+        }
     }
 }
 
@@ -706,11 +762,12 @@ body::before {
     }
 
     .score {
-        font-size: 0.9rem;
+        font-size: 1.5rem;
     }
 
     .match-card, .enhanced-match-card {
-        padding: 3px;
+        padding: 10px;
+        min-height: 110px;
     }
 }
 
@@ -750,38 +807,60 @@ body::before {
     }
 
     .score {
-        font-size: 0.8rem;
+        font-size: 1.3rem;
     }
 
     .teams {
+        font-size: 0.7rem;
+        line-height: 1.2;
+        min-height: 2.5rem;
+    }
+
+    .match-name {
         font-size: 0.6rem;
+        margin-bottom: 3px;
+    }
+
+    .team-names {
+        font-size: 0.7rem;
+        line-height: 1.2;
     }
 
     .selector-name {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
     }
 
     .league-badge {
-        font-size: 0.4rem;
-        padding: 1px 2px;
+        font-size: 0.55rem;
+        padding: 2px 4px;
+        margin-bottom: 4px;
     }
 
     .btts-status {
-        font-size: 0.5rem;
-        padding: 1px 2px;
+        font-size: 0.6rem;
+        padding: 3px 6px;
+        margin-bottom: 4px;
     }
 
     .match-status {
-        font-size: 0.5rem;
-        padding: 1px 2px;
+        font-size: 0.6rem;
+        padding: 2px 4px;
+    }
+
+    .time {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        min-width: 65px;
     }
 
     .matches-grid, .enhanced-matches-grid {
-        gap: 1px;
+        gap: 8px;
     }
 
     .match-card, .enhanced-match-card {
-        padding: 2px;
+        padding: 8px;
+        min-height: 100px;
     }
 }
 

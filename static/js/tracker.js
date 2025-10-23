@@ -581,22 +581,26 @@ class BTTSTracker {
         const scoreLine = this.formatScoreLine(matchData);
         const matchTime = this.getEnhancedMatchTime(matchData);
 
-        let teamsText = `${matchData.home_team || 'TBD'} vs ${matchData.away_team || 'TBD'}`;
+        let teamsContent = '';
         let leagueText = matchData.league || 'Unknown League';
         let scoreText = scoreLine;
         let timeText = matchTime;
 
         if (matchData.placeholder) {
-            teamsText = matchData.placeholder_text || 'Awaiting Match Assignment';
+            teamsContent = `<div class="team-names">${matchData.placeholder_text || 'Awaiting Match Assignment'}</div>`;
             leagueText = '—';
             scoreText = '—';
             timeText = '—';
+        } else {
+            const matchName = matchData.league ? `<div class="match-name">${matchData.league}</div>` : '';
+            const teamNames = `<div class="team-names">${matchData.home_team || 'TBD'} vs ${matchData.away_team || 'TBD'}</div>`;
+            teamsContent = matchName + teamNames;
         }
 
         card.innerHTML = `
             <div class="selector-name">${selectorName}</div>
             <div class="league-badge">${leagueText}</div>
-            <div class="teams">${teamsText}</div>
+            <div class="teams">${teamsContent}</div>
             <div class="score-display">
                 <div class="score">${scoreText}</div>
                 <div class="time">${timeText}</div>
@@ -733,18 +737,28 @@ class BTTSTracker {
         if (status === 'not_started') {
             return 'Not Started';
         } else if (status === 'finished') {
-            return 'Full Time';
+            return 'FT';
         } else if (status === 'live') {
-            // Try to get actual match time from the API data
+            // Enhanced live timing with more detailed information
             const matchTime = matchData.match_time || matchData.minute || 'LIVE';
-            return typeof matchTime === 'number' ? `${matchTime}'` : matchTime;
-        } else if (status === 'first_half' || status === 'second_half') {
+            if (typeof matchTime === 'number') {
+                return `LIVE ${matchTime}'`;
+            }
+            return matchTime;
+        } else if (status === 'first_half') {
             const matchTime = matchData.match_time || matchData.minute || 'LIVE';
             const timeStr = typeof matchTime === 'number' ? `${matchTime}'` : matchTime;
-            const half = status === 'first_half' ? '1H' : '2H';
-            return `${half} ${timeStr}`;
+            return `1H ${timeStr}`;
+        } else if (status === 'second_half') {
+            const matchTime = matchData.match_time || matchData.minute || 'LIVE';
+            const timeStr = typeof matchTime === 'number' ? `${matchTime}'` : matchTime;
+            return `2H ${timeStr}`;
         } else if (status === 'half_time') {
-            return 'Half Time';
+            return 'HT';
+        } else if (status === 'extra_time') {
+            return 'ET';
+        } else if (status === 'penalties') {
+            return 'PEN';
         } else {
             return status.replace('_', ' ').toUpperCase();
         }
@@ -754,9 +768,10 @@ class BTTSTracker {
         const homeScore = matchData.home_score || 0;
         const awayScore = matchData.away_score || 0;
 
-        // Add plus indicators for recent goals
+        // Enhanced score formatting with better visual presentation
         let scoreLine = `${homeScore}-${awayScore}`;
 
+        // Add plus indicators for recent goals with enhanced styling
         if (matchData.recent_goals && matchData.recent_goals.length > 0) {
             const recentGoals = matchData.recent_goals.slice(-2); // Show last 2 goals
             const indicators = recentGoals.map(goal => {
@@ -767,6 +782,14 @@ class BTTSTracker {
 
             if (indicators) {
                 scoreLine += ` ${indicators}`;
+            }
+        }
+
+        // Add status indicators for better context
+        if (matchData.status === 'live') {
+            const minute = matchData.match_time || matchData.minute;
+            if (typeof minute === 'number' && minute > 0) {
+                scoreLine += ` (${minute}')`;
             }
         }
 

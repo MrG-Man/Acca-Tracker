@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Device Test - Football Predictions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_test.css') }}">
+    <style>
+        /* Additional styles for better mobile testing */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Hide scrollbars on device frames for cleaner look */
+        .device-screen {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 #f1f1f1;
+        }
+
+        /* Ensure iframes load properly */
+        iframe {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        iframe.loaded {
+            opacity: 1;
+        }
+
+        /* Custom loading states */
+        .device-error {
+            background: #f8d7da;
+            color: #721c24;
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .device-error::before {
+            content: '⚠️';
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-test-container">
+        <!-- Header -->
+        <header class="mobile-test-header">
+            <h1>📱 Mobile Device Test Suite</h1>
+            <p>Test your admin and tracker interfaces across multiple device sizes</p>
+        </header>
+
+        <!-- Device Controls -->
+        <div class="device-controls">
+            <button class="device-btn admin-mode" data-mode="admin" onclick="switchMode('admin')">
+                👨‍💼 Admin Mode
+            </button>
+            <button class="device-btn tracker-mode" data-mode="tracker" onclick="switchMode('tracker')">
+                📊 Tracker Mode
+            </button>
+        </div>
+
+        <!-- Orientation Controls -->
+        <div class="orientation-controls">
+            <button class="orientation-btn active" onclick="setOrientation('portrait')">
+                📱 Portrait
+            </button>
+            <button class="orientation-btn" onclick="setOrientation('landscape')">
+                📲 Landscape
+            </button>
+        </div>
+
+        <!-- Device Showcase -->
+        <div class="device-showcase">
+            <!-- iPhone 12 Pro -->
+            <div class="device-frame iphone-12" data-device="iphone-12">
+                <div class="device-screen" id="iphone-12-screen">
+                    <div class="device-loading" id="iphone-12-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading...</p>
+                    </div>
+                    <iframe
+                        id="iphone-12-iframe"
+                        onload="handleIframeLoad('iphone-12')"
+                        onerror="handleIframeError('iphone-12')">
+                    </iframe>
+                </div>
+                <div class="status-indicator" id="iphone-12-status"></div>
+                <button class="fullscreen-btn" onclick="toggleFullscreen('iphone-12')" title="Fullscreen">
+                    ⛶
+                </button>
+                <div class="device-info">
+                    iPhone 12 Pro<br>
+                    <small>390 × 844px</small>
+                </div>
+            </div>
+
+            <!-- iPhone SE -->
+            <div class="device-frame iphone-se" data-device="iphone-se">
+                <div class="device-screen" id="iphone-se-screen">
+                    <div class="device-loading" id="iphone-se-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading...</p>
+                    </div>
+                    <iframe
+                        id="iphone-se-iframe"
+                        onload="handleIframeLoad('iphone-se')"
+                        onerror="handleIframeError('iphone-se')">
+                    </iframe>
+                </div>
+                <div class="status-indicator" id="iphone-se-status"></div>
+                <button class="fullscreen-btn" onclick="toggleFullscreen('iphone-se')" title="Fullscreen">
+                    ⛶
+                </button>
+                <div class="device-info">
+                    iPhone SE<br>
+                    <small>375 × 667px</small>
+                </div>
+            </div>
+
+            <!-- Samsung Galaxy S21 -->
+            <div class="device-frame samsung-galaxy" data-device="samsung-galaxy">
+                <div class="device-screen" id="samsung-galaxy-screen">
+                    <div class="device-loading" id="samsung-galaxy-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading...</p>
+                    </div>
+                    <iframe
+                        id="samsung-galaxy-iframe"
+                        onload="handleIframeLoad('samsung-galaxy')"
+                        onerror="handleIframeError('samsung-galaxy')">
+                    </iframe>
+                </div>
+                <div class="status-indicator" id="samsung-galaxy-status"></div>
+                <button class="fullscreen-btn" onclick="toggleFullscreen('samsung-galaxy')" title="Fullscreen">
+                    ⛶
+                </button>
+                <div class="device-info">
+                    Samsung Galaxy S21<br>
+                    <small>360 × 800px</small>
+                </div>
+            </div>
+
+            <!-- iPad -->
+            <div class="device-frame ipad" data-device="ipad">
+                <div class="device-screen" id="ipad-screen">
+                    <div class="device-loading" id="ipad-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading...</p>
+                    </div>
+                    <iframe
+                        id="ipad-iframe"
+                        onload="handleIframeLoad('ipad')"
+                        onerror="handleIframeError('ipad')">
+                    </iframe>
+                </div>
+                <div class="status-indicator" id="ipad-status"></div>
+                <button class="fullscreen-btn" onclick="toggleFullscreen('ipad')" title="Fullscreen">
+                    ⛶
+                </button>
+                <div class="device-info">
+                    iPad<br>
+                    <small>768 × 1024px</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Testing Tools -->
+        <div class="testing-tools" style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 20px; margin-top: 30px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0; color: #2c3e50;">🔧 Testing Tools</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #495057;">Quick Actions</h4>
+                    <button onclick="refreshAllDevices()" style="width: 100%; padding: 10px; margin-bottom: 10px; border: none; border-radius: 8px; background: #28a745; color: white; font-weight: 600; cursor: pointer;">
+                        🔄 Refresh All Devices
+                    </button>
+                    <button onclick="testConnectivity()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: #17a2b8; color: white; font-weight: 600; cursor: pointer;">
+                        🌐 Test Connectivity
+                    </button>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #495057;">Device Info</h4>
+                    <div id="device-info" style="font-family: monospace; font-size: 0.9rem; color: #6c757d; line-height: 1.4;">
+                        Current Mode: <span id="current-mode">admin</span><br>
+                        Orientation: <span id="current-orientation">portrait</span><br>
+                        Active Devices: <span id="active-devices">4</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #495057;">Performance</h4>
+                    <div id="performance-info" style="font-family: monospace; font-size: 0.9rem; color: #6c757d; line-height: 1.4;">
+                        Load Time: <span id="avg-load-time">-</span><br>
+                        Last Update: <span id="last-update">-</span><br>
+                        Status: <span id="overall-status" style="color: #28a745;">● Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #6c757d; font-size: 0.9rem;">
+            <p>Mobile Device Test Suite - Test your interfaces across multiple screen sizes and devices</p>
+            <p>Switch between Admin and Tracker modes to test different parts of your application</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/mobile_test.js') }}"></script>
+</body>
+</html>
