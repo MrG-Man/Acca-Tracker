@@ -133,53 +133,120 @@ class ModernAccaTracker {
     
     async loadCurrentWeek() {
         try {
-            const response = await fetch('/api/tracker-data');
+            const response = await fetch('/api/modern-tracker-data');
             const data = await response.json();
-            
+
             if (data.success && data.week) {
                 this.currentWeek = data.week;
-                document.getElementById('currentWeek')?.textContent = 
-                    new Date(data.week).toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric', 
-                        year: 'numeric' 
+                const weekElement = document.getElementById('currentWeek');
+                if (weekElement) {
+                    weekElement.textContent = new Date(data.week).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
                     });
+                }
+            } else if (data.fallback && data.week) {
+                // Handle fallback data
+                console.warn('Using fallback week data');
+                this.currentWeek = data.week;
+                const weekElement = document.getElementById('currentWeek');
+                if (weekElement) {
+                    weekElement.textContent = new Date(data.week).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                }
             }
         } catch (error) {
             console.error('Error loading current week:', error);
+            // Set fallback week if API fails
+            const fallbackWeek = new Date().toISOString().split('T')[0];
+            this.currentWeek = fallbackWeek;
+            const weekElement = document.getElementById('currentWeek');
+            if (weekElement) {
+                weekElement.textContent = new Date(fallbackWeek).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
         }
     }
     
     async loadAllData() {
         this.updateConnectionStatus('loading');
-        
+
         try {
-            // Load selections
-            await this.loadSelections();
-            
-            // Update all sections
-            this.updateDashboard();
-            
-            // Update last update time
-            this.updateLastUpdateTime();
-            
-            this.updateConnectionStatus('connected');
+            // Load unified data from modern endpoint
+            const response = await fetch('/api/modern-tracker-data');
+            const data = await response.json();
+
+            if (data.success) {
+                // Update state with unified data - handle enhanced structure
+                this.selections.clear();
+                if (data.selections) {
+                    Object.entries(data.selections).forEach(([selector, matchData]) => {
+                        // Ensure backward compatibility and handle null/undefined values
+                        const enhancedMatchData = this.enhanceMatchData(matchData);
+                        this.selections.set(selector, enhancedMatchData);
+                    });
+                }
+
+                this.liveScores.clear();
+                if (data.matches) {
+                    Object.entries(data.matches).forEach(([selector, matchData]) => {
+                        // Ensure backward compatibility and handle null/undefined values
+                        const enhancedMatchData = this.enhanceMatchData(matchData);
+                        this.liveScores.set(selector, enhancedMatchData);
+                    });
+                }
+
+                // Update all sections with enhanced data
+                this.updateDashboard(data);
+                this.updateSelectionProgress(data);
+
+                // Update last update time
+                this.updateLastUpdateTime();
+
+                this.updateConnectionStatus('connected');
+            } else {
+                // Handle enhanced error response with fallback data
+                if (data.fallback) {
+                    console.warn('Using fallback data due to API error:', data.error);
+                    this.handleFallbackData(data);
+                    this.updateConnectionStatus('connected');
+                    this.showToast('Using cached data - some features may be limited', 'warning');
+                } else {
+                    throw new Error(data.error || 'Failed to load data');
+                }
+            }
         } catch (error) {
             console.error('Error loading data:', error);
             this.updateConnectionStatus('disconnected');
-            this.showToast('Failed to load data', 'error');
+            this.showToast('Failed to load data - check connection', 'error');
         }
     }
     
     async loadSelections() {
         try {
-            const response = await fetch('/api/selections');
+            const response = await fetch('/api/modern-tracker-data');
             const data = await response.json();
-            
-            if (data.selectors) {
+
+            if (data.success && data.selections) {
                 this.selections.clear();
-                Object.entries(data.selectors).forEach(([selector, matchData]) => {
-                    this.selections.set(selector, matchData);
+                Object.entries(data.selections).forEach(([selector, matchData]) => {
+                    const enhancedMatchData = this.enhanceMatchData(matchData);
+                    this.selections.set(selector, enhancedMatchData);
+                });
+            } else if (data.fallback && data.selections) {
+                // Handle fallback data
+                console.warn('Using fallback selections data');
+                this.selections.clear();
+                Object.entries(data.selections).forEach(([selector, matchData]) => {
+                    const enhancedMatchData = this.enhanceMatchData(matchData);
+                    this.selections.set(selector, enhancedMatchData);
                 });
             }
         } catch (error) {
@@ -191,28 +258,71 @@ class ModernAccaTracker {
     async loadSelectionData() {
         const loadingState = document.getElementById('selectionLoading');
         if (loadingState) loadingState.classList.add('active');
-        
+
         try {
-            // Load available matches
-            const response = await fetch('/api/bbc-fixtures');
+            // Load unified data from modern endpoint
+            const response = await fetch('/api/modern-tracker-data');
             const data = await response.json();
-            
-            if (data.success && data.matches) {
-                this.matches = data.matches;
+
+            if (data.success) {
+                // Update selections with enhanced data processing
+                this.selections.clear();
+                if (data.selections) {
+                    Object.entries(data.selections).forEach(([selector, matchData]) => {
+                        const enhancedMatchData = this.enhanceMatchData(matchData);
+                        this.selections.set(selector, enhancedMatchData);
+                    });
+                }
+
+                // Load available matches from BBC fixtures with enhanced error handling
+                try {
+                    const fixturesResponse = await fetch('/api/bbc-fixtures');
+                    const fixturesData = await fixturesResponse.json();
+
+                    if (fixturesData.success && fixturesData.matches) {
+                        this.matches = fixturesData.matches;
+                    } else if (fixturesData.fallback) {
+                        console.warn('Using fallback fixtures data');
+                        this.matches = fixturesData.matches || [];
+                        this.showToast('Using cached fixtures - may not be current', 'warning');
+                    }
+                } catch (fixturesError) {
+                    console.warn('Error loading fixtures, continuing without:', fixturesError);
+                    this.matches = [];
+                }
+
+                // Render selectors
+                this.renderSelectors();
+
+                // Render available matches
+                this.renderAvailableMatches();
+
+                // Update progress with enhanced data
+                this.updateSelectionProgress(data);
+            } else {
+                // Handle enhanced error response with fallback data
+                if (data.fallback) {
+                    console.warn('Using fallback data for selections:', data.error);
+                    this.selections.clear();
+                    if (data.selections) {
+                        Object.entries(data.selections).forEach(([selector, matchData]) => {
+                            const enhancedMatchData = this.enhanceMatchData(matchData);
+                            this.selections.set(selector, enhancedMatchData);
+                        });
+                    }
+                    this.matches = [];
+                    this.renderSelectors();
+                    this.renderAvailableMatches();
+                    this.updateSelectionProgress(data);
+                    this.showToast('Using cached data - selections may be outdated', 'warning');
+                } else {
+                    throw new Error(data.error || 'Failed to load selection data');
+                }
             }
-            
-            // Render selectors
-            this.renderSelectors();
-            
-            // Render available matches
-            this.renderAvailableMatches();
-            
-            // Update progress
-            this.updateSelectionProgress();
-            
+
         } catch (error) {
             console.error('Error loading selection data:', error);
-            this.showToast('Failed to load matches', 'error');
+            this.showToast('Failed to load matches - check connection', 'error');
         } finally {
             if (loadingState) loadingState.classList.remove('active');
         }
@@ -221,80 +331,184 @@ class ModernAccaTracker {
     async loadTrackerData() {
         const loadingState = document.getElementById('trackerLoading');
         if (loadingState) loadingState.classList.add('active');
-        
+
         try {
-            const response = await fetch('/api/btts-status');
+            const response = await fetch('/api/modern-tracker-data');
             const data = await response.json();
-            
-            if (data.matches) {
+
+            if (data.success && data.matches) {
                 this.liveScores.clear();
                 Object.entries(data.matches).forEach(([selector, matchData]) => {
-                    this.liveScores.set(selector, matchData);
+                    // Enhanced match data handling
+                    const enhancedMatchData = this.enhanceMatchData(matchData);
+                    this.liveScores.set(selector, enhancedMatchData);
                 });
+
+                // Render live matches
+                this.renderLiveMatches();
+
+                // Update tracker summary with enhanced data
+                this.updateTrackerSummary(data);
+            } else {
+                // Handle enhanced error response with fallback data
+                if (data.fallback) {
+                    console.warn('Using fallback data for tracker:', data.error);
+                    this.liveScores.clear();
+                    if (data.matches) {
+                        Object.entries(data.matches).forEach(([selector, matchData]) => {
+                            const enhancedMatchData = this.enhanceMatchData(matchData);
+                            this.liveScores.set(selector, enhancedMatchData);
+                        });
+                    }
+                    this.renderLiveMatches();
+                    this.updateTrackerSummary(data);
+                    this.showToast('Using cached data - live updates may be limited', 'warning');
+                } else {
+                    throw new Error(data.error || 'Failed to load tracker data');
+                }
             }
-            
-            // Render live matches
-            this.renderLiveMatches();
-            
-            // Update tracker summary
-            this.updateTrackerSummary(data);
-            
+
         } catch (error) {
             console.error('Error loading tracker data:', error);
-            this.showToast('Failed to load live data', 'error');
+            this.showToast('Failed to load live data - check connection', 'error');
         } finally {
             if (loadingState) loadingState.classList.remove('active');
         }
     }
     
-    updateDashboard() {
-        const totalSelections = this.selections.size;
-        const maxSelections = 8;
-        const percentage = Math.round((totalSelections / maxSelections) * 100);
-        
-        // Update stats
-        document.getElementById('dashTotalSelections').textContent = totalSelections;
-        document.getElementById('selectionProgressText').textContent = `${percentage}%`;
-        
+    enhanceMatchData(matchData) {
+        // Ensure backward compatibility and handle null/undefined values
+        if (!matchData || typeof matchData !== 'object') {
+            return {
+                home_team: null,
+                away_team: null,
+                prediction: 'TBD',
+                confidence: 5,
+                assigned_at: null,
+                league: null,
+                status: 'no_selection',
+                home_score: 0,
+                away_score: 0,
+                match_time: '—',
+                btts_detected: false,
+                is_selected: false,
+                placeholder_text: 'No data available',
+                last_updated: new Date().toISOString()
+            };
+        }
+
+        return {
+            home_team: matchData.home_team || null,
+            away_team: matchData.away_team || null,
+            prediction: matchData.prediction || 'TBD',
+            confidence: matchData.confidence || 5,
+            assigned_at: matchData.assigned_at || null,
+            league: matchData.league || null,
+            status: matchData.status || 'not_started',
+            home_score: matchData.home_score || 0,
+            away_score: matchData.away_score || 0,
+            match_time: matchData.match_time || '0\'',
+            btts_detected: Boolean(matchData.btts_detected),
+            is_selected: Boolean(matchData.is_selected),
+            placeholder_text: matchData.placeholder_text || null,
+            error: matchData.error || false,
+            error_message: matchData.error_message || null,
+            last_updated: matchData.last_updated || new Date().toISOString()
+        };
+    }
+
+    handleFallbackData(data) {
+        // Handle fallback data from API error responses
+        console.warn('Processing fallback data:', data);
+
+        // Update selections with fallback data
+        this.selections.clear();
+        if (data.selections) {
+            Object.entries(data.selections).forEach(([selector, matchData]) => {
+                const enhancedMatchData = this.enhanceMatchData(matchData);
+                this.selections.set(selector, enhancedMatchData);
+            });
+        }
+
+        // Update live scores with fallback data
+        this.liveScores.clear();
+        if (data.matches) {
+            Object.entries(data.matches).forEach(([selector, matchData]) => {
+                const enhancedMatchData = this.enhanceMatchData(matchData);
+                this.liveScores.set(selector, enhancedMatchData);
+            });
+        }
+
+        // Update UI with fallback data
+        this.updateDashboard(data);
+        this.updateSelectionProgress(data);
+    }
+
+    updateDashboard(data = null) {
+        // Use enhanced statistics from backend if available, otherwise calculate manually
+        let stats = {
+            totalSelections: this.selections.size,
+            completionPercentage: 0,
+            bttsSuccess: 0,
+            bttsPending: 0,
+            bttsFailed: 0
+        };
+
+        // Use backend statistics if available
+        if (data && data.statistics) {
+            stats = {
+                totalSelections: data.statistics.selected_count || this.selections.size,
+                completionPercentage: data.statistics.completion_percentage || 0,
+                bttsSuccess: data.statistics.btts_detected || 0,
+                bttsPending: data.statistics.btts_pending || 0,
+                bttsFailed: data.statistics.btts_failed || 0
+            };
+        } else {
+            // Calculate manually for backward compatibility
+            const totalSelections = this.selections.size;
+            const maxSelections = 8;
+            stats.completionPercentage = Math.round((totalSelections / maxSelections) * 100);
+
+            // Calculate BTTS stats from live scores
+            this.liveScores.forEach((matchData) => {
+                if (matchData.btts_detected) {
+                    stats.bttsSuccess++;
+                } else if (matchData.status === 'finished') {
+                    stats.bttsFailed++;
+                } else {
+                    stats.bttsPending++;
+                }
+            });
+        }
+
+        // Update stats display
+        document.getElementById('dashTotalSelections').textContent = stats.totalSelections;
+        document.getElementById('selectionProgressText').textContent = `${stats.completionPercentage}%`;
+
         // Update progress ring
         const progressRing = document.getElementById('selectionProgressRing');
         if (progressRing) {
             const circumference = 163.36;
-            const offset = circumference - (percentage / 100) * circumference;
+            const offset = circumference - (stats.completionPercentage / 100) * circumference;
             progressRing.style.strokeDashoffset = offset;
         }
-        
-        // Calculate BTTS stats
-        let bttsSuccess = 0;
-        let bttsPending = 0;
-        let bttsFailed = 0;
-        
-        this.liveScores.forEach((matchData) => {
-            if (matchData.btts_detected) {
-                bttsSuccess++;
-            } else if (matchData.status === 'finished') {
-                bttsFailed++;
-            } else {
-                bttsPending++;
-            }
-        });
-        
-        document.getElementById('dashBttsSuccess').textContent = bttsSuccess;
-        document.getElementById('dashBttsPending').textContent = bttsPending;
-        document.getElementById('dashBttsFailed').textContent = bttsFailed;
-        
+
+        document.getElementById('dashBttsSuccess').textContent = stats.bttsSuccess;
+        document.getElementById('dashBttsPending').textContent = stats.bttsPending;
+        document.getElementById('dashBttsFailed').textContent = stats.bttsFailed;
+
         // Update success rate
-        const successRate = totalSelections > 0 
-            ? Math.round((bttsSuccess / totalSelections) * 100) 
+        const successRate = stats.totalSelections > 0
+            ? Math.round((stats.bttsSuccess / stats.totalSelections) * 100)
             : 0;
         document.getElementById('bttsSuccessRate').textContent = `${successRate}%`;
-        
+
         // Update accumulator status
         this.updateAccumulatorStatus('dashAccumulatorStatus', 'dashStatusMessage', {
-            bttsSuccess,
-            bttsPending,
-            bttsFailed,
-            totalSelections
+            bttsSuccess: stats.bttsSuccess,
+            bttsPending: stats.bttsPending,
+            bttsFailed: stats.bttsFailed,
+            totalSelections: stats.totalSelections
         });
     }
     
@@ -340,28 +554,50 @@ class ModernAccaTracker {
     renderSelectors() {
         const container = document.getElementById('selectorsGrid');
         if (!container) return;
-        
+
         container.innerHTML = '';
-        
+
         this.selectors.forEach(selector => {
             const isAssigned = this.selections.has(selector);
-            const matchData = this.selections.get(selector);
-            
+            const matchData = this.selections.get(selector) || {};
+
             const card = document.createElement('div');
             card.className = `selector-card ${isAssigned ? 'assigned' : ''}`;
-            
+
             let assignmentHTML = '';
             let actionsHTML = '';
-            
+
             if (isAssigned && matchData) {
+                // Enhanced assignment display with better timestamp handling
+                const assignedTime = matchData.assigned_at
+                    ? new Date(matchData.assigned_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                    : 'Recently';
+
+                const homeTeam = matchData.home_team || 'TBD';
+                const awayTeam = matchData.away_team || 'TBD';
+                const league = matchData.league || 'Unknown League';
+
                 assignmentHTML = `
                     <div class="selector-assignment">
                         <div class="assignment-match">
-                            ${matchData.home_team} vs ${matchData.away_team}
+                            <div class="match-teams">${homeTeam} vs ${awayTeam}</div>
+                            <div class="match-league">${league}</div>
                         </div>
                         <div class="assignment-time">
-                            Assigned: ${new Date(matchData.assigned_at || Date.now()).toLocaleString()}
+                            <span class="time-label">Assigned:</span>
+                            <span class="time-value">${assignedTime}</span>
                         </div>
+                        ${matchData.error ? `
+                            <div class="assignment-error">
+                                <span class="error-icon">⚠️</span>
+                                <span class="error-text">${matchData.error_message || 'Data error'}</span>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
                 actionsHTML = `
@@ -372,18 +608,18 @@ class ModernAccaTracker {
                     </div>
                 `;
             }
-            
+
             card.innerHTML = `
                 <div class="selector-header">
                     <div class="selector-name">${selector}</div>
                     <div class="selector-status ${isAssigned ? 'assigned' : 'available'}">
-                        ${isAssigned ? 'Assigned' : 'Available'}
+                        ${isAssigned ? '✓ Assigned' : 'Available'}
                     </div>
                 </div>
                 ${assignmentHTML}
                 ${actionsHTML}
             `;
-            
+
             container.appendChild(card);
         });
     }
@@ -391,47 +627,69 @@ class ModernAccaTracker {
     renderAvailableMatches() {
         const container = document.getElementById('availableMatchesGrid');
         if (!container) return;
-        
+
         container.innerHTML = '';
-        
-        if (this.matches.length === 0) {
+
+        if (!this.matches || this.matches.length === 0) {
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                    <p style="color: var(--color-text-secondary); font-size: 1.125rem;">
-                        No matches available for selection
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
+                    <h3>No Matches Available</h3>
+                    <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">
+                        No matches available for selection at this time
                     </p>
                 </div>
             `;
             return;
         }
-        
-        this.matches.forEach(match => {
-            const matchId = `${match.league}_${match.home_team}_${match.away_team}`;
+
+        this.matches.forEach((match, index) => {
+            // Enhanced match validation
+            if (!match || typeof match !== 'object') {
+                console.warn(`Invalid match data at index ${index}:`, match);
+                return;
+            }
+
+            const homeTeam = match.home_team || 'Unknown Team';
+            const awayTeam = match.away_team || 'Unknown Team';
+            const matchId = `${match.league || 'Unknown'}_${homeTeam}_${awayTeam}`;
+
+            // Enhanced assignment checking
             const isAssigned = Array.from(this.selections.values()).some(
-                m => m.home_team === match.home_team && m.away_team === match.away_team
+                m => m && m.home_team === homeTeam && m.away_team === awayTeam
             );
-            
+
             const card = document.createElement('div');
             card.className = `match-card ${isAssigned ? 'assigned' : ''}`;
-            
+
             if (!isAssigned) {
                 card.style.cursor = 'pointer';
                 card.addEventListener('click', () => {
                     this.openAssignmentModal(match);
                 });
             }
-            
+
+            // Enhanced match display with error handling
+            const league = match.league || 'Unknown League';
+            const kickoff = match.kickoff || '15:00';
+
             card.innerHTML = `
-                <div class="match-league">${match.league || 'Unknown League'}</div>
+                <div class="match-league">${league}</div>
                 <div class="match-teams">
-                    ${match.home_team} vs ${match.away_team}
+                    ${homeTeam} vs ${awayTeam}
                 </div>
                 <div class="match-time">
-                    Kickoff: ${match.kickoff || '15:00'}
+                    Kickoff: ${kickoff}
                 </div>
-                ${isAssigned ? '<div class="match-assigned-badge">Assigned</div>' : ''}
+                ${match.error ? `
+                    <div class="match-error">
+                        <span class="error-icon">⚠️</span>
+                        <span class="error-text">${match.error_message || 'Data error'}</span>
+                    </div>
+                ` : ''}
+                ${isAssigned ? '<div class="match-assigned-badge">✓ Assigned</div>' : ''}
             `;
-            
+
             container.appendChild(card);
         });
     }
@@ -439,9 +697,9 @@ class ModernAccaTracker {
     renderLiveMatches() {
         const container = document.getElementById('liveMatchesGrid');
         if (!container) return;
-        
+
         container.innerHTML = '';
-        
+
         if (this.liveScores.size === 0) {
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
@@ -454,80 +712,166 @@ class ModernAccaTracker {
             `;
             return;
         }
-        
+
         this.selectors.forEach(selector => {
             const matchData = this.liveScores.get(selector);
-            
-            if (!matchData) return;
-            
+
+            // Enhanced match data handling with better fallbacks
+            const enhancedMatchData = matchData || this.createPlaceholderMatchData(selector);
+
+            if (!matchData) {
+                this.liveScores.set(selector, enhancedMatchData);
+            }
+
             const card = document.createElement('div');
-            
+
+            // Enhanced BTTS status determination
             let cardClass = 'live-match-card btts-pending';
             let bttsStatusClass = 'pending';
             let bttsStatusText = 'AWAITING GOALS';
-            
-            if (matchData.btts_detected) {
+            let statusIcon = '⏳';
+
+            if (enhancedMatchData.error) {
+                cardClass = 'live-match-card error';
+                bttsStatusClass = 'error';
+                bttsStatusText = '⚠️ ERROR';
+                statusIcon = '⚠️';
+            } else if (enhancedMatchData.btts_detected) {
                 cardClass = 'live-match-card btts-success';
                 bttsStatusClass = 'success';
                 bttsStatusText = '✓ BOTH SCORED';
-            } else if (matchData.status === 'finished') {
+                statusIcon = '✅';
+            } else if (enhancedMatchData.status === 'finished') {
                 cardClass = 'live-match-card btts-failed';
                 bttsStatusClass = 'failed';
                 bttsStatusText = '✗ NO BTTS';
-            } else if (matchData.home_score > 0 || matchData.away_score > 0) {
+                statusIcon = '❌';
+            } else if (enhancedMatchData.home_score > 0 || enhancedMatchData.away_score > 0) {
                 bttsStatusText = 'ONE SCORED';
+                statusIcon = '🔄';
+            } else if (enhancedMatchData.status === 'no_selection') {
+                bttsStatusText = 'NO SELECTION';
+                statusIcon = '⭕';
             }
-            
+
             card.className = cardClass;
-            
-            const homeScore = matchData.home_score || 0;
-            const awayScore = matchData.away_score || 0;
-            const matchTime = this.formatMatchTime(matchData);
-            
+
+            const homeScore = enhancedMatchData.home_score || 0;
+            const awayScore = enhancedMatchData.away_score || 0;
+            const matchTime = this.formatMatchTime(enhancedMatchData);
+            const homeTeam = enhancedMatchData.home_team || 'TBD';
+            const awayTeam = enhancedMatchData.away_team || 'TBD';
+            const league = enhancedMatchData.league || 'Unknown League';
+
             card.innerHTML = `
                 <div class="live-selector-name">${selector}</div>
-                <div class="live-match-league">${matchData.league || 'Unknown League'}</div>
+                <div class="live-match-league">${league}</div>
                 <div class="live-match-teams">
-                    ${matchData.home_team || 'TBD'} vs ${matchData.away_team || 'TBD'}
+                    ${homeTeam} vs ${awayTeam}
                 </div>
                 <div class="live-score-display">
                     <div class="live-score">${homeScore} - ${awayScore}</div>
                     <div class="live-time">${matchTime}</div>
                 </div>
                 <div class="live-btts-status ${bttsStatusClass}">
-                    ${bttsStatusText}
+                    <span class="status-icon">${statusIcon}</span>
+                    <span class="status-text">${bttsStatusText}</span>
                 </div>
                 <div class="live-match-status">
-                    ${this.formatMatchStatus(matchData.status)}
+                    ${this.formatMatchStatus(enhancedMatchData.status)}
                 </div>
+                ${enhancedMatchData.placeholder_text ? `
+                    <div class="live-placeholder-text">${enhancedMatchData.placeholder_text}</div>
+                ` : ''}
+                ${enhancedMatchData.error_message ? `
+                    <div class="live-error-text">Error: ${enhancedMatchData.error_message}</div>
+                ` : ''}
             `;
-            
+
             container.appendChild(card);
         });
     }
+
+    createPlaceholderMatchData(selector) {
+        return {
+            home_team: null,
+            away_team: null,
+            home_score: 0,
+            away_score: 0,
+            status: 'no_selection',
+            match_time: '—',
+            league: null,
+            btts_detected: false,
+            is_selected: false,
+            placeholder_text: 'Awaiting Match Assignment',
+            error: false,
+            error_message: null,
+            last_updated: new Date().toISOString()
+        };
+    }
     
     updateTrackerSummary(data) {
-        const stats = data.statistics || {};
-        
-        document.getElementById('trackerBttsSuccess').textContent = stats.btts_detected || 0;
-        document.getElementById('trackerBttsPending').textContent = stats.btts_pending || 0;
-        document.getElementById('trackerBttsFailed').textContent = stats.btts_failed || 0;
-        
+        // Use enhanced statistics from backend if available
+        let stats = {
+            btts_detected: 0,
+            btts_pending: 0,
+            btts_failed: 0,
+            selected_count: this.selections.size,
+            completion_percentage: 0,
+            live_matches: 0,
+            finished_matches: 0,
+            not_started_matches: 0
+        };
+
+        if (data && data.statistics) {
+            stats = { ...stats, ...data.statistics };
+        } else {
+            // Calculate manually for backward compatibility
+            this.liveScores.forEach((matchData) => {
+                if (matchData.btts_detected) {
+                    stats.btts_detected++;
+                } else if (matchData.status === 'finished') {
+                    stats.btts_failed++;
+                } else if (matchData.is_selected) {
+                    stats.btts_pending++;
+                }
+            });
+        }
+
+        // Update display elements
+        const successElement = document.getElementById('trackerBttsSuccess');
+        const pendingElement = document.getElementById('trackerBttsPending');
+        const failedElement = document.getElementById('trackerBttsFailed');
+
+        if (successElement) successElement.textContent = stats.btts_detected;
+        if (pendingElement) pendingElement.textContent = stats.btts_pending;
+        if (failedElement) failedElement.textContent = stats.btts_failed;
+
+        // Update accumulator status with enhanced data
         this.updateAccumulatorStatus('trackerAccumulatorStatus', null, {
-            bttsSuccess: stats.btts_detected || 0,
-            bttsPending: stats.btts_pending || 0,
-            bttsFailed: stats.btts_failed || 0,
-            totalSelections: this.selections.size
+            bttsSuccess: stats.btts_detected,
+            bttsPending: stats.btts_pending,
+            bttsFailed: stats.btts_failed,
+            totalSelections: stats.selected_count
         });
     }
     
-    updateSelectionProgress() {
-        const assigned = this.selections.size;
-        const total = 8;
-        const percentage = Math.round((assigned / total) * 100);
-        
+    updateSelectionProgress(data = null) {
+        // Use enhanced statistics from backend if available
+        let assigned = this.selections.size;
+        let total = 8;
+        let percentage = 0;
+
+        if (data && data.statistics) {
+            assigned = data.statistics.selected_count || this.selections.size;
+            percentage = data.statistics.completion_percentage || 0;
+        } else {
+            // Calculate manually for backward compatibility
+            percentage = Math.round((assigned / total) * 100);
+        }
+
         document.getElementById('assignedCount').textContent = assigned;
-        
+
         const progressBar = document.getElementById('assignmentProgressBar');
         if (progressBar) {
             progressBar.style.width = `${percentage}%`;
@@ -730,31 +1074,76 @@ class ModernAccaTracker {
         }
     }
     
+    validateDataStructure(data) {
+        // Validate that the API response has the expected structure
+        if (!data || typeof data !== 'object') {
+            return false;
+        }
+
+        // Check for required fields in successful response
+        if (data.success) {
+            return true; // Trust the backend's success flag
+        }
+
+        // Check for fallback data structure
+        if (data.fallback && data.matches && data.statistics) {
+            return true;
+        }
+
+        return false;
+    }
+
+    handleApiError(error, context = 'API call') {
+        console.error(`Error in ${context}:`, error);
+
+        // Determine error type and provide appropriate user feedback
+        let errorMessage = 'An unexpected error occurred';
+        let errorType = 'error';
+
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Network connection failed - check your internet connection';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Server is not responding - please try again later';
+        } else if (error.message.includes('JSON')) {
+            errorMessage = 'Invalid response from server - data may be corrupted';
+            errorType = 'warning';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        this.showToast(errorMessage, errorType);
+        this.updateConnectionStatus('disconnected');
+
+        return errorMessage;
+    }
+
     showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         if (!container) return;
-        
+
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        
+
         const iconMap = {
             success: '✓',
             error: '✗',
-            info: 'ℹ'
+            warning: '⚠️',
+            info: 'ℹ️'
         };
-        
+
         toast.innerHTML = `
-            <div class="toast-icon">${iconMap[type] || 'ℹ'}</div>
+            <div class="toast-icon">${iconMap[type] || 'ℹ️'}</div>
             <div class="toast-message">${message}</div>
         `;
-        
+
         container.appendChild(toast);
-        
-        // Auto remove after 3 seconds
+
+        // Auto remove after 4 seconds for warnings, 3 for others
+        const timeout = type === 'warning' ? 4000 : 3000;
         setTimeout(() => {
             toast.style.animation = 'slideInRight 0.3s reverse';
             setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        }, timeout);
     }
 }
 

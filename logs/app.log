@@ -1516,3 +1516,92 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-23 15:19:23,181 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
 2025-10-23 15:22:39,508 - app - WARNING - 404 error: http://localhost:5000/modern
 2025-10-23 15:23:13,308 - app - WARNING - 404 error: http://localhost:5000/modern
+2025-10-23 16:49:50,631 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:49:50,631 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:49:57,517 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:49:57,517 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:54:04,325 - DataManager - WARNING - No BBC cache file found for date 2025-10-23
+2025-10-23 16:54:04,616 - bbc_scraper - WARNING - JSON extraction failed, falling back to HTML parsing
+2025-10-23 16:54:04,623 - DataManager - WARNING - No BBC cache file found for date 2025-10-23
+2025-10-23 16:54:04,902 - bbc_scraper - WARNING - JSON extraction failed, falling back to HTML parsing
+2025-10-23 16:54:04,908 - DataManager - WARNING - No BBC cache file found for date 2025-10-23
+2025-10-23 16:54:05,032 - bbc_scraper - WARNING - JSON extraction failed, falling back to HTML parsing
+2025-10-23 16:54:05,039 - DataManager - WARNING - No BBC cache file found for date 2025-10-23
+2025-10-23 16:54:05,162 - bbc_scraper - WARNING - JSON extraction failed, falling back to HTML parsing
+2025-10-23 16:57:07,456 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:07,456 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:13,370 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:13,371 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:13,382 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:13,382 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:13,420 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 16:57:22,031 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:22,031 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:41,916 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:41,916 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:43,391 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:43,391 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:43,393 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:57:43,393 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:35,738 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:35,738 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:35,749 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:35,749 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:35,792 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 16:58:58,828 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:58,828 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:58,840 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:58,840 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:58:58,877 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 16:59:29,188 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:59:29,188 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:59:29,200 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:59:29,200 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 16:59:29,237 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 17:00:06,683 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:06,683 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:06,695 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:06,695 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:06,732 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 17:00:37,697 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:37,697 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:37,709 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:37,709 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:00:37,747 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 17:01:16,432 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:01:16,432 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:01:16,444 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:01:16,444 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:01:16,506 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 17:01:46,448 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:01:46,448 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:01,974 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:01,974 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:01,986 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:01,986 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:02,024 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 17:02:31,992 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:31,992 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:52,551 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:52,551 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:52,564 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:52,564 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:02:52,595 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 17:03:22,569 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:03:22,569 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:18,700 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:18,700 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:18,719 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:18,719 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:22,268 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:22,268 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:26,051 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:26,051 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:34,539 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:34,540 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:47,471 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:47,471 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:48,724 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:48,724 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:48,726 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-23 17:04:48,726 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
