@@ -31,6 +31,13 @@
                         <span class="update-label">Last Update:</span>
                         <span class="update-time" id="lastUpdateTime">Never</span>
                     </div>
+                    <div class="debug-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="debugModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Debug</span>
+                    </div>
                 </div>
             </div>
             
@@ -155,10 +162,29 @@
                         <h3>Assignment Progress</h3>
                         <div class="progress-stats">
                             <span class="progress-count"><span id="assignedCount">0</span> / 8 Assigned</span>
+                            <div class="progress-details" id="progressDetails">
+                                <!-- Enhanced progress messaging will be inserted here -->
+                            </div>
                         </div>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill" id="assignmentProgressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-percentage" id="progressPercentage">0%</div>
+                </div>
+
+                <!-- Override Warning (shown when <8 selections) -->
+                <div class="override-warning glass-card warning-card" id="overrideWarning" style="display: none;">
+                    <div class="warning-header">
+                        <span class="warning-icon">⚠️</span>
+                        <h3>Override Required</h3>
+                    </div>
+                    <div class="warning-content">
+                        <p>You have only <span id="currentSelectionsCount">0</span> selections. You need 8 selectors or must confirm override.</p>
+                        <div class="warning-actions">
+                            <button class="btn btn-warning" id="overrideBtn">Override Confirmation</button>
+                            <button class="btn btn-secondary" id="refreshSelections">Refresh Data</button>
+                        </div>
                     </div>
                 </div>
 
@@ -170,11 +196,49 @@
                     </div>
                 </div>
 
-                <!-- Available Matches -->
+                <!-- All Matches -->
                 <div class="matches-section">
-                    <h3 class="subsection-title">Available Matches</h3>
+                    <h3 class="subsection-title">Saturday 15:00 Matches</h3>
                     <div class="matches-grid" id="availableMatchesGrid">
-                        <!-- Match cards will be dynamically inserted -->
+                        <!-- Match cards will be dynamically inserted with direct dropdown selectors -->
+                    </div>
+                </div>
+
+                <!-- Debug Panel (initially hidden) -->
+                <div class="debug-panel glass-card" id="debugPanel" style="display: none;">
+                    <div class="debug-header">
+                        <h3>Debug Panel</h3>
+                        <div class="debug-controls">
+                            <button class="btn btn-small btn-secondary" id="clearDebugBtn">Clear</button>
+                            <button class="btn btn-small btn-secondary" id="toggleDebugBtn">Toggle Debug</button>
+                            <label class="debug-toggle">
+                                <input type="checkbox" id="debugModeToggle"> Enable Debug Mode
+                            </label>
+                        </div>
+                    </div>
+                    <div class="debug-content">
+                        <div class="debug-info">
+                            <div class="debug-item">
+                                <span class="debug-label">Requests in Queue:</span>
+                                <span class="debug-value" id="debugQueueCount">0</span>
+                            </div>
+                            <div class="debug-item">
+                                <span class="debug-label">Last Error:</span>
+                                <span class="debug-value" id="debugLastError">None</span>
+                            </div>
+                            <div class="debug-item">
+                                <span class="debug-label">Connection Status:</span>
+                                <span class="debug-value" id="debugConnectionStatus">Unknown</span>
+                            </div>
+                            <div class="debug-item">
+                                <span class="debug-label">Total Selections:</span>
+                                <span class="debug-value" id="debugTotalSelections">0</span>
+                            </div>
+                        </div>
+                        <div class="debug-actions">
+                            <button class="btn btn-small btn-primary" id="testConnectionBtn">Test Connection</button>
+                            <button class="btn btn-small btn-primary" id="refreshDataBtn">Refresh Data</button>
+                        </div>
                     </div>
                 </div>
 
@@ -261,7 +325,7 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Modal for Match Assignment -->
+    <!-- Modal for Match Assignment (Legacy - to be replaced) -->
     <div class="modal-overlay" id="assignmentModal">
         <div class="modal-content glass-card">
             <div class="modal-header">
@@ -282,6 +346,52 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="cancelAssignment">Cancel</button>
                 <button class="btn btn-primary" id="confirmAssignment">Assign Match</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Override Confirmation Modal -->
+    <div class="modal-overlay" id="overrideModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Override Confirmation</h3>
+                <button class="modal-close" id="closeOverrideModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to proceed with only <strong id="overrideCurrentCount">0</strong> selections instead of the required 8.</p>
+                <p>This should only be done in exceptional circumstances.</p>
+
+                <div class="confirmation-section">
+                    <label for="overrideConfirm">Type the following to confirm:</label>
+                    <div class="confirmation-text">"I confirm that I want to proceed with fewer than 8 selections"</div>
+                    <input type="text" id="overrideConfirm" class="form-control" placeholder="Type the confirmation message exactly">
+                </div>
+
+                <div class="override-reasons">
+                    <h4>Please select the reason for override:</h4>
+                    <div class="reason-options">
+                        <label class="reason-option">
+                            <input type="radio" name="override-reason" value="insufficient-matches">
+                            <span>Insufficient suitable matches available</span>
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="override-reason" value="time-constraints">
+                            <span>Time constraints preventing full assignment</span>
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="override-reason" value="technical-issues">
+                            <span>Technical issues with selector availability</span>
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="override-reason" value="other">
+                            <span>Other (will be logged for review)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelOverride">Cancel</button>
+                <button class="btn btn-warning" id="confirmOverride" disabled>Confirm Override</button>
             </div>
         </div>
     </div>

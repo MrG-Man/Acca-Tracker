@@ -13,32 +13,54 @@ class ModernAccaTracker {
         this.autoRefresh = true;
         this.refreshInterval = 30000; // 30 seconds
         this.refreshTimer = null;
-        
+
         // Selectors list
         this.selectors = [
             "Glynny", "Eamonn Bone", "Mickey D", "Rob Carney",
             "Steve H", "Danny", "Eddie Lee", "Fran Radar"
         ];
-        
+
+        // Admin-like features
+        this.debugMode = localStorage.getItem('modern_debug_mode') === 'true';
+        this.requestQueue = new Map(); // Track ongoing requests to prevent race conditions
+        this.overrideModal = null;
+        this.selectedReason = null;
+        this.errorReports = [];
+
         // Initialize
         this.init();
     }
     
     async init() {
         console.log('🚀 Modern Acca Tracker initialized');
-        
+
         // Setup event listeners
         this.setupEventListeners();
-        
+
+        // Initialize debug mode
+        if (this.debugMode) {
+            this.showDebugPanel();
+        }
+
         // Load initial data
         await this.loadCurrentWeek();
         await this.loadAllData();
-        
+
         // Start auto-refresh
         this.startAutoRefresh();
-        
+
         // Update UI
         this.updateConnectionStatus('connected');
+
+        // Start connection monitoring
+        this.startConnectionMonitoring();
+
+        this.logDebug('Modern Acca Tracker fully initialized', {
+            debugMode: this.debugMode,
+            requestQueueSize: this.requestQueue.size,
+            selectionsCount: this.selections.size,
+            timestamp: new Date().toISOString()
+        });
     }
     
     setupEventListeners() {
@@ -49,7 +71,7 @@ class ModernAccaTracker {
                 this.switchTab(tab);
             });
         });
-        
+
         // Quick actions
         document.querySelectorAll('.action-button').forEach(button => {
             button.addEventListener('click', (e) => {
@@ -57,7 +79,7 @@ class ModernAccaTracker {
                 this.handleQuickAction(action);
             });
         });
-        
+
         // Auto-refresh toggle
         const autoRefreshToggle = document.getElementById('autoRefreshToggle');
         if (autoRefreshToggle) {
@@ -70,24 +92,113 @@ class ModernAccaTracker {
                 }
             });
         }
-        
-        // Modal close
+
+        // Debug mode toggle
+        const debugModeToggle = document.getElementById('debugModeToggle');
+        if (debugModeToggle) {
+            debugModeToggle.checked = this.debugMode;
+            debugModeToggle.addEventListener('change', (e) => {
+                this.toggleDebugMode();
+            });
+        }
+
+        // Modal close handlers
         document.getElementById('closeAssignmentModal')?.addEventListener('click', () => {
             this.closeAssignmentModal();
         });
-        
+
         document.getElementById('cancelAssignment')?.addEventListener('click', () => {
             this.closeAssignmentModal();
         });
-        
+
         document.getElementById('confirmAssignment')?.addEventListener('click', () => {
             this.confirmAssignment();
         });
-        
-        // Click outside modal to close
+
+        // Override modal handlers
+        document.getElementById('closeOverrideModal')?.addEventListener('click', () => {
+            this.closeOverrideModal();
+        });
+
+        document.getElementById('cancelOverride')?.addEventListener('click', () => {
+            this.closeOverrideModal();
+        });
+
+        document.getElementById('confirmOverride')?.addEventListener('click', () => {
+            this.confirmOverride();
+        });
+
+        document.getElementById('overrideBtn')?.addEventListener('click', () => {
+            this.showOverrideModal();
+        });
+
+        // Debug panel handlers
+        document.getElementById('clearDebugBtn')?.addEventListener('click', () => {
+            this.clearDebugInfo();
+        });
+
+        document.getElementById('toggleDebugBtn')?.addEventListener('click', () => {
+            this.toggleDebugMode();
+        });
+
+        document.getElementById('testConnectionBtn')?.addEventListener('click', () => {
+            this.testConnection();
+        });
+
+        document.getElementById('refreshDataBtn')?.addEventListener('click', () => {
+            this.loadAllData();
+        });
+
+        // Click outside modals to close
         document.getElementById('assignmentModal')?.addEventListener('click', (e) => {
             if (e.target.id === 'assignmentModal') {
                 this.closeAssignmentModal();
+            }
+        });
+
+        document.getElementById('overrideModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'overrideModal') {
+                this.closeOverrideModal();
+            }
+        });
+
+        // Override form validation
+        document.getElementById('overrideConfirm')?.addEventListener('input', () => {
+            this.validateOverrideForm();
+        });
+
+        document.querySelectorAll('input[name="override-reason"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.selectedReason = e.target.value;
+                this.validateOverrideForm();
+            });
+        });
+
+        // Direct assignment dropdowns
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('selector-dropdown')) {
+                this.handleDirectAssignment(e.target);
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // ESC key to close modals
+            if (e.key === 'Escape') {
+                this.closeAssignmentModal();
+                this.closeOverrideModal();
+            }
+
+            // Ctrl/Cmd + D to toggle debug mode
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                this.toggleDebugMode();
+            }
+
+            // Ctrl/Cmd + R to refresh with cache busting
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                this.refreshPageWithCacheBust();
             }
         });
     }
@@ -259,10 +370,14 @@ class ModernAccaTracker {
         const loadingState = document.getElementById('selectionLoading');
         if (loadingState) loadingState.classList.add('active');
 
+        console.log('[MODERN_DEBUG] Starting loadSelectionData');
+
         try {
             // Load unified data from modern endpoint
             const response = await fetch('/api/modern-tracker-data');
             const data = await response.json();
+
+            console.log('[MODERN_DEBUG] loadSelectionData API response:', data);
 
             if (data.success) {
                 // Update selections with enhanced data processing
@@ -273,21 +388,29 @@ class ModernAccaTracker {
                         this.selections.set(selector, enhancedMatchData);
                     });
                 }
+                console.log('[MODERN_DEBUG] Selections loaded:', this.selections.size);
 
-                // Load available matches from BBC fixtures with enhanced error handling
+                // Load available matches from BBC matches for current week with enhanced error handling
                 try {
-                    const fixturesResponse = await fetch('/api/bbc-fixtures');
-                    const fixturesData = await fixturesResponse.json();
+                    const currentWeek = this.currentWeek || new Date().toISOString().split('T')[0];
+                    const matchesResponse = await fetch(`/api/bbc-matches/${currentWeek}`);
+                    const matchesData = await matchesResponse.json();
 
-                    if (fixturesData.success && fixturesData.matches) {
-                        this.matches = fixturesData.matches;
-                    } else if (fixturesData.fallback) {
-                        console.warn('Using fallback fixtures data');
-                        this.matches = fixturesData.matches || [];
-                        this.showToast('Using cached fixtures - may not be current', 'warning');
+                    console.log('[MODERN_DEBUG] BBC matches response:', matchesData);
+
+                    if (matchesData.success) {
+                        // Filter for 15:00 matches to match admin interface behavior
+                        const allMatches = matchesData.fixtures || [];
+                        this.matches = allMatches.filter(match => match.kickoff === '15:00');
+                        console.log(`[MODERN_DEBUG] Filtered to ${this.matches.length} 15:00 matches from ${allMatches.length} total matches`);
+                    } else if (matchesData.fallback) {
+                        console.warn('[MODERN_DEBUG] Using fallback matches data');
+                        const allMatches = matchesData.fixtures || [];
+                        this.matches = allMatches.filter(match => match.kickoff === '15:00');
+                        this.showToast('Using cached matches - may not be current', 'warning');
                     }
-                } catch (fixturesError) {
-                    console.warn('Error loading fixtures, continuing without:', fixturesError);
+                } catch (matchesError) {
+                    console.warn('[MODERN_DEBUG] Error loading matches, continuing without:', matchesError);
                     this.matches = [];
                 }
 
@@ -302,7 +425,7 @@ class ModernAccaTracker {
             } else {
                 // Handle enhanced error response with fallback data
                 if (data.fallback) {
-                    console.warn('Using fallback data for selections:', data.error);
+                    console.warn('[MODERN_DEBUG] Using fallback data for selections:', data.error);
                     this.selections.clear();
                     if (data.selections) {
                         Object.entries(data.selections).forEach(([selector, matchData]) => {
@@ -321,7 +444,7 @@ class ModernAccaTracker {
             }
 
         } catch (error) {
-            console.error('Error loading selection data:', error);
+            console.error('[MODERN_DEBUG] Error loading selection data:', error);
             this.showToast('Failed to load matches - check connection', 'error');
         } finally {
             if (loadingState) loadingState.classList.remove('active');
@@ -636,7 +759,7 @@ class ModernAccaTracker {
                     <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
                     <h3>No Matches Available</h3>
                     <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">
-                        No matches available for selection at this time
+                        No 15:00 matches available for selection at this time
                     </p>
                 </div>
             `;
@@ -662,16 +785,42 @@ class ModernAccaTracker {
             const card = document.createElement('div');
             card.className = `match-card ${isAssigned ? 'assigned' : ''}`;
 
-            if (!isAssigned) {
-                card.style.cursor = 'pointer';
-                card.addEventListener('click', () => {
-                    this.openAssignmentModal(match);
-                });
-            }
-
             // Enhanced match display with error handling
             const league = match.league || 'Unknown League';
             const kickoff = match.kickoff || '15:00';
+
+            let assignmentHTML = '';
+            if (isAssigned) {
+                // Show assigned badge for already assigned matches
+                const assignedSelector = Array.from(this.selections.entries()).find(
+                    ([selector, m]) => m && m.home_team === homeTeam && m.away_team === awayTeam
+                );
+                const selectorName = assignedSelector ? assignedSelector[0] : 'Unknown';
+                assignmentHTML = `
+                    <div class="match-assigned-badge">
+                        ✓ Assigned to ${selectorName}
+                    </div>
+                `;
+            } else {
+                // Show direct assignment dropdown for unassigned matches
+                const availableSelectors = this.selectors.filter(selector => !this.selections.has(selector));
+                assignmentHTML = `
+                    <div class="match-assignment">
+                        <div class="assignment-controls">
+                            <select class="selector-dropdown" data-match-id="${matchId}">
+                                <option value="">Select Selector ▼</option>
+                                ${availableSelectors.map(selector =>
+                                    `<option value="${selector}">${selector}</option>`
+                                ).join('')}
+                            </select>
+                            <div class="assignment-status" style="display: none;">
+                                <span class="status-text"></span>
+                                <span class="status-spinner" style="display: none;">⟳</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
 
             card.innerHTML = `
                 <div class="match-league">${league}</div>
@@ -687,7 +836,7 @@ class ModernAccaTracker {
                         <span class="error-text">${match.error_message || 'Data error'}</span>
                     </div>
                 ` : ''}
-                ${isAssigned ? '<div class="match-assigned-badge">✓ Assigned</div>' : ''}
+                ${assignmentHTML}
             `;
 
             container.appendChild(card);
@@ -862,6 +1011,8 @@ class ModernAccaTracker {
         let total = 8;
         let percentage = 0;
 
+        console.log('[MODERN_DEBUG] updateSelectionProgress called:', { data, assigned, total });
+
         if (data && data.statistics) {
             assigned = data.statistics.selected_count || this.selections.size;
             percentage = data.statistics.completion_percentage || 0;
@@ -870,11 +1021,57 @@ class ModernAccaTracker {
             percentage = Math.round((assigned / total) * 100);
         }
 
+        console.log('[MODERN_DEBUG] Progress calculated:', { assigned, total, percentage });
+
+        // Update basic progress display
         document.getElementById('assignedCount').textContent = assigned;
 
         const progressBar = document.getElementById('assignmentProgressBar');
         if (progressBar) {
             progressBar.style.width = `${percentage}%`;
+        }
+
+        const progressPercentage = document.getElementById('progressPercentage');
+        if (progressPercentage) {
+            progressPercentage.textContent = `${percentage}%`;
+        }
+
+        // Update enhanced progress details
+        this.updateProgressDetails(assigned, total);
+
+        // Show/hide override warning
+        this.updateOverrideWarning(assigned);
+    }
+
+    updateProgressDetails(assigned, total) {
+        const progressDetails = document.getElementById('progressDetails');
+        if (!progressDetails) return;
+
+        const remaining = total - assigned;
+        let detailsHTML = '';
+
+        if (assigned === 0) {
+            detailsHTML = '<span class="progress-detail">No selections made yet</span>';
+        } else if (remaining === 0) {
+            detailsHTML = '<span class="progress-detail success">All selections complete! 🎉</span>';
+        } else if (remaining <= 2) {
+            detailsHTML = `<span class="progress-detail warning">Still need ${remaining} more selection${remaining !== 1 ? 's' : ''}</span>`;
+        } else {
+            detailsHTML = `<span class="progress-detail">Still need ${remaining} more selections</span>`;
+        }
+
+        progressDetails.innerHTML = detailsHTML;
+    }
+
+    updateOverrideWarning(assigned) {
+        const overrideWarning = document.getElementById('overrideWarning');
+        const currentSelectionsCount = document.getElementById('currentSelectionsCount');
+
+        if (assigned < 8) {
+            if (overrideWarning) overrideWarning.style.display = 'block';
+            if (currentSelectionsCount) currentSelectionsCount.textContent = assigned;
+        } else {
+            if (overrideWarning) overrideWarning.style.display = 'none';
         }
     }
     
@@ -907,22 +1104,24 @@ class ModernAccaTracker {
     }
     
     openAssignmentModal(match) {
+        // Legacy method - kept for backward compatibility
+        // New direct assignment system doesn't use modals
         const modal = document.getElementById('assignmentModal');
         const detailsContainer = document.getElementById('assignmentDetails');
         const selectorSelect = document.getElementById('selectorSelect');
-        
+
         if (!modal || !detailsContainer || !selectorSelect) return;
-        
+
         // Store match data
         modal.dataset.matchData = JSON.stringify(match);
-        
+
         // Update details
         detailsContainer.innerHTML = `
             <p><strong>League:</strong> ${match.league || 'Unknown'}</p>
             <p><strong>Match:</strong> ${match.home_team} vs ${match.away_team}</p>
             <p><strong>Kickoff:</strong> ${match.kickoff || '15:00'}</p>
         `;
-        
+
         // Update selector dropdown
         selectorSelect.innerHTML = '<option value="">Choose a selector...</option>';
         this.selectors.forEach(selector => {
@@ -933,9 +1132,180 @@ class ModernAccaTracker {
                 selectorSelect.appendChild(option);
             }
         });
-        
+
         // Show modal
         modal.classList.add('active');
+    }
+
+    async handleDirectAssignment(dropdown) {
+        const matchCard = dropdown.closest('.match-card');
+        const statusDiv = matchCard.querySelector('.assignment-status');
+        const statusText = statusDiv?.querySelector('.status-text');
+        const statusSpinner = statusDiv?.querySelector('.status-spinner');
+        const selector = dropdown.value;
+
+        console.log('[MODERN_DEBUG] handleDirectAssignment called:', { selector, matchId: dropdown.dataset.matchId });
+
+        if (!selector) {
+            // Reset status if no selector selected
+            if (statusDiv) statusDiv.style.display = 'none';
+            return;
+        }
+
+        // Get match ID from the dropdown's data attribute
+        const matchId = dropdown.dataset.matchId;
+        const requestKey = `${matchId}_${selector}`;
+
+        // Prevent race conditions by checking if request is already in progress
+        if (this.requestQueue.has(requestKey)) {
+            this.logDebug(`Request already in progress for ${requestKey}, ignoring duplicate`);
+            return;
+        }
+
+        // Add to request queue
+        this.requestQueue.set(requestKey, { dropdown, matchCard, statusDiv, statusText, statusSpinner });
+        this.logDebug(`Added request to queue: ${requestKey}`);
+
+        // Show loading state
+        if (statusDiv) {
+            statusDiv.style.display = 'flex';
+            if (statusText) statusText.textContent = `Assigning to ${selector}...`;
+            if (statusSpinner) statusSpinner.style.display = 'inline-block';
+        }
+
+        try {
+            await this.performAssignmentWithRetry(dropdown, matchId, selector, requestKey);
+        } catch (error) {
+            this.handleAssignmentError(dropdown, statusDiv, statusText, statusSpinner, error, requestKey);
+        } finally {
+            // Remove from request queue
+            this.requestQueue.delete(requestKey);
+            this.logDebug(`Removed request from queue: ${requestKey}`);
+        }
+    }
+
+    async performAssignmentWithRetry(dropdown, matchId, selector, requestKey, maxRetries = 3) {
+        let lastError;
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                this.logDebug(`Assignment attempt ${attempt}/${maxRetries} for ${requestKey}`);
+
+                // Make the assignment API call with cache-busting
+                const response = await fetch(`/api/assign?_t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        match_id: matchId,
+                        selector: selector,
+                        timestamp: Date.now(),
+                        attempt: attempt
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.handleAssignmentSuccess(dropdown, selector, requestKey);
+                    return; // Success, exit retry loop
+                } else {
+                    // Server returned error
+                    throw new Error(result.error || 'Unknown server error');
+                }
+
+            } catch (error) {
+                lastError = error;
+                this.logError(`Assignment attempt ${attempt} failed for ${requestKey}`, error);
+
+                // If this isn't the last attempt, wait before retrying
+                if (attempt < maxRetries) {
+                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
+                    this.logDebug(`Waiting ${delay}ms before retry ${attempt + 1}`);
+                    await this.delay(delay);
+                }
+            }
+        }
+
+        // All retries failed
+        throw lastError;
+    }
+
+    handleAssignmentSuccess(dropdown, selector, requestKey) {
+        // Update UI for all queued requests for this dropdown
+        this.requestQueue.forEach((requestData, key) => {
+            if (key.startsWith(requestKey.split('_')[0])) {
+                const { statusDiv, statusText, statusSpinner } = requestData;
+                if (statusText) {
+                    statusText.textContent = `✓ Assigned to ${selector}`;
+                    statusText.style.color = '#4caf50';
+                }
+                if (statusSpinner) statusSpinner.style.display = 'none';
+            }
+        });
+
+        this.logDebug(`Assignment successful for ${requestKey}`);
+
+        // Refresh the page after a short delay to show the success message
+        setTimeout(() => {
+            this.refreshPage();
+        }, 1000);
+    }
+
+    handleAssignmentError(dropdown, statusDiv, statusText, statusSpinner, error, requestKey) {
+        const errorMessage = this.getDetailedErrorMessage(error);
+
+        // Update UI for all queued requests for this dropdown
+        this.requestQueue.forEach((requestData, key) => {
+            if (key.startsWith(requestKey.split('_')[0])) {
+                const { statusText: reqStatusText, statusSpinner: reqStatusSpinner } = requestData;
+                if (reqStatusText) {
+                    reqStatusText.textContent = `✗ ${errorMessage}`;
+                    reqStatusText.style.color = '#f44336';
+                }
+                if (reqStatusSpinner) reqStatusSpinner.style.display = 'none';
+            }
+        });
+
+        this.logError(`Assignment failed for ${requestKey}`, error);
+
+        // Reset dropdown after error
+        setTimeout(() => {
+            dropdown.value = '';
+            if (statusDiv) statusDiv.style.display = 'none';
+
+            // Clear any remaining requests for this dropdown
+            this.requestQueue.forEach((_, key) => {
+                if (key.startsWith(requestKey.split('_')[0])) {
+                    this.requestQueue.delete(key);
+                }
+            });
+        }, 3000);
+    }
+
+    getDetailedErrorMessage(error) {
+        if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+            return 'Network error - please check connection';
+        } else if (error.message.includes('HTTP 5')) {
+            return 'Server error - please try again later';
+        } else if (error.message.includes('HTTP 4')) {
+            return 'Request error - please check your input';
+        } else if (error.message.includes('timeout')) {
+            return 'Request timeout - please try again';
+        } else {
+            return 'Assignment failed - please try again';
+        }
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
     
     closeAssignmentModal() {
@@ -944,22 +1314,100 @@ class ModernAccaTracker {
             modal.classList.remove('active');
         }
     }
+
+    showOverrideModal() {
+        const modal = document.getElementById('overrideModal');
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Reset form
+            const confirmInput = document.getElementById('overrideConfirm');
+            if (confirmInput) confirmInput.value = '';
+
+            const confirmBtn = document.getElementById('confirmOverride');
+            if (confirmBtn) confirmBtn.disabled = true;
+
+            // Update current count
+            const currentCount = document.getElementById('overrideCurrentCount');
+            if (currentCount) currentCount.textContent = this.selections.size;
+
+            this.selectedReason = null;
+        }
+    }
+
+    closeOverrideModal() {
+        const modal = document.getElementById('overrideModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    validateOverrideForm() {
+        const confirmInput = document.getElementById('overrideConfirm');
+        const confirmBtn = document.getElementById('confirmOverride');
+
+        const requiredText = "I confirm that I want to proceed with fewer than 8 selections";
+        const isTextValid = confirmInput && confirmInput.value === requiredText;
+        const isReasonSelected = this.selectedReason !== null;
+
+        if (confirmBtn) {
+            confirmBtn.disabled = !(isTextValid && isReasonSelected);
+        }
+
+        return isTextValid && isReasonSelected;
+    }
+
+    async confirmOverride() {
+        if (!this.validateOverrideForm()) {
+            this.showToast('Please complete all confirmation requirements', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/override', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    confirm_message: "I confirm that I want to proceed with fewer than 8 selections",
+                    reason: this.selectedReason
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showToast('Override confirmed successfully', 'success');
+                this.closeOverrideModal();
+                this.refreshPage();
+            } else {
+                this.showToast(result.error, 'error');
+            }
+        } catch (error) {
+            this.showToast('Network error occurred', 'error');
+            console.error('Override error:', error);
+        }
+    }
     
     async confirmAssignment() {
+        // Legacy method - kept for backward compatibility with modal system
         const modal = document.getElementById('assignmentModal');
         const selectorSelect = document.getElementById('selectorSelect');
-        
+
         if (!modal || !selectorSelect) return;
-        
+
         const selector = selectorSelect.value;
         if (!selector) {
             this.showToast('Please select a selector', 'error');
             return;
         }
-        
+
         const matchData = JSON.parse(modal.dataset.matchData || '{}');
         const matchId = `${matchData.league}_${matchData.home_team}_${matchData.away_team}`;
-        
+
         try {
             const response = await fetch('/api/assign', {
                 method: 'POST',
@@ -972,13 +1420,13 @@ class ModernAccaTracker {
                     timestamp: new Date().toISOString()
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 this.showToast(`Match assigned to ${selector}`, 'success');
                 this.closeAssignmentModal();
-                
+
                 // Reload data
                 await this.loadAllData();
                 this.loadSelectionData();
@@ -989,6 +1437,131 @@ class ModernAccaTracker {
             console.error('Error assigning match:', error);
             this.showToast('Failed to assign match', 'error');
         }
+    }
+
+    logDebug(message, data = null) {
+        if (this.debugMode) {
+            const timestamp = new Date().toISOString();
+            console.log(`[MODERN_DEBUG ${timestamp}] ${message}`, data || '');
+        }
+    }
+
+    logError(message, error = null) {
+        const timestamp = new Date().toISOString();
+        console.error(`[MODERN_ERROR ${timestamp}] ${message}`, error || '');
+        this.logDebug('Error occurred', { message, error: error?.stack || error });
+
+        // Add to error reports
+        this.errorReports.push({
+            timestamp,
+            message,
+            error: error?.message || error,
+            stack: error?.stack,
+            url: window.location.href,
+            userAgent: navigator.userAgent
+        });
+
+        // Keep only last 50 errors
+        if (this.errorReports.length > 50) {
+            this.errorReports.shift();
+        }
+    }
+
+    toggleDebugMode() {
+        this.debugMode = !this.debugMode;
+        localStorage.setItem('modern_debug_mode', this.debugMode.toString());
+
+        const debugPanel = document.getElementById('debugPanel');
+        const debugModeToggle = document.getElementById('debugModeToggle');
+
+        if (this.debugMode) {
+            if (debugPanel) debugPanel.style.display = 'block';
+            if (debugModeToggle) debugModeToggle.checked = true;
+            this.showDebugPanel();
+            this.showToast('Debug mode enabled', 'success');
+        } else {
+            if (debugPanel) debugPanel.style.display = 'none';
+            if (debugModeToggle) debugModeToggle.checked = false;
+            this.hideDebugPanel();
+            this.showToast('Debug mode disabled', 'warning');
+        }
+
+        this.logDebug(`Debug mode ${this.debugMode ? 'enabled' : 'disabled'}`);
+    }
+
+    showDebugPanel() {
+        if (!this.debugMode) return;
+
+        // Update debug info
+        this.updateDebugInfo();
+
+        // Show debug panel
+        const debugPanel = document.getElementById('debugPanel');
+        if (debugPanel) {
+            debugPanel.style.display = 'block';
+        }
+
+        // Update debug info periodically
+        this.debugInterval = setInterval(() => {
+            this.updateDebugInfo();
+        }, 1000);
+    }
+
+    hideDebugPanel() {
+        const debugPanel = document.getElementById('debugPanel');
+        if (debugPanel) {
+            debugPanel.style.display = 'none';
+        }
+
+        if (this.debugInterval) {
+            clearInterval(this.debugInterval);
+            this.debugInterval = null;
+        }
+    }
+
+    updateDebugInfo() {
+        const queueCountEl = document.getElementById('debugQueueCount');
+        const lastErrorEl = document.getElementById('debugLastError');
+        const connectionEl = document.getElementById('debugConnectionStatus');
+        const selectionsEl = document.getElementById('debugTotalSelections');
+
+        if (queueCountEl) queueCountEl.textContent = this.requestQueue.size;
+        if (lastErrorEl) {
+            const lastError = this.errorReports.length > 0 ? this.errorReports[this.errorReports.length - 1].message : 'None';
+            lastErrorEl.textContent = lastError;
+        }
+        if (connectionEl) connectionEl.textContent = navigator.onLine ? 'Online' : 'Offline';
+        if (selectionsEl) selectionsEl.textContent = this.selections.size;
+    }
+
+    clearDebugInfo() {
+        this.errorReports = [];
+        const lastErrorEl = document.getElementById('debugLastError');
+        if (lastErrorEl) lastErrorEl.textContent = 'None';
+        this.logDebug('Debug info cleared');
+    }
+
+    async testConnection() {
+        try {
+            const response = await fetch('/api/modern-tracker-data');
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Connection test successful', 'success');
+                this.logDebug('Connection test passed');
+            } else {
+                throw new Error(data.error || 'Connection test failed');
+            }
+        } catch (error) {
+            this.showToast('Connection test failed', 'error');
+            this.logError('Connection test failed', error);
+        }
+    }
+
+    refreshPageWithCacheBust() {
+        // Force cache-busting refresh
+        const timestamp = Date.now();
+        window.location.href = `${window.location.pathname}?_cb=${timestamp}`;
     }
     
     async unassignMatch(selector) {
@@ -1054,17 +1627,47 @@ class ModernAccaTracker {
     
     startAutoRefresh() {
         this.stopAutoRefresh();
-        
+
         this.refreshTimer = setInterval(() => {
             if (this.autoRefresh) {
                 this.loadAllData();
-                
+
                 // Reload current tab data
                 if (this.currentTab === 'tracker') {
                     this.loadTrackerData();
                 }
             }
         }, this.refreshInterval);
+    }
+
+    startConnectionMonitoring() {
+        // Monitor connection status and show warnings for offline mode
+        this.connectionCheckInterval = setInterval(() => {
+            if (!navigator.onLine) {
+                this.showToast(
+                    'Connection lost - changes may not be saved',
+                    'warning',
+                    {
+                        persistent: true,
+                        actionButton: {
+                            text: 'Retry Connection',
+                            onClick: () => window.location.reload()
+                        }
+                    }
+                );
+            }
+        }, 5000);
+
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            this.showToast('Connection restored', 'success');
+            this.logDebug('Connection restored');
+        });
+
+        window.addEventListener('offline', () => {
+            this.showToast('Connection lost', 'warning', { persistent: true });
+            this.logDebug('Connection lost');
+        });
     }
     
     stopAutoRefresh() {
@@ -1096,6 +1699,9 @@ class ModernAccaTracker {
     handleApiError(error, context = 'API call') {
         console.error(`Error in ${context}:`, error);
 
+        // Enhanced error reporting
+        this.logError(`API Error in ${context}`, error);
+
         // Determine error type and provide appropriate user feedback
         let errorMessage = 'An unexpected error occurred';
         let errorType = 'error';
@@ -1117,9 +1723,15 @@ class ModernAccaTracker {
         return errorMessage;
     }
 
-    showToast(message, type = 'info') {
+    showToast(message, type = 'info', options = {}) {
         const container = document.getElementById('toastContainer');
         if (!container) return;
+
+        const {
+            duration = type === 'warning' ? 4000 : 3000,
+            persistent = false,
+            actionButton = null
+        } = options;
 
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
@@ -1131,19 +1743,42 @@ class ModernAccaTracker {
             info: 'ℹ️'
         };
 
-        toast.innerHTML = `
+        let toastHTML = `
             <div class="toast-icon">${iconMap[type] || 'ℹ️'}</div>
             <div class="toast-message">${message}</div>
         `;
 
+        // Add action button if provided
+        if (actionButton) {
+            toastHTML += `
+                <div class="toast-actions">
+                    <button class="toast-action-btn" onclick="${actionButton.onClick}">${actionButton.text}</button>
+                </div>
+            `;
+        }
+
+        toast.innerHTML = toastHTML;
         container.appendChild(toast);
 
-        // Auto remove after 4 seconds for warnings, 3 for others
-        const timeout = type === 'warning' ? 4000 : 3000;
-        setTimeout(() => {
+        // Auto remove after duration (unless persistent)
+        if (!persistent) {
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.3s reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // Store reference for potential manual removal
+        toast.remove = () => {
             toast.style.animation = 'slideInRight 0.3s reverse';
-            setTimeout(() => toast.remove(), 300);
-        }, timeout);
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        };
+
+        return toast;
     }
 }
 

@@ -188,6 +188,8 @@ class AdminInterface {
         const statusSpinner = statusDiv.querySelector('.status-spinner');
         const selector = dropdown.value;
 
+        console.log('[ADMIN_DEBUG] handleDropdownChange called:', { selector, matchId: dropdown.dataset.matchId });
+
         if (!selector) {
             // Reset status if no selector selected
             statusDiv.style.display = 'none';
@@ -695,6 +697,8 @@ class AdminInterface {
         const assignedSelectors = document.querySelectorAll('.selector-badge.assigned').length;
         const totalSelectors = document.querySelectorAll('.selector-badge').length;
         const availableSelectors = totalSelectors - assignedSelectors;
+
+        console.log('[ADMIN_DEBUG] updateSummaryPanel called:', { assignedSelectors, totalSelectors, availableSelectors });
 
         // Update counts in the progress indicator
         const assignedCountEl = document.querySelector('.assigned-count');
