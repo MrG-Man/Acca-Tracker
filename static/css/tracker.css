@@ -185,16 +185,19 @@ body::before {
 
 .accumulator-status {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
     align-items: center;
+    gap: 20px;
+    justify-content: center;
     margin-bottom: 0;
     flex: 0 0 auto;
+    flex-wrap: nowrap;
 }
 
 .status-badge {
-    padding: 12px 24px;
+    padding: 8px 16px;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     border: 3px solid rgba(255, 255, 255, 0.3);
@@ -223,13 +226,14 @@ body::before {
 }
 
 .stat-item {
-    flex: 1;
+    flex: 0 0 auto;
     text-align: center;
-    padding: 15px 5px;
+    padding: 10px 8px;
     background: rgba(255, 255, 255, 0.8);
     border: 2px solid rgba(0,0,0,0.1);
     position: relative;
     overflow: hidden;
+    margin: 0;
 }
 
 .stat-item::before {
@@ -245,16 +249,16 @@ body::before {
 .stat-label {
     display: block;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .stat-value {
     display: block;
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     font-weight: 900;
     line-height: 1;
 }
@@ -674,8 +678,8 @@ body::before {
     }
 
     .status-badge {
-        padding: 2px 4px;
-        font-size: 0.5rem;
+        padding: 1px 3px;
+        font-size: 0.4rem;
     }
 
     .teams {
@@ -816,8 +820,8 @@ body::before {
     }
 
     .status-badge {
-        padding: 3px 6px;
-        font-size: 0.6rem;
+        padding: 2px 4px;
+        font-size: 0.5rem;
     }
 
     .score {

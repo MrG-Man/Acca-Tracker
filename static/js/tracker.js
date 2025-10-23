@@ -12,6 +12,11 @@ class BTTSTracker {
         this.bttsPendingCount = document.getElementById('btts-pending-count');
         this.bttsFailedCount = document.getElementById('btts-failed-count');
 
+        // Hide accumulator status if loaded in iframe to prevent duplicates in mobile test interface
+        if (this.accumulatorStatus && window.self !== window.top) {
+            this.accumulatorStatus.style.display = 'none';
+        }
+
         // Configuration
         this.updateInterval = 30000; // 30 seconds
         this.retryInterval = 5000; // 5 seconds
