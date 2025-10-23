@@ -1508,3 +1508,11 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-23 14:56:52,996 - app - WARNING - 404 error: http://localhost:5001/favicon.ico
 2025-10-23 15:11:07,152 - app - WARNING - 404 error: http://localhost:5001/modern
 2025-10-23 15:11:07,183 - app - WARNING - 404 error: http://localhost:5001/favicon.ico
+2025-10-23 15:18:19,253 - app - WARNING - 404 error: http://localhost:5000/modern
+2025-10-23 15:18:19,266 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 15:19:00,611 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 15:19:14,533 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 15:19:23,144 - app - WARNING - 404 error: http://localhost:5000/modern
+2025-10-23 15:19:23,181 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
+2025-10-23 15:22:39,508 - app - WARNING - 404 error: http://localhost:5000/modern
+2025-10-23 15:23:13,308 - app - WARNING - 404 error: http://localhost:5000/modern
