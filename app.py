@@ -373,14 +373,6 @@ def modern_tracker():
         app.logger.error(f"Error loading modern tracker interface: {str(e)}")
         return f"Error loading modern tracker interface: {str(e)}", 500
 
-@app.route('/demo')
-def demo():
-    """Demo page showcasing current accumulator selections in modern format."""
-    try:
-        return render_template('demo.html')
-    except Exception as e:
-        app.logger.error(f"Error loading demo interface: {str(e)}")
-        return f"Error loading demo interface: {str(e)}", 500
 
 @app.route('/admin')
 def admin():
@@ -971,35 +963,8 @@ def report_error():
 
 # ===== BTTS TRACKER ROUTES =====
 
-@app.route('/btts-tracker')
-def btts_tracker():
-    """Main BTTS accumulator tracker interface."""
-    try:
-        # Load current week's selections for context
-        week = get_current_prediction_week()
-
-        # Check if data_manager is available before calling methods
-        if data_manager is None:
-            print("ERROR: data_manager is None - cannot load selections for BTTS tracker")
-            return render_template('tracker.html')
-
-        selections = data_manager.load_weekly_selections(week)
-
-        return render_template('tracker.html')
-
-    except Exception as e:
-        return f"Error loading BTTS tracker: {str(e)}", 500
 
 
-@app.route('/mobile-test')
-def mobile_test():
-    """Mobile device testing interface for testing responsive design across multiple devices."""
-    try:
-        app.logger.info("Mobile test route accessed - rendering mobile_test.html")
-        return render_template('mobile_test.html')
-    except Exception as e:
-        app.logger.error(f"Error loading mobile test interface: {str(e)}")
-        return f"Error loading mobile test interface: {str(e)}", 500
 
 
 def get_team_color(team_name):
@@ -1014,68 +979,6 @@ def get_team_color(team_name):
     return colors[hash_value]
 
 
-@app.route('/mobile-demo')
-def mobile_demo():
-    """Mobile demo page showcasing current accumulator selections in mobile format."""
-    try:
-        # Load current selections
-        selections_data = load_selections()
-        selections = selections_data.get('selectors', {})
-
-        # Create demo matches for all 8 selectors
-        demo_matches = []
-        for selector in SELECTORS:
-            if selector in selections:
-                # Use real match data for selected matches
-                match_data = selections[selector]
-                # Simulate realistic match statuses and scores
-                import random
-                statuses = ['FT', 'HT', '82\'', '65\'', '45\'', 'Live']
-                status = random.choice(statuses)
-                if status == 'FT':
-                    home_score = random.randint(0, 4)
-                    away_score = random.randint(0, 4)
-                    btts = home_score > 0 and away_score > 0
-                elif status in ['HT', '45\'']:
-                    home_score = random.randint(0, 2)
-                    away_score = random.randint(0, 2)
-                    btts = home_score > 0 and away_score > 0
-                else:
-                    home_score = random.randint(0, 3)
-                    away_score = random.randint(0, 3)
-                    btts = home_score > 0 and away_score > 0
-
-                demo_matches.append({
-                    'selector': selector,
-                    'home_team': match_data.get('home_team'),
-                    'away_team': match_data.get('away_team'),
-                    'home_score': home_score,
-                    'away_score': away_score,
-                    'status': status,
-                    'btts': btts,
-                    'league': match_data.get('league', 'Premier League'),
-                    'home_color': get_team_color(match_data.get('home_team')),
-                    'away_color': get_team_color(match_data.get('away_team'))
-                })
-            else:
-                # Create placeholder for unselected selectors
-                demo_matches.append({
-                    'selector': selector,
-                    'home_team': None,
-                    'away_team': None,
-                    'home_score': 0,
-                    'away_score': 0,
-                    'status': '—',
-                    'btts': False,
-                    'league': None,
-                    'home_color': '#666666',
-                    'away_color': '#666666'
-                })
-
-        return render_template('mobile-demo.html', matches=demo_matches, get_team_color=get_team_color)
-    except Exception as e:
-        app.logger.error(f"Error loading mobile demo interface: {str(e)}")
-        return f"Error loading mobile demo interface: {str(e)}", 500
 
 
 
