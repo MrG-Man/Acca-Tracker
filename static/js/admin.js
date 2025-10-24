@@ -13,6 +13,7 @@ class AdminInterface {
     init() {
         this.setupEventListeners();
         this.updateAllDropdowns();
+        this.setupSearchFunctionality();
         this.logDebug('AdminInterface initialized');
 
         // Add mobile detection and logging
@@ -132,6 +133,29 @@ class AdminInterface {
                 this.hideOverrideModal();
             }
         });
+
+        // Team search functionality
+        const teamSearchInput = document.getElementById('team-search');
+        const clearSearchBtn = document.getElementById('clear-search');
+
+        if (teamSearchInput) {
+            teamSearchInput.addEventListener('input', (e) => {
+                this.handleTeamSearch(e.target.value);
+                this.toggleClearButton(e.target.value);
+            });
+
+            teamSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.clearTeamSearch();
+                }
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                this.clearTeamSearch();
+            });
+        }
     }
 
     async handleAssignment(button) {
@@ -756,6 +780,158 @@ class AdminInterface {
         // This would be used if we want to completely rebuild the summary panel
         // For now, we'll use the incremental update approach above
         console.log('Summary data refreshed:', { selections: selections.length, total: allSelectors.length });
+    }
+
+    setupSearchFunctionality() {
+        this.searchTimeout = null;
+        this.currentSearchTerm = '';
+        this.matchesGrid = document.getElementById('matches-grid');
+        this.searchResultsInfo = document.getElementById('search-results-info');
+        this.resultsCount = document.querySelector('.results-count');
+
+        this.logDebug('Search functionality initialized');
+    }
+
+    handleTeamSearch(searchTerm) {
+        // Clear previous timeout
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
+        // Debounce search to avoid too many calls
+        this.searchTimeout = setTimeout(() => {
+            this.performTeamSearch(searchTerm);
+        }, 300);
+    }
+
+    performTeamSearch(searchTerm) {
+        this.currentSearchTerm = searchTerm.toLowerCase().trim();
+
+        if (!this.matchesGrid) {
+            this.logDebug('Matches grid not found');
+            return;
+        }
+
+        const matchCards = this.matchesGrid.querySelectorAll('.match-card');
+        let visibleCount = 0;
+        let totalMatches = matchCards.length;
+
+        if (this.currentSearchTerm === '') {
+            // Show all matches if search is empty
+            this.showAllMatches(matchCards);
+            this.updateSearchResultsInfo(totalMatches, totalMatches);
+            return;
+        }
+
+        // Filter matches based on search term
+        matchCards.forEach(card => {
+            const homeTeam = card.querySelector('.team.home')?.textContent.toLowerCase() || '';
+            const awayTeam = card.querySelector('.team.away')?.textContent.toLowerCase() || '';
+            const league = card.querySelector('.match-header h3')?.textContent.toLowerCase() || '';
+
+            const matchesSearch = homeTeam.includes(this.currentSearchTerm) ||
+                                awayTeam.includes(this.currentSearchTerm) ||
+                                league.includes(this.currentSearchTerm);
+
+            if (matchesSearch) {
+                card.style.display = 'block';
+                card.classList.add('search-match');
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+                card.classList.remove('search-match');
+            }
+        });
+
+        // Update matches grid class and show results info
+        this.matchesGrid.classList.toggle('search-filtered', this.currentSearchTerm !== '');
+        this.updateSearchResultsInfo(totalMatches, visibleCount);
+
+        // Show "no results" message if no matches found
+        this.showNoResultsMessage(visibleCount === 0);
+
+        this.logDebug('Team search performed', {
+            searchTerm: this.currentSearchTerm,
+            totalMatches,
+            visibleCount
+        });
+    }
+
+    showAllMatches(matchCards) {
+        matchCards.forEach(card => {
+            card.style.display = 'block';
+            card.classList.remove('search-match');
+        });
+
+        this.matchesGrid.classList.remove('search-filtered');
+        this.hideNoResultsMessage();
+    }
+
+    updateSearchResultsInfo(total, visible) {
+        if (!this.searchResultsInfo || !this.resultsCount) return;
+
+        if (this.currentSearchTerm === '') {
+            this.searchResultsInfo.style.display = 'none';
+            return;
+        }
+
+        this.resultsCount.textContent = `${visible} of ${total} matches`;
+        this.searchResultsInfo.style.display = 'flex';
+
+        this.logDebug('Search results updated', { total, visible });
+    }
+
+    showNoResultsMessage(show) {
+        let noResultsDiv = this.matchesGrid.querySelector('.search-no-results');
+
+        if (show && !noResultsDiv) {
+            noResultsDiv = document.createElement('div');
+            noResultsDiv.className = 'search-no-results';
+            noResultsDiv.innerHTML = `
+                <div class="search-no-results-icon">🔍</div>
+                <h3>No matches found</h3>
+                <p>No matches contain teams or leagues matching "${this.currentSearchTerm}"</p>
+            `;
+            this.matchesGrid.appendChild(noResultsDiv);
+        } else if (!show && noResultsDiv) {
+            noResultsDiv.remove();
+        }
+    }
+
+    hideNoResultsMessage() {
+        const noResultsDiv = this.matchesGrid.querySelector('.search-no-results');
+        if (noResultsDiv) {
+            noResultsDiv.remove();
+        }
+    }
+
+    clearTeamSearch() {
+        const teamSearchInput = document.getElementById('team-search');
+        const clearSearchBtn = document.getElementById('clear-search');
+
+        if (teamSearchInput) {
+            teamSearchInput.value = '';
+            this.performTeamSearch('');
+            this.toggleClearButton('');
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.style.display = 'none';
+        }
+
+        // Focus back to search input
+        if (teamSearchInput) {
+            teamSearchInput.focus();
+        }
+
+        this.logDebug('Team search cleared');
+    }
+
+    toggleClearButton(searchValue) {
+        const clearSearchBtn = document.getElementById('clear-search');
+        if (clearSearchBtn) {
+            clearSearchBtn.style.display = searchValue.trim() !== '' ? 'block' : 'none';
+        }
     }
 
     // Update confirmation button state when form changes

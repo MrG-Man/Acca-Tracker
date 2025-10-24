@@ -21,8 +21,7 @@ from typing import Dict, List, Optional, Callable, Any
 import json
 import os
 
-# SOFASCORE API ENABLED FOR PRODUCTION
-from sofascore_optimized import SofascoreLiveScoresAPI
+# SOFASCORE API DISABLED - Using mock API
 from data_manager import data_manager
 
 # Import BTTS detector for integration
@@ -32,66 +31,89 @@ try:
 except ImportError:
     BTTS_DETECTOR_AVAILABLE = False
 
-class MockLiveScoresAPI:
+class BBCLiveScoresAPI:
     """
-    Mock API class that mimics SofascoreLiveScoresAPI interface but returns static data.
-    Used for testing admin interface without making actual API calls.
+    BBC-based live scores API that integrates with the existing LiveScoreManager interface.
+    Uses BBC scraper to fetch live scores instead of Sofascore.
     """
 
     def __init__(self, cache_dir="cache"):
-        """Initialize mock API with static data."""
+        """Initialize BBC API with scraper."""
         self.cache_dir = cache_dir
         self.active_matches = {}
         self.btts_status = {}
+        self.api_calls_used = 0
 
     def get_live_scores_batch(self, match_ids=None, use_cache=True):
-        """Return mock live scores data."""
-        return {
-            'events': [
-                {
-                    'id': 'mock_match_1',
-                    'homeTeam': {'name': 'Arsenal'},
-                    'awayTeam': {'name': 'Chelsea'},
-                    'status': {'type': 'not_started'},
-                    'homeScore': {'current': 0},
-                    'awayScore': {'current': 0}
-                },
-                {
-                    'id': 'mock_match_2',
-                    'homeTeam': {'name': 'Manchester United'},
-                    'awayTeam': {'name': 'Liverpool'},
-                    'status': {'type': 'not_started'},
-                    'homeScore': {'current': 0},
-                    'awayScore': {'current': 0}
+        """Return live scores data from BBC."""
+        try:
+            from bbc_scraper import BBCSportScraper
+            scraper = BBCSportScraper()
+            target_date = datetime.now().strftime('%Y-%m-%d')
+            live_result = scraper.scrape_live_scores(target_date)
+            all_live_matches = live_result.get("live_matches", [])
+
+            # Convert BBC format to Sofascore-like format for compatibility
+            events = []
+            for match in all_live_matches:
+                event = {
+                    'id': f"{match.get('league', 'Unknown')}_{match.get('home_team', '')}_{match.get('away_team', '')}",
+                    'homeTeam': {'name': match.get('home_team', '')},
+                    'awayTeam': {'name': match.get('away_team', '')},
+                    'status': {'type': match.get('status', 'not_started')},
+                    'homeScore': {'current': match.get('home_score', 0)},
+                    'awayScore': {'current': match.get('away_score', 0)},
+                    'bbc_data': match  # Keep original BBC data
                 }
-            ]
-        }
+                events.append(event)
+
+            self.api_calls_used += 1
+            return {'events': events}
+
+        except Exception as e:
+            print(f"Error fetching BBC live scores: {e}")
+            return {'events': []}
 
     def detect_match_events(self, live_data):
-        """Return empty events list for mock data."""
-        return []
+        """Detect events from BBC live data."""
+        events = []
+        if live_data and 'events' in live_data:
+            for event in live_data['events']:
+                # Check for BTTS events
+                home_score = event.get('homeScore', {}).get('current', 0)
+                away_score = event.get('awayScore', {}).get('current', 0)
+                if home_score > 0 and away_score > 0:
+                    events.append({
+                        'type': 'btts',
+                        'match_id': event['id'],
+                        'timestamp': datetime.now(),
+                        'score': f"{home_score}-{away_score}",
+                        'home_team': event['homeTeam']['name'],
+                        'away_team': event['awayTeam']['name']
+                    })
+        return events
 
     def get_usage_stats(self):
-        """Return mock usage statistics."""
+        """Return usage statistics."""
         return {
-            'current_month': '2024-10',
-            'api_calls_used': 0,
-            'api_calls_target': '0 (DISABLED)',
+            'current_month': datetime.now().strftime('%Y-%m'),
+            'api_calls_used': self.api_calls_used,
+            'api_calls_target': 'Unlimited (BBC)',
             'cache_hits': 0,
             'cache_misses': 0,
             'events_detected': 0,
             'btts_detected': 0,
-            'active_matches': 0,
+            'active_matches': len(self.active_matches),
             'cache_hit_rate': 0.0
         }
 
     def print_stats(self):
-        """Print mock statistics."""
-        print("📊 MOCK SOFASCORE API STATISTICS (API DISABLED)")
+        """Print statistics."""
+        print("📊 BBC LIVE SCORES API STATISTICS")
         print("="*50)
-        print("🔌 Sofascore API: DISABLED")
-        print("📊 API Calls: 0 (Mock Data)")
-        print("🎯 Status: Testing Mode")
+        print("🔌 Source: BBC Sport")
+        print(f"📊 API Calls: {self.api_calls_used}")
+        print("🎯 Status: Active")
         print("="*50)
 
 class LiveScoreManager:
@@ -110,8 +132,8 @@ class LiveScoreManager:
         """
         self.data_manager = data_manager_instance or data_manager
 
-        # SOFASCORE API ENABLED FOR PRODUCTION - Using real API
-        self.live_api = SofascoreLiveScoresAPI(cache_dir=cache_dir)
+        # Using BBC API for live scores
+        self.live_api = BBCLiveScoresAPI(cache_dir=cache_dir)
 
         # Event callbacks
         self.event_callbacks = {

@@ -329,8 +329,7 @@ class BTTSDetector:
 
     def check_btts_status(self, match_id: str) -> Dict[str, Any]:
         """
-        Check BTTS status for a specific match.
-        SOFASCORE API DISABLED - Returning mock data for testing.
+        Check BTTS status for a specific match using BBC data.
 
         Args:
             match_id (str): Match identifier
@@ -338,29 +337,131 @@ class BTTSDetector:
         Returns:
             Dict: BTTS status information
         """
-        # SOFASCORE API DISABLED - Return mock data for testing
-        selector = self.match_selectors.get(match_id, 'Unknown')
+        try:
+            selector = self.match_selectors.get(match_id, 'Unknown')
 
-        return {
-            'match_id': match_id,
-            'btts_detected': False,  # Mock: No BTTS detected
-            'current_score': '0-0',  # Mock: No goals yet
-            'is_live': False,        # Mock: Not live
-            'selector': selector,
-            'last_updated': datetime.now().isoformat(),
-            'status': 'SOFASCORE_API_DISABLED',
-            'message': 'Live score tracking disabled for admin interface testing'
-        }
+            # Get current selections to find match details
+            selections = self.load_weekly_selections()
+            if match_id not in self.match_selectors or match_id not in [s.get('id') for s in selections.values()]:
+                return {
+                    'match_id': match_id,
+                    'btts_detected': False,
+                    'current_score': '0-0',
+                    'is_live': False,
+                    'selector': selector,
+                    'last_updated': datetime.now().isoformat(),
+                    'status': 'NOT_FOUND',
+                    'message': 'Match not found in selections'
+                }
+
+            # Find match data
+            match_data = None
+            for sel, data in selections.items():
+                if data.get('id') == match_id:
+                    match_data = data
+                    break
+
+            if not match_data:
+                return {
+                    'match_id': match_id,
+                    'btts_detected': False,
+                    'current_score': '0-0',
+                    'is_live': False,
+                    'selector': selector,
+                    'last_updated': datetime.now().isoformat(),
+                    'status': 'NOT_FOUND',
+                    'message': 'Match data not found'
+                }
+
+            home_team = match_data.get('home_team')
+            away_team = match_data.get('away_team')
+
+            # Get live scores from BBC
+            try:
+                from bbc_scraper import BBCSportScraper
+                scraper = BBCSportScraper()
+                target_date = datetime.now().strftime('%Y-%m-%d')
+                live_result = scraper.scrape_live_scores(target_date)
+                all_live_matches = live_result.get("live_matches", [])
+
+                # Find matching live data
+                live_match = None
+                for bbc_match in all_live_matches:
+                    if (bbc_match.get('home_team') == home_team and
+                        bbc_match.get('away_team') == away_team):
+                        live_match = bbc_match
+                        break
+
+                if live_match:
+                    home_score = live_match.get('home_score', 0)
+                    away_score = live_match.get('away_score', 0)
+                    status = live_match.get('status', 'not_started')
+                    match_time = live_match.get('match_time', '0\'')
+                    league = live_match.get('league', 'Unknown')
+                    btts_detected = home_score > 0 and away_score > 0
+                    is_live = status in ['live', 'first_half', 'second_half']
+
+                    return {
+                        'match_id': match_id,
+                        'btts_detected': btts_detected,
+                        'current_score': f'{home_score}-{away_score}',
+                        'is_live': is_live,
+                        'selector': selector,
+                        'home_team': home_team,
+                        'away_team': away_team,
+                        'league': league,
+                        'status': status,
+                        'match_time': match_time,
+                        'last_updated': datetime.now().isoformat(),
+                        'source': 'BBC'
+                    }
+                else:
+                    return {
+                        'match_id': match_id,
+                        'btts_detected': False,
+                        'current_score': '0-0',
+                        'is_live': False,
+                        'selector': selector,
+                        'home_team': home_team,
+                        'away_team': away_team,
+                        'status': 'not_started',
+                        'match_time': '0\'',
+                        'last_updated': datetime.now().isoformat(),
+                        'source': 'BBC',
+                        'message': 'No live data available yet'
+                    }
+
+            except Exception as e:
+                return {
+                    'match_id': match_id,
+                    'btts_detected': False,
+                    'current_score': '0-0',
+                    'is_live': False,
+                    'selector': selector,
+                    'last_updated': datetime.now().isoformat(),
+                    'status': 'ERROR',
+                    'message': f'Error fetching BBC data: {str(e)}'
+                }
+
+        except Exception as e:
+            return {
+                'match_id': match_id,
+                'btts_detected': False,
+                'current_score': '0-0',
+                'is_live': False,
+                'selector': 'Unknown',
+                'last_updated': datetime.now().isoformat(),
+                'status': 'ERROR',
+                'message': f'Error checking BTTS status: {str(e)}'
+            }
 
     def get_all_btts_status(self) -> Dict[str, Any]:
         """
-        Get BTTS status for all tracked matches.
-        SOFASCORE API DISABLED - Returning mock data for testing.
+        Get BTTS status for all tracked matches using BBC data.
 
         Returns:
             Dict: Complete BTTS status for all matches
         """
-        # SOFASCORE API DISABLED - Return mock data for testing
         results = {}
 
         for match_id in self.active_matches:
@@ -368,15 +469,16 @@ class BTTSDetector:
 
         # Update statistics
         self.stats['total_matches_tracked'] = len(self.active_matches)
-        self.stats['btts_pending'] = 0  # Mock: No pending BTTS
+        self.stats['btts_pending'] = len([m for m in results.values() if not m['btts_detected'] and m['is_live']])
+        self.stats['btts_detected'] = len([m for m in results.values() if m['btts_detected']])
         self.stats['last_update'] = datetime.now()
 
         return {
             'matches': results,
             'statistics': self.stats.copy(),
             'last_updated': datetime.now().isoformat(),
-            'status': 'SOFASCORE_API_DISABLED',
-            'message': 'Live score tracking disabled for admin interface testing'
+            'status': 'ACTIVE',
+            'message': 'Live score tracking active with BBC data'
         }
 
     def start_monitoring(self, check_interval: int = 60):

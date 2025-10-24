@@ -79,8 +79,7 @@ app.config.from_object(config)
 
 # Log critical environment variables (without exposing secrets)
 print(f"Environment check - HOST: {config.HOST}, PORT: {config.PORT}")
-print(f"Feature flags - BBC: {config.ENABLE_BBC_SCRAPER}, Sofascore: {config.ENABLE_SOFA_SCORE_API}")
-print(f"API Keys configured - Sofascore: {'Yes' if config.SOFASCORE_API_KEY else 'No'}")
+print(f"Feature flags - BBC: {config.ENABLE_BBC_SCRAPER}")
 
 # Setup CORS
 CORS(app, origins=config.CORS_ORIGINS, supports_credentials=True)
@@ -157,10 +156,6 @@ def validate_critical_components():
     else:
         print("✓ Data manager module available")
 
-    if config.SOFASCORE_API_KEY:
-        print("✓ Sofascore API key configured")
-    else:
-        print("⚠ Sofascore API key not configured - live scores will be disabled")
 
     if config.SECRET_KEY:
         print("✓ Flask secret key configured")
@@ -210,26 +205,7 @@ except ImportError:
     BTTS_DETECTOR_AVAILABLE = False
     app.logger.warning("BTTS detector not available")
 
-# Import Sofascore Live Scores API for live tracking
-try:
-    from sofascore_optimized import SofascoreLiveScoresAPI
-    # Only initialize if API key is available
-    if config.SOFASCORE_API_KEY:
-        sofascore_api = SofascoreLiveScoresAPI(api_key=config.SOFASCORE_API_KEY)
-        SOFASCORE_AVAILABLE = True
-        app.logger.info("Sofascore API loaded successfully")
-    else:
-        sofascore_api = None
-        SOFASCORE_AVAILABLE = False
-        app.logger.warning("Sofascore API key not configured - live scores disabled")
-except ImportError:
-    sofascore_api = None
-    SOFASCORE_AVAILABLE = False
-    app.logger.warning("Sofascore API not available")
-except Exception as e:
-    sofascore_api = None
-    SOFASCORE_AVAILABLE = False
-    app.logger.error(f"Error initializing Sofascore API: {e}")
+# BBC live scores integration active
 
 # Panel members in assignment order
 SELECTORS = [
@@ -314,81 +290,6 @@ def find_next_available_fixtures_date(target_date=None, max_days_ahead=14):
     app.logger.warning(f"No fixtures found within {max_days_ahead} days of {target_date}")
     return None
 
-def map_selections_to_sofascore_ids(selections):
-    """
-    Map current week's selections to Sofascore match IDs.
-
-    Args:
-        selections (dict): Current week's selections
-
-    Returns:
-        dict: Mapping of selector names to Sofascore match IDs
-    """
-    if not SOFASCORE_AVAILABLE or not sofascore_api:
-        return {}
-
-    try:
-        # Get current week's BBC fixtures for team name matching
-        week = get_current_prediction_week()
-
-        # Check if data_manager is available before calling methods
-        if data_manager is None:
-            print("ERROR: data_manager is None - cannot get BBC fixtures")
-            return {}
-
-        bbc_fixtures = data_manager.get_bbc_fixtures(week)
-
-        if not bbc_fixtures:
-            return {}
-
-        # Get live scores from Sofascore to find match IDs
-        live_data = sofascore_api.get_live_scores_batch()
-
-        if not live_data or 'events' not in live_data:
-            return {}
-
-        match_mapping = {}
-
-        # For each selection, find the corresponding Sofascore match ID
-        for selector, match_data in selections.items():
-            home_team = match_data.get('home_team')
-            away_team = match_data.get('away_team')
-
-            if not home_team or not away_team:
-                continue
-
-            # Find matching Sofascore event
-            for event in live_data['events']:
-                sofascore_home = event.get('homeTeam', {}).get('name', '')
-                sofascore_away = event.get('awayTeam', {}).get('name', '')
-
-                # Try exact match first
-                if (sofascore_home == home_team and sofascore_away == away_team):
-                    match_mapping[selector] = {
-                        'sofascore_id': event.get('id'),
-                        'home_team': home_team,
-                        'away_team': away_team,
-                        'status': event.get('status', {}).get('type', 'not_started')
-                    }
-                    break
-
-                # Try partial match (for team name variations)
-                if (home_team.lower() in sofascore_home.lower() and
-                    away_team.lower() in sofascore_away.lower()):
-                    match_mapping[selector] = {
-                        'sofascore_id': event.get('id'),
-                        'home_team': home_team,
-                        'away_team': away_team,
-                        'status': event.get('status', {}).get('type', 'not_started'),
-                        'note': 'partial_match'
-                    }
-                    break
-
-        return match_mapping
-
-    except Exception as e:
-        print(f"Error mapping selections to Sofascore IDs: {e}")
-        return {}
 
 def load_selections():
     """Load existing selections for the current week using DataManager."""
@@ -1186,6 +1087,9 @@ def get_btts_status():
         week = get_current_prediction_week()
         print(f"[DEBUG] /api/btts-status - Loading BTTS status for week: {week}")
 
+        # Get target date for live scores
+        target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+
         # Check if data_manager is available before calling methods
         if data_manager is None:
             print("ERROR: data_manager is None - cannot load selections for BTTS status")
@@ -1266,55 +1170,66 @@ def get_btts_status():
                     "last_updated": datetime.now().isoformat()
                 }
 
-        # Map selections to Sofascore match IDs
-        match_mapping = map_selections_to_sofascore_ids(selections)
+        # Get live scores from BBC for BTTS detection
+        try:
+            if BBCSportScraper is not None:
+                scraper = BBCSportScraper()
+                live_result = scraper.scrape_live_scores(target_date)
+                all_live_matches = live_result.get("live_matches", [])
+                app.logger.info(f"[DEBUG] /api/btts-status - Scraped {len(all_live_matches)} live matches from BBC")
+            else:
+                all_live_matches = []
+                app.logger.warning("[DEBUG] /api/btts-status - BBC scraper not available")
+        except Exception as e:
+            app.logger.error(f"[DEBUG] /api/btts-status - Error scraping BBC live scores: {e}")
+            all_live_matches = []
 
-        # Get live scores and detect events
-        if SOFASCORE_AVAILABLE and sofascore_api:
-            try:
-                # Get live scores data
-                live_data = sofascore_api.get_live_scores_batch()
+        # Match selections with BBC live data
+        for selector, match_data in selections.items():
+            home_team = match_data.get('home_team')
+            away_team = match_data.get('away_team')
 
-                if live_data and 'events' in live_data:
-                    # Detect match events (including BTTS)
-                    detected_events = sofascore_api.detect_match_events(live_data)
+            # Find matching live data
+            live_match = None
+            for bbc_match in all_live_matches:
+                if (bbc_match.get('home_team') == home_team and
+                    bbc_match.get('away_team') == away_team):
+                    live_match = bbc_match
+                    break
 
-                    # Process each tracked match
-                    for selector, match_info in match_mapping.items():
-                        sofascore_id = match_info.get('sofascore_id')
-                        if not sofascore_id:
-                            continue
+            if live_match:
+                # Use BBC live data
+                home_score = live_match.get('home_score', 0)
+                away_score = live_match.get('away_score', 0)
+                status = live_match.get('status', 'not_started')
+                match_time = live_match.get('match_time', '0\'')
+                league = live_match.get('league', 'Unknown')
+                btts_detected = home_score > 0 and away_score > 0
 
-                        # Find the match in live data
-                        match_event = None
-                        for event in live_data['events']:
-                            if event.get('id') == sofascore_id:
-                                match_event = event
-                                break
-
-                        if match_event:
-                            home_score = match_event.get('homeScore', {}).get('current', 0)
-                            away_score = match_event.get('awayScore', {}).get('current', 0)
-                            status = match_event.get('status', {}).get('type', 'not_started')
-
-                            # Check if BTTS occurred
-                            is_btts = home_score > 0 and away_score > 0
-
-                            matches_data[selector] = {
-                                "sofascore_id": sofascore_id,
-                                "home_team": match_info.get('home_team'),
-                                "away_team": match_info.get('away_team'),
-                                "home_score": home_score,
-                                "away_score": away_score,
-                                "status": status,
-                                "btts_detected": is_btts,
-                                "league": match_info.get('league', 'Unknown League'),
-                                "last_updated": datetime.now().isoformat()
-                            }
-
-            except Exception as e:
-                print(f"Error getting live scores: {e}")
-                # Continue with cached/empty data if Sofascore fails
+                matches_data[selector] = {
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "status": status,
+                    "match_time": match_time,
+                    "league": league,
+                    "btts_detected": btts_detected,
+                    "last_updated": datetime.now().isoformat()
+                }
+                app.logger.debug(f"[DEBUG] /api/btts-status - Updated {selector}: {home_team} vs {away_team} - {home_score}-{away_score} ({status})")
+            else:
+                # No live data found - set to not_started
+                matches_data[selector] = {
+                    "home_team": match_data.get('home_team'),
+                    "away_team": match_data.get('away_team'),
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "not_started",
+                    "league": "Unknown",
+                    "btts_detected": False,
+                    "last_updated": datetime.now().isoformat()
+                }
 
         # Calculate statistics for all matches
         btts_detected = 0
@@ -1325,10 +1240,8 @@ def get_btts_status():
             elif match_data.get('status') in ['not_started', 'live', 'no_selection']:
                 btts_pending += 1
 
-        # Get API usage statistics
+        # Sofascore integration removed - no API stats
         api_stats = {}
-        if SOFASCORE_AVAILABLE and sofascore_api:
-            api_stats = sofascore_api.get_usage_stats()
 
         # Calculate completion percentage
         total_selectors = len(SELECTORS)
@@ -1337,7 +1250,7 @@ def get_btts_status():
 
         return jsonify({
             "status": "ACTIVE" if matches_data else "NO_LIVE_DATA",
-            "message": f"Tracking {len(matches_data)} matches with Sofascore integration",
+            "message": f"Tracking {len(matches_data)} matches with BBC live scores",
             "matches": matches_data,
             "statistics": {
                 "total_matches_tracked": len(matches_data),
@@ -1345,17 +1258,11 @@ def get_btts_status():
                 "btts_pending": btts_pending,
                 "btts_failed": len(matches_data) - btts_detected - btts_pending,
                 "last_update": datetime.now().isoformat(),
-                "sofascore_api_available": SOFASCORE_AVAILABLE,
                 "api_calls_used": api_stats.get('api_calls_used', 0),
                 "api_calls_target": api_stats.get('api_calls_target', '12-16'),
                 "completion_percentage": completion_percentage
             },
             "last_updated": datetime.now().isoformat(),
-            "sofascore_integration": {
-                "enabled": SOFASCORE_AVAILABLE,
-                "cache_hit_rate": api_stats.get('cache_hit_rate', 0),
-                "events_detected": api_stats.get('events_detected', 0)
-            }
         })
 
     except Exception as e:
@@ -1401,6 +1308,9 @@ def get_btts_summary():
         # Load current week's selections
         week = get_current_prediction_week()
 
+        # Get target date for live scores
+        target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+
         # Check if data_manager is available before calling methods
         if data_manager is None:
             print("ERROR: data_manager is None - cannot load selections for BTTS summary")
@@ -1429,50 +1339,21 @@ def get_btts_summary():
                 "accumulator_status": "NO_DATA"
             })
 
-        # Get current BTTS status data (reuse the logic from get_btts_status)
+        # Get live scores from BBC for BTTS detection
         try:
-            # Load current week's selections
-            selections = data_manager.load_weekly_selections(week) if 'selections' not in locals() else selections
-
-            if not selections:
-                matches = {}
+            if BBCSportScraper is not None:
+                scraper = BBCSportScraper()
+                live_result = scraper.scrape_live_scores(target_date)
+                all_live_matches = live_result.get("live_matches", [])
+                app.logger.info(f"[DEBUG] /api/btts-summary - Scraped {len(all_live_matches)} live matches from BBC")
             else:
-                # Map selections to Sofascore match IDs
-                match_mapping = map_selections_to_sofascore_ids(selections)
-
-                # Get live scores and detect events
-                matches = {}
-                if SOFASCORE_AVAILABLE and sofascore_api:
-                    live_data = sofascore_api.get_live_scores_batch()
-                    if live_data and 'events' in live_data:
-                        for selector, match_info in match_mapping.items():
-                            sofascore_id = match_info.get('sofascore_id')
-                            if not sofascore_id:
-                                continue
-
-                            # Find the match in live data
-                            for event in live_data['events']:
-                                if event.get('id') == sofascore_id:
-                                    home_score = event.get('homeScore', {}).get('current', 0)
-                                    away_score = event.get('awayScore', {}).get('current', 0)
-                                    status = event.get('status', {}).get('type', 'not_started')
-
-                                    matches[selector] = {
-                                        "sofascore_id": sofascore_id,
-                                        "home_team": match_info.get('home_team'),
-                                        "away_team": match_info.get('away_team'),
-                                        "home_score": home_score,
-                                        "away_score": away_score,
-                                        "status": status,
-                                        "btts_detected": home_score > 0 and away_score > 0,
-                                        "last_updated": datetime.now().isoformat()
-                                    }
-                                    break
+                all_live_matches = []
+                app.logger.warning("[DEBUG] /api/btts-summary - BBC scraper not available")
         except Exception as e:
-            print(f"Error getting BTTS status for summary: {e}")
-            matches = {}
+            app.logger.error(f"[DEBUG] /api/btts-summary - Error scraping BBC live scores: {e}")
+            all_live_matches = []
 
-        # Calculate summary statistics
+        # Calculate summary statistics using BBC data
         selectors_data = {}
         btts_success = 0
         btts_pending = 0
@@ -1483,25 +1364,27 @@ def get_btts_summary():
                 home_team = match_data.get('home_team')
                 away_team = match_data.get('away_team')
 
-                # Find corresponding match in BTTS data
+                # Find corresponding match in BBC live data
                 match_info = None
-                for sel, info in matches.items():
-                    if (info.get('home_team') == home_team and
-                        info.get('away_team') == away_team):
-                        match_info = info
+                for bbc_match in all_live_matches:
+                    if (bbc_match.get('home_team') == home_team and
+                        bbc_match.get('away_team') == away_team):
+                        match_info = bbc_match
                         break
 
                 if match_info:
-                    is_btts = match_info.get('btts_detected', False)
+                    home_score = match_info.get('home_score', 0)
+                    away_score = match_info.get('away_score', 0)
                     status = match_info.get('status', 'not_started')
+                    is_btts = home_score > 0 and away_score > 0
 
                     selectors_data[selector] = {
                         "home_team": home_team,
                         "away_team": away_team,
                         "btts_detected": is_btts,
                         "status": status,
-                        "home_score": match_info.get('home_score', 0),
-                        "away_score": match_info.get('away_score', 0)
+                        "home_score": home_score,
+                        "away_score": away_score
                     }
 
                     if is_btts:
@@ -1537,7 +1420,7 @@ def get_btts_summary():
 
         return jsonify({
             "status": "ACTIVE",
-            "message": f"BTTS accumulator tracking active for {total_selections} selections",
+            "message": f"BTTS accumulator tracking active for {total_selections} selections with BBC live scores",
             "selectors": selectors_data,
             "total_matches": total_selections,
             "btts_success": btts_success,
@@ -1554,81 +1437,6 @@ def get_btts_summary():
             "accumulator_status": "ERROR"
         }), 500
 
-@app.route('/api/btts-start-monitoring', methods=['POST'])
-def start_btts_monitoring():
-    """API endpoint to start BTTS monitoring."""
-    try:
-        if not SOFASCORE_AVAILABLE or not sofascore_api:
-            return jsonify({
-                "success": False,
-                "error": "Sofascore API not available",
-                "status": "API_UNAVAILABLE",
-                "message": "Sofascore integration is not properly configured"
-            }), 503
-
-        # Get current usage stats
-        api_stats = sofascore_api.get_usage_stats()
-
-        # Check if we're within usage limits
-        if api_stats.get('api_calls_used', 0) >= 20:  # Safety buffer
-            return jsonify({
-                "success": False,
-                "error": "Monthly API limit exceeded",
-                "status": "LIMIT_EXCEEDED",
-                "message": f"API usage limit reached ({api_stats.get('api_calls_used', 0)}/16 calls this month)"
-            }), 429
-
-        return jsonify({
-            "success": True,
-            "message": "BTTS monitoring is active with Sofascore integration",
-            "status": "ACTIVE",
-            "api_usage": api_stats,
-            "note": "Monitoring uses ultra-conservative API usage (12-16 calls/month target)"
-        })
-
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/btts-stop-monitoring', methods=['POST'])
-def stop_btts_monitoring():
-    """API endpoint to stop BTTS monitoring."""
-    try:
-        # Since we're using event-driven updates, "stopping" just means
-        # the API won't be called until explicitly requested again
-        return jsonify({
-            "success": True,
-            "message": "BTTS monitoring uses event-driven updates - no persistent monitoring to stop",
-            "status": "EVENT_DRIVEN",
-            "note": "Live scores are fetched on-demand when endpoints are called"
-        })
-
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/btts-reset', methods=['POST'])
-def reset_btts_detector():
-    """API endpoint to reset BTTS detector state."""
-    try:
-        if SOFASCORE_AVAILABLE and sofascore_api:
-            # Clear Sofascore cache and reset statistics
-            sofascore_api.clear_cache()
-            sofascore_api.reset_monthly_usage()
-
-            return jsonify({
-                "success": True,
-                "message": "BTTS detector state reset successfully",
-                "status": "RESET",
-                "actions_performed": ["cache_cleared", "monthly_usage_reset"]
-            })
-        else:
-            return jsonify({
-                "success": True,
-                "message": "BTTS detector not available - no state to reset",
-                "status": "NOT_AVAILABLE"
-            })
-
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
 
 # ===== ENHANCED BBC SCRAPER API ENDPOINTS =====
 
@@ -2188,58 +1996,55 @@ def get_modern_tracker_data():
             response_data["statistics"]["placeholder_count"] = len(SELECTORS) - selected_count
             response_data["statistics"]["completion_percentage"] = max(0, min(100, int((selected_count / len(SELECTORS)) * 100))) if len(SELECTORS) > 0 else 0
 
-        # Get live scores and update match data if available
-        if SOFASCORE_AVAILABLE and sofascore_api:
-            try:
-                # Map selections to Sofascore match IDs
-                match_mapping = map_selections_to_sofascore_ids(selections or {})
+        # Get live scores from BBC for BTTS detection
+        try:
+            if BBCSportScraper is not None:
+                scraper = BBCSportScraper()
+                live_result = scraper.scrape_live_scores(target_date)
+                all_live_matches = live_result.get("live_matches", [])
+                app.logger.info(f"[DEBUG] /api/modern-tracker-data - Scraped {len(all_live_matches)} live matches from BBC")
+            else:
+                all_live_matches = []
+                app.logger.warning("[DEBUG] /api/modern-tracker-data - BBC scraper not available")
+        except Exception as e:
+            app.logger.error(f"[DEBUG] /api/modern-tracker-data - Error scraping BBC live scores: {e}")
+            all_live_matches = []
 
-                # Get live scores data
-                live_data = sofascore_api.get_live_scores_batch()
+        # Update matches with BBC live data
+        for selector in SELECTORS:
+            if selector in response_data["matches"]:
+                match_data = response_data["matches"][selector]
+                if match_data.get('is_selected'):
+                    home_team = match_data.get('home_team')
+                    away_team = match_data.get('away_team')
 
-                if live_data and 'events' in live_data:
-                    # Update matches with live data
-                    for selector, match_info in match_mapping.items():
-                        sofascore_id = match_info.get('sofascore_id')
-                        if not sofascore_id or selector not in response_data["matches"]:
-                            continue
+                    # Find matching live data
+                    live_match = None
+                    for bbc_match in all_live_matches:
+                        if (bbc_match.get('home_team') == home_team and
+                            bbc_match.get('away_team') == away_team):
+                            live_match = bbc_match
+                            break
 
-                        # Find the match in live data
-                        for event in live_data['events']:
-                            if event.get('id') == sofascore_id:
-                                home_score = event.get('homeScore', {}).get('current', 0)
-                                away_score = event.get('awayScore', {}).get('current', 0)
-                                status = event.get('status', {}).get('type', 'not_started')
-                                match_time = event.get('time', {}).get('currentTime', '0\'')
+                    if live_match:
+                        # Update with BBC data
+                        home_score = live_match.get('home_score', 0)
+                        away_score = live_match.get('away_score', 0)
+                        status = live_match.get('status', 'not_started')
+                        match_time = live_match.get('match_time', '0\'')
+                        league = live_match.get('league', 'Unknown')
+                        btts_detected = home_score > 0 and away_score > 0
 
-                                # Check if BTTS occurred
-                                is_btts = home_score > 0 and away_score > 0
-
-                                # Update match data
-                                response_data["matches"][selector].update({
-                                    "home_score": home_score,
-                                    "away_score": away_score,
-                                    "status": status,
-                                    "match_time": match_time if status == 'live' else response_data["matches"][selector]["match_time"],
-                                    "btts_detected": is_btts,
-                                    "last_updated": datetime.now().isoformat()
-                                })
-
-                                # Update selections data too
-                                if selector in response_data["selections"]:
-                                    response_data["selections"][selector].update({
-                                        "home_score": home_score,
-                                        "away_score": away_score,
-                                        "status": status,
-                                        "match_time": match_time if status == 'live' else response_data["selections"][selector]["match_time"],
-                                        "btts_detected": is_btts,
-                                        "last_updated": datetime.now().isoformat()
-                                    })
-                                break
-
-            except Exception as e:
-                print(f"Error getting live scores for modern tracker: {e}")
-                # Continue without live data
+                        response_data["matches"][selector].update({
+                            "home_score": home_score,
+                            "away_score": away_score,
+                            "status": status,
+                            "match_time": match_time,
+                            "league": league,
+                            "btts_detected": btts_detected,
+                            "last_updated": datetime.now().isoformat()
+                        })
+                        app.logger.debug(f"[DEBUG] /api/modern-tracker-data - Updated {selector}: {home_team} vs {away_team} - {home_score}-{away_score} ({status})")
 
         # Calculate final statistics
         btts_detected = sum(1 for match in response_data["matches"].values() if match.get('btts_detected'))
@@ -2445,7 +2250,6 @@ def get_tracker_data():
                 "live_matches": live_matches,
                 "finished_matches": finished_matches,
                 "not_started_matches": not_started_matches,
-                "sofascore_api_available": SOFASCORE_AVAILABLE
             },
             "last_updated": datetime.now().isoformat()
         })
@@ -2503,7 +2307,6 @@ def health_check():
         # Enhanced service status checking
         services = {
             'bbc_scraper': BBCSportScraper is not None,
-            'sofascore_api': SOFASCORE_AVAILABLE,
             'btts_detector': BTTS_DETECTOR_AVAILABLE,
             'data_manager': data_manager is not None
         }
@@ -2591,16 +2394,6 @@ def metrics():
                 'platform': sys.platform
             }
         }
-
-        # Add Sofascore API metrics if available
-        if SOFASCORE_AVAILABLE and sofascore_api:
-            try:
-                usage_stats = sofascore_api.get_usage_stats()
-                cache_analytics = sofascore_api.get_cache_analytics()
-                metrics_data['api_usage'] = usage_stats
-                metrics_data['cache_stats'] = cache_analytics
-            except Exception as e:
-                app.logger.warning(f"Could not get Sofascore metrics: {e}")
 
         return jsonify(metrics_data)
 

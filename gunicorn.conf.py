@@ -45,7 +45,6 @@ certfile = None
 raw_env = [
     f'FLASK_ENV={os.getenv("FLASK_ENV", "production")}',
     f'SECRET_KEY={os.getenv("SECRET_KEY", "")}',
-    f'SOFASCORE_API_KEY={os.getenv("SOFASCORE_API_KEY", "")}',
 ]
 
 # Preload application for better performance

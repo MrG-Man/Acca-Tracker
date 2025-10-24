@@ -100,10 +100,22 @@
         {% endif %}
 
         <div class="matches-section">
-            <h2>Saturday 15:00 Matches</h2>
+            <div class="matches-header">
+                <h2>Saturday 15:00 Matches</h2>
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <input type="text" id="team-search" placeholder="Search teams..." class="team-search-input">
+                        <span class="search-icon">🔍</span>
+                        <button type="button" id="clear-search" class="clear-search-btn" style="display: none;">✕</button>
+                    </div>
+                    <div class="search-results-info" id="search-results-info" style="display: none;">
+                        <span class="results-count"></span>
+                    </div>
+                </div>
+            </div>
 
             {% if matches %}
-            <div class="matches-grid">
+            <div class="matches-grid" id="matches-grid">
                 {% for match in matches %}
                 <div class="match-card" data-match-id="{{ match.league }}_{{ match.home_team }}_{{ match.away_team }}">
                     <div class="match-header">

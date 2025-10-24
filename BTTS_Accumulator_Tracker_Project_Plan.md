@@ -56,46 +56,44 @@
 - **Frontend**: HTML/CSS/JavaScript (no frameworks)
 - **Data Storage**: JSON files for selections, cache
 - **Web Scraping**: BBC Sport for match fixtures (Saturday 3pm only)
-- **API Integration**: Sofascore API (live scores only, 12-16 calls/month)
+- **Web Scraping**: BBC Sport for fixtures and live scores
 - **Deployment**: Single server (local or cloud)
 
-## Hybrid Data Strategy & Budget Management
+## Data Strategy & Budget Management
 
-### Monthly API Budget: 500 Calls (75% Reduction Achieved)
-- **Optimized Usage**: 12-16 calls per month (3% utilization)
+### Zero API Budget (BBC Scraping Only)
+- **No API Calls Required**: All data from BBC Sport web scraping
 - **Budget Breakdown**:
-  - Live tracking: 3-4 calls per Saturday × 4 Saturdays = 12-16 calls
+  - Live tracking: 0 API calls (web scraping)
   - Match details: 0 calls (web scraping)
   - Setup/Admin: 0 calls (web scraping)
-  - Buffer: 484 calls for testing and errors
+  - Total: 0 API calls per month
 
-### Data Source Separation Strategy
-- **Web Scraping (BBC Sport)**: All match fixtures and details (Saturday 3pm only)
-- **Sofascore API**: Live scores only (every 15-20 minutes)
+### Data Source Strategy
+- **Web Scraping (BBC Sport)**: All match fixtures, details, and live scores
 - **Smart Caching**: Different TTL for different data types
-- **Batch Processing**: Single API call for all 8 matches
+- **Batch Processing**: Single scraping session for all 8 matches
 
-### Event-Driven Call Pattern
+### Event-Driven Update Pattern
 ```
 Saturday Schedule:
 3:00pm - 5:00pm (2-hour window)
-- Updates triggered by KO/HT/FT events (not time-based)
-- Goal events trigger immediate updates
-- 3-4 API calls per Saturday (event-driven)
-- 4 Saturdays = 12-16 calls per month
-- 75% reduction from original 48 calls/month
+- Updates triggered by page refreshes (user-initiated)
+- Live scores updated on-demand via scraping
+- 0 API calls per Saturday
+- 4 Saturdays = 0 API calls per month
 
 Critical Events Monitored:
-- Kick-Off (KO) detection
-- Half-Time (HT) confirmation
-- Full-Time (FT) verification
-- Goal scoring events (both teams)
+- Kick-Off (KO) detection via BBC
+- Half-Time (HT) confirmation via BBC
+- Full-Time (FT) verification via BBC
+- Goal scoring events via BBC
 ```
 
 ### Scraping Schedule
 ```
 Friday Schedule:
-- Weekly scraping: 8 league pages (England + Scotland)
+- Weekly scraping: BBC unified page (all leagues)
 - Update frequency: Friday evenings for Saturday matches
 - Data scope: Saturday 3pm kickoffs only
 ```
@@ -123,11 +121,11 @@ Friday Schedule:
 - [ ] Auto-refresh functionality (5-minute intervals)
 - [ ] Mobile-responsive design
 
-### Phase 4: API Integration & Optimization (Week 5)
-- [ ] Integrate Sofascore API for live scores
-- [ ] Implement single-call batch updates
+### Phase 4: BBC Integration & Optimization (Week 5)
+- [ ] Integrate BBC scraping for live scores
+- [ ] Implement unified scraping for all data
 - [ ] Add intelligent caching system
-- [ ] API usage monitoring and alerts
+- [ ] Performance monitoring and alerts
 
 ### Phase 5: Testing & Refinement (Week 6)
 - [ ] End-to-end testing of accumulator workflow
@@ -190,7 +188,7 @@ BTTS_Accumulator_Tracker/
 ├── app.py                    # Main Flask application
 ├── requirements.txt          # Python dependencies
 ├── bbc_scraper.py           # BBC Sport web scraper (8 leagues)
-├── sofascore_optimized.py    # Live scores API client (optimized)
+# Removed: sofascore_optimized.py (now using BBC scraping only)
 ├── data_manager.py          # Coordinates scraping + API data
 ├── templates/
 │   ├── admin.html           # Admin interface (match selection)
@@ -218,10 +216,10 @@ BTTS_Accumulator_Tracker/
 - **Fallback**: Manual fixture entry if scraping fails
 - **Maintenance**: Monitor BBC website structure changes
 
-### API Limitations (Minimized)
-- **Mitigation**: Live scores only (12-16 calls/month vs 48)
-- **Monitoring**: Real-time usage tracking
-- **Fallback**: Cached scores if API fails temporarily
+### Scraping Reliability
+- **Mitigation**: BBC Sport unified scraping for all data
+- **Monitoring**: Scraping success tracking
+- **Fallback**: Cached data if scraping fails temporarily
 
 ### Match Availability
 - **Challenge**: Getting reliable Saturday 3pm fixtures data
@@ -232,10 +230,9 @@ BTTS_Accumulator_Tracker/
 ## Success Metrics
 
 ### Technical Metrics
-- [ ] API calls: <20 per month (target: 12-16) - 75% reduction achieved
 - [ ] Scraping success rate: >95% for weekly fixture updates
-- [ ] Event detection: 100% reliable KO/HT/FT recognition
-- [ ] BTTS detection: Real-time goal event monitoring
+- [ ] Event detection: 100% reliable KO/HT/FT recognition via BBC
+- [ ] BTTS detection: Real-time goal event monitoring via BBC
 - [ ] Cache hit rate: >90% (different TTL for different data types)
 - [ ] Page load time: <2 seconds
 
@@ -296,7 +293,7 @@ BTTS_Accumulator_Tracker/
 
 ### Architecture Evolution
 - **Before**: Sofascore API for everything (48 calls/month)
-- **After**: BBC scraping + Sofascore live scores only (12-16 calls/month)
+- **After**: BBC scraping for all data (0 API calls/month)
 
 ---
 

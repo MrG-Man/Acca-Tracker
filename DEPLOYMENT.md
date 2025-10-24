@@ -49,7 +49,7 @@ chmod +x deploy.sh
 - **Domain name** (optional, for production)
 
 ### API Keys Required
-- **Sofascore API Key** (from RapidAPI)
+- **None required** (uses BBC Sport web scraping)
 
 ## Environment Setup
 
@@ -80,9 +80,7 @@ FLASK_ENV=production
 HOST=0.0.0.0
 PORT=5000
 
-# API Keys
-SOFASCORE_API_KEY=your-rapidapi-key-here
-RAPIDAPI_HOST=sofascore.p.rapidapi.com
+# No API keys required (BBC scraping only)
 ```
 
 #### Optional Settings
@@ -259,7 +257,6 @@ curl http://localhost:5000/health
     "version": "1.0.0",
     "services": {
         "bbc_scraper": true,
-        "sofascore_api": true,
         "data_manager": true
     }
 }
@@ -367,12 +364,11 @@ pip list
 
 #### API Connection Issues
 ```bash
-# Test API connectivity
-curl -H "X-RapidAPI-Key: $SOFASCORE_API_KEY" \
-     "https://sofascore.p.rapidapi.com/categories/list"
+# Test BBC scraper connectivity
+curl http://localhost:5000/api/bbc-fixtures
 
-# Check API key in .env
-grep SOFASCORE_API_KEY .env
+# Check application health
+curl http://localhost:5000/health
 ```
 
 #### Database Issues (Future)
@@ -392,8 +388,8 @@ docker stats
 # Monitor API usage
 curl http://localhost:5000/metrics
 
-# Check cache efficiency
-python -c "from sofascore_optimized import SofascoreLiveScoresAPI; api = SofascoreLiveScoresAPI(); api.print_stats()"
+# Check BBC scraper cache efficiency
+curl http://localhost:5000/health
 ```
 
 ### Debug Mode
@@ -482,7 +478,6 @@ sudo ufw enable
 
 ### Cache Optimization
 - **BBC scraper cache**: 72 hours
-- **Sofascore API cache**: 3 minutes for live data
 - **Memory cache**: 5 minutes for frequent data
 
 ### Database Optimization (Future)

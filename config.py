@@ -17,8 +17,6 @@ class Config:
     PORT = int(os.getenv('PORT', 5000))
 
     # API Keys
-    SOFASCORE_API_KEY = os.getenv('SOFASCORE_API_KEY')
-    RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST', 'sofascore.p.rapidapi.com')
 
     # Security
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
@@ -30,7 +28,6 @@ class Config:
 
     # Feature Flags
     ENABLE_BBC_SCRAPER = os.getenv('ENABLE_BBC_SCRAPER', 'True').lower() == 'true'
-    ENABLE_SOFA_SCORE_API = os.getenv('ENABLE_SOFA_SCORE_API', 'True').lower() == 'true'
     ENABLE_BTTS_TRACKER = os.getenv('ENABLE_BTTS_TRACKER', 'True').lower() == 'true'
 
     # Backup Settings
@@ -53,12 +50,6 @@ class ProductionConfig(Config):
             import warnings
             warnings.warn("SECRET_KEY environment variable not set in production - using default", UserWarning)
             self.SECRET_KEY = 'production-secret-key-change-in-production'
-
-        self.SOFASCORE_API_KEY = os.getenv('SOFASCORE_API_KEY')
-        if not self.SOFASCORE_API_KEY:
-            import warnings
-            warnings.warn("SOFASCORE_API_KEY environment variable not set in production - Sofascore features will be disabled", UserWarning)
-            self.SOFASCORE_API_KEY = None
 
 class DevelopmentConfig(Config):
     """Development configuration"""

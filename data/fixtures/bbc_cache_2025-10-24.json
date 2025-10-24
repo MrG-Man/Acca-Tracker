@@ -1,0 +1,120 @@
+{
+  "metadata": {
+    "cached_at": "2025-10-24T12:14:19.015693",
+    "expires_at": "2025-10-27T12:14:19.015697",
+    "ttl_hours": 24,
+    "date": "2025-10-24"
+  },
+  "fixtures": [
+    {
+      "league": "Premier League",
+      "home_team": "Leeds United",
+      "away_team": "West Ham United",
+      "kickoff": "20:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Preston North End",
+      "away_team": "Sheffield United",
+      "kickoff": "20:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "League One",
+      "home_team": "Hamilton Academical",
+      "away_team": "Queen of the South",
+      "kickoff": "19:45",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "League One",
+      "home_team": "Dunston UTS",
+      "away_team": "Hebburn Town",
+      "kickoff": "19:45",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Katsina United",
+      "away_team": "El Kanemi Warriors",
+      "kickoff": "16:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Nasarawa United",
+      "away_team": "Remo Stars",
+      "kickoff": "16:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Rivers United",
+      "away_team": "Ikorodu City",
+      "kickoff": "16:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Nieciecza",
+      "away_team": "Zagłębie Lubin",
+      "kickoff": "17:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Oleksandria",
+      "away_team": "Epitsentr",
+      "kickoff": "13:30",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    },
+    {
+      "league": "Premier League",
+      "home_team": "Veres Rivne",
+      "away_team": "Zorya",
+      "kickoff": "16:00",
+      "venue": "TBC",
+      "home_score": 0,
+      "away_score": 0,
+      "status": "not_started",
+      "match_time": "0'"
+    }
+  ]
+}
