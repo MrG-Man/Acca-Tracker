@@ -2349,3 +2349,13 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-24 10:39:03,892 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
 2025-10-24 10:39:22,142 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
 2025-10-24 10:39:22,142 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:39:33,892 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:39:33,892 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:39:33,894 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:39:33,894 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:39:52,565 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:39:52,565 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:40:03,891 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:40:03,891 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:40:03,905 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 10:40:03,905 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
