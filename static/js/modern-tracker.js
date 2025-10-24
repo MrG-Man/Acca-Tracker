@@ -21,7 +21,6 @@ class ModernAccaTracker {
         ];
 
         // Admin-like features
-        this.debugMode = localStorage.getItem('modern_debug_mode') === 'true';
         this.errorReports = [];
 
         // Team colors for logos
@@ -47,8 +46,6 @@ class ModernAccaTracker {
         // Setup event listeners
         this.setupEventListeners();
 
-        // Debug mode initialization removed for mobile layout
-
         // Load initial data
         await this.loadCurrentWeek();
         await this.loadAllData();
@@ -65,36 +62,13 @@ class ModernAccaTracker {
         // Start connection monitoring
         this.startConnectionMonitoring();
 
-        this.logDebug('Modern Acca Tracker fully initialized', {
-            debugMode: this.debugMode,
-            selectionsCount: this.selections.size,
-            timestamp: new Date().toISOString()
-        });
+        console.log('Modern Acca Tracker fully initialized');
     }
     
     setupEventListeners() {
-        // Debug mode toggle
-        const debugModeToggle = document.getElementById('debugModeToggle');
-        if (debugModeToggle) {
-            debugModeToggle.checked = this.debugMode;
-            debugModeToggle.addEventListener('change', (e) => {
-                this.toggleDebugMode();
-            });
-        }
-
-        // Debug panel handlers
         document.getElementById('refreshDataBtn')?.addEventListener('click', () => {
             this.loadAllData();
             this.loadTrackerData();
-        });
-
-        // Keyboard shortcuts for debug mode
-        document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + D to toggle debug mode
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                e.preventDefault();
-                this.toggleDebugMode();
-            }
         });
     }
     
@@ -459,17 +433,9 @@ class ModernAccaTracker {
 
     // Removed override and assignment functions as they are not needed in mobile layout
 
-    logDebug(message, data = null) {
-        if (this.debugMode) {
-            const timestamp = new Date().toISOString();
-            console.log(`[MODERN_DEBUG ${timestamp}] ${message}`, data || '');
-        }
-    }
-
     logError(message, error = null) {
         const timestamp = new Date().toISOString();
         console.error(`[MODERN_ERROR ${timestamp}] ${message}`, error || '');
-        this.logDebug('Error occurred', { message, error: error?.stack || error });
 
         // Add to error reports
         this.errorReports.push({
@@ -487,24 +453,7 @@ class ModernAccaTracker {
         }
     }
 
-    toggleDebugMode() {
-        this.debugMode = !this.debugMode;
-        localStorage.setItem('modern_debug_mode', this.debugMode.toString());
 
-        const debugModeToggle = document.getElementById('debugModeToggle');
-
-        if (this.debugMode) {
-            if (debugModeToggle) debugModeToggle.checked = true;
-            this.showToast('Debug mode enabled', 'success');
-        } else {
-            if (debugModeToggle) debugModeToggle.checked = false;
-            this.showToast('Debug mode disabled', 'warning');
-        }
-
-        this.logDebug(`Debug mode ${this.debugMode ? 'enabled' : 'disabled'}`);
-    }
-
-    // Removed debug panel functions as they are not needed in mobile layout
 
     // Removed refreshPageWithCacheBust function as it's not needed in mobile layout
     
@@ -555,12 +504,10 @@ class ModernAccaTracker {
         // Listen for online/offline events
         window.addEventListener('online', () => {
             this.showToast('Connection restored', 'success');
-            this.logDebug('Connection restored');
         });
 
         window.addEventListener('offline', () => {
             this.showToast('Connection lost', 'warning', { persistent: true });
-            this.logDebug('Connection lost');
         });
     }
     
