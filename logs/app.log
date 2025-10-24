@@ -2359,3 +2359,10 @@ werkzeug.exceptions.BadRequest: 400 Bad Request: The browser (or proxy) sent a r
 2025-10-24 10:40:03,891 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
 2025-10-24 10:40:03,905 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
 2025-10-24 10:40:03,905 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,933 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,933 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,936 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,936 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,949 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,949 - SofascoreLiveScores - ERROR - Monthly API limit exceeded! Live scores disabled.
+2025-10-24 11:22:05,971 - app - WARNING - 404 error: http://localhost:5000/favicon.ico
