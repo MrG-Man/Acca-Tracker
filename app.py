@@ -472,6 +472,15 @@ def modern_tracker():
         app.logger.error(f"Error loading modern tracker interface: {str(e)}")
         return f"Error loading modern tracker interface: {str(e)}", 500
 
+@app.route('/demo')
+def demo():
+    """Demo page showcasing current accumulator selections in modern format."""
+    try:
+        return render_template('demo.html')
+    except Exception as e:
+        app.logger.error(f"Error loading demo interface: {str(e)}")
+        return f"Error loading demo interface: {str(e)}", 500
+
 @app.route('/admin')
 def admin():
     """Main admin interface for match selection."""
