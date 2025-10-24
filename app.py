@@ -1101,6 +1101,82 @@ def mobile_test():
         return f"Error loading mobile test interface: {str(e)}", 500
 
 
+def get_team_color(team_name):
+    """Get a color for the team logo based on team name."""
+    colors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+        '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+    ]
+    # Simple hash based on team name
+    hash_value = sum(ord(c) for c in team_name) % len(colors)
+    return colors[hash_value]
+
+
+@app.route('/mobile-demo')
+def mobile_demo():
+    """Mobile demo page showcasing current accumulator selections in mobile format."""
+    try:
+        # Load current selections
+        selections_data = load_selections()
+        selections = selections_data.get('selectors', {})
+
+        # Create demo matches for all 8 selectors
+        demo_matches = []
+        for selector in SELECTORS:
+            if selector in selections:
+                # Use real match data for selected matches
+                match_data = selections[selector]
+                # Simulate realistic match statuses and scores
+                import random
+                statuses = ['FT', 'HT', '82\'', '65\'', '45\'', 'Live']
+                status = random.choice(statuses)
+                if status == 'FT':
+                    home_score = random.randint(0, 4)
+                    away_score = random.randint(0, 4)
+                    btts = home_score > 0 and away_score > 0
+                elif status in ['HT', '45\'']:
+                    home_score = random.randint(0, 2)
+                    away_score = random.randint(0, 2)
+                    btts = home_score > 0 and away_score > 0
+                else:
+                    home_score = random.randint(0, 3)
+                    away_score = random.randint(0, 3)
+                    btts = home_score > 0 and away_score > 0
+
+                demo_matches.append({
+                    'selector': selector,
+                    'home_team': match_data.get('home_team'),
+                    'away_team': match_data.get('away_team'),
+                    'home_score': home_score,
+                    'away_score': away_score,
+                    'status': status,
+                    'btts': btts,
+                    'league': match_data.get('league', 'Premier League'),
+                    'home_color': get_team_color(match_data.get('home_team')),
+                    'away_color': get_team_color(match_data.get('away_team'))
+                })
+            else:
+                # Create placeholder for unselected selectors
+                demo_matches.append({
+                    'selector': selector,
+                    'home_team': None,
+                    'away_team': None,
+                    'home_score': 0,
+                    'away_score': 0,
+                    'status': '—',
+                    'btts': False,
+                    'league': None,
+                    'home_color': '#666666',
+                    'away_color': '#666666'
+                })
+
+        return render_template('mobile-demo.html', matches=demo_matches, get_team_color=get_team_color)
+    except Exception as e:
+        app.logger.error(f"Error loading mobile demo interface: {str(e)}")
+        return f"Error loading mobile demo interface: {str(e)}", 500
+
+
 
 @app.route('/api/btts-status')
 def get_btts_status():

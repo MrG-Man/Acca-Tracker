@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Accumulator - Mobile Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-demo.css') }}">
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Header -->
+        <header class="mobile-header">
+            <div style="width: 24px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 14px; color: #9ca3af;">←</span>
+            </div>
+            <h1 class="app-title">My Accumulator</h1>
+            <div style="width: 24px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 14px; color: #9ca3af;">⋮</span>
+            </div>
+        </header>
+
+        <!-- Matches List -->
+        <main class="matches-list">
+            {% for match in matches %}
+            <div class="match-card">
+                <div class="match-header">
+                    <div class="selector-name">{{ match.selector }}</div>
+                    <div class="match-time">{{ match.status }}</div>
+                </div>
+
+                <div class="match-teams">
+                    {% if match.home_team and match.away_team %}
+                    <div class="team home-team">
+                        <div class="team-logo" style="background-color: {{ match.home_color }};"></div>
+                        <span class="team-name">{{ match.home_team }}</span>
+                    </div>
+
+                    <div class="match-score">
+                        <span class="score">{{ match.home_score }}</span>
+                    </div>
+
+                    <div class="team away-team">
+                        <span class="team-name">{{ match.away_team }}</span>
+                        <div class="team-logo" style="background-color: {{ match.away_color }};"></div>
+                    </div>
+                    {% else %}
+                    <div class="team home-team">
+                        <div class="team-logo" style="background-color: #666666;"></div>
+                        <span class="team-name">No Selection</span>
+                    </div>
+
+                    <div class="match-score">
+                        <span class="score">—</span>
+                    </div>
+
+                    <div class="team away-team">
+                        <span class="team-name">Pending</span>
+                        <div class="team-logo" style="background-color: #666666;"></div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if match.btts %}
+                <div class="btts-badge">BTTS</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </main>
+    </div>
+
+    <script>
+        // Auto-refresh functionality
+        setInterval(function() {
+            window.location.reload();
+        }, 30000); // Refresh every 30 seconds
+
+        // Add click handlers for interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Mobile demo page loaded successfully');
+        });
+    </script>
+</body>
+</html>
