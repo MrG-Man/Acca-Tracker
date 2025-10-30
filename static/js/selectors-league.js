@@ -108,7 +108,7 @@ function renderLeagueData(data) {
 
 /* ===== Card Creation ===== */
 function createLeagueCard(selector, position) {
-    const pointsClass = selector.total_points > 0 ? 'points-positive' : 
+    const pointsClass = selector.total_points > 0 ? 'points-positive' :
                       selector.total_points === 0 ? 'points-zero' : 'points-negative';
     
     const positionClass = position === 1 ? 'position-1' :
@@ -117,11 +117,11 @@ function createLeagueCard(selector, position) {
     
     const card = document.createElement('div');
     card.className = 'league-card';
-    card.setAttribute('data-selector-id', selector.selector_id || selector.id || index);
+    card.setAttribute('data-selector-id', selector.selector_id || selector.id || position);
     
     // Enhanced selector info with additional stats if available
-    const selections = selector.selections || 0;
-    const correct = selector.correct_predictions || 0;
+    const selections = selector.selections || selector.total_matches || 0;
+    const correct = selector.correct_predictions || selector.btts_successes || 0;
     const accuracy = selections > 0 ? Math.round((correct / selections) * 100) : 0;
     
     card.innerHTML = `
