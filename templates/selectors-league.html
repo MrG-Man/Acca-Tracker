@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selectors League - BTTS Accumulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-tracker.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/selectors-league.css') }}">
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Header -->
+        <header class="mobile-header">
+            <h1 class="app-title">🏆 Selectors League</h1>
+            <p class="app-subtitle">BTTS Rankings</p>
+        </header>
+
+        <!-- League Info Bar -->
+        <div class="league-info-bar">
+            <div class="info-item">
+                <span class="info-label">Scoring:</span>
+                <span class="info-value">+3 BTTS, 0 Single Goal, -3 No Goals</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Updated:</span>
+                <span class="info-value" id="lastUpdateTime">Live</span>
+            </div>
+        </div>
+
+        <!-- League Standings List -->
+        <main class="league-list" id="leagueStandings">
+            <!-- League cards will be dynamically inserted -->
+        </main>
+
+        <!-- Loading State -->
+        <div class="loading-state" id="leagueLoading">
+            <div class="loading-spinner"></div>
+            <p>Loading league standings...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">🏆</div>
+            <h3 class="empty-state-title">No League Data</h3>
+            <p class="empty-state-text">League standings will appear here once there are predictions.</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-state" id="errorState" style="display: none;">
+            <div class="error-state-icon">⚠️</div>
+            <h3 class="error-state-title">Failed to Load</h3>
+            <p class="error-state-text">Unable to fetch league data. Please try again.</p>
+            <button class="btn btn-secondary" onclick="retryLoad()">Retry</button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Debug Toggle (for development) -->
+    <div class="debug-toggle-mobile" id="debugToggle" style="display: none;">
+        <span class="toggle-label">Debug</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="debugMode">
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/selectors-league.js') }}"></script>
+</body>
+</html>

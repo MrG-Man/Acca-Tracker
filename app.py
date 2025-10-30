@@ -205,6 +205,16 @@ except ImportError:
     BTTS_DETECTOR_AVAILABLE = False
     app.logger.warning("BTTS detector not available")
 
+# Import Selectors League for integration
+try:
+    from selectors_league import selectors_league  # noqa: F401
+    SELECTORS_LEAGUE_AVAILABLE = True
+    app.logger.info("Selectors league loaded successfully")
+except ImportError:
+    SELECTORS_LEAGUE_AVAILABLE = False
+    app.logger.warning("Selectors league not available")
+    selectors_league = None
+
 # BBC live scores integration active
 
 # Panel members in assignment order
@@ -372,6 +382,16 @@ def modern_tracker():
     except Exception as e:
         app.logger.error(f"Error loading modern tracker interface: {str(e)}")
         return f"Error loading modern tracker interface: {str(e)}", 500
+
+
+@app.route('/selectors-league')
+def selectors_league_page():
+    """Selectors League page showing historical performance."""
+    try:
+        return render_template('selectors-league.html')
+    except Exception as e:
+        app.logger.error(f"Error loading selectors league interface: {str(e)}")
+        return f"Error loading selectors league interface: {str(e)}", 500
 
 
 @app.route('/admin')
@@ -2015,6 +2035,35 @@ def get_modern_tracker_data():
             "last_updated": datetime.now().isoformat(),
             "fallback": True
         }), 500
+
+@app.route('/api/selectors-league')
+def get_selectors_league():
+    """API endpoint to get selectors league data with historical performance."""
+    try:
+        # Check if selectors league module is available
+        if not SELECTORS_LEAGUE_AVAILABLE or selectors_league is None:
+            return jsonify({
+                "success": False,
+                "error": "Selectors league module not available",
+                "last_updated": datetime.now().isoformat()
+            }), 500
+
+        # Get view filter from query parameters
+        view_filter = request.args.get('view', 'overall')
+
+        # Calculate league data
+        league_data = selectors_league.calculate_league_data(view_filter)
+
+        return jsonify(league_data)
+
+    except Exception as e:
+        app.logger.error(f"Error getting selectors league data: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting selectors league data: {str(e)}",
+            "last_updated": datetime.now().isoformat()
+        }), 500
+
 
 
 @app.route('/api/tracker-data')

@@ -1,0 +1,524 @@
+/* Modern Selectors League - Dark Theme Mobile-First Design */
+
+/* ===== League Info Bar ===== */
+.league-info-bar {
+    background: rgba(0, 0, 0, 0.2);
+    padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 20px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.league-info-bar .info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: clamp(4px, 1vw, 6px);
+}
+
+.league-info-bar .info-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-size: clamp(10px, 2.2vw, 12px);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: clamp(10px, 2.2vw, 12px);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ===== League List ===== */
+.league-list {
+    padding: clamp(8px, 2vw, 16px);
+    max-height: calc(100vh - clamp(120px, 30vw, 160px));
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+.league-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.league-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.league-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.league-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== League Card ===== */
+.league-card {
+    background: var(--card-bg);
+    border-radius: clamp(8px, 2vw, 12px);
+    padding: clamp(12px, 3vw, 16px);
+    margin-bottom: clamp(8px, 2vw, 12px);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-base);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(8px, 2vw, 12px);
+}
+
+.league-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.league-card:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== Position Badge ===== */
+.position-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(40px, 10vw, 48px);
+    height: clamp(40px, 10vw, 48px);
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: clamp(14px, 3.5vw, 16px);
+    flex-shrink: 0;
+    border: 2px solid;
+}
+
+.position-1 {
+    background: linear-gradient(135deg, #f1c40f, #f39c12);
+    color: #000;
+    border-color: #f39c12;
+    box-shadow: 0 4px 12px rgba(241, 196, 15, 0.3);
+}
+
+.position-2 {
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+    color: #2c3e50;
+    border-color: #95a5a6;
+    box-shadow: 0 4px 12px rgba(189, 195, 199, 0.3);
+}
+
+.position-3 {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: white;
+    border-color: #d35400;
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+}
+
+.position-other {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== Selector Info ===== */
+.selector-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.selector-name {
+    font-size: clamp(14px, 3.5vw, 16px);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: clamp(2px, 0.5vw, 4px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selector-stats {
+    font-size: clamp(11px, 2.8vw, 13px);
+    color: var(--text-secondary);
+    display: flex;
+    gap: clamp(8px, 2vw, 12px);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: clamp(2px, 0.5vw, 4px);
+}
+
+/* ===== Points Display ===== */
+.points-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.points-value {
+    font-size: clamp(18px, 4.5vw, 24px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.points-label {
+    font-size: clamp(10px, 2.5vw, 12px);
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: clamp(2px, 0.5vw, 4px);
+}
+
+.points-positive {
+    color: var(--color-success);
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.points-zero {
+    color: var(--color-warning);
+}
+
+.points-negative {
+    color: var(--color-danger);
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+    text-align: center;
+    padding: clamp(40px, 10vw, 60px) clamp(20px, 5vw, 30px);
+    color: var(--text-secondary);
+}
+
+.empty-state-icon {
+    font-size: clamp(48px, 12vw, 72px);
+    margin-bottom: clamp(16px, 4vw, 20px);
+    opacity: 0.6;
+}
+
+.empty-state-title {
+    font-size: clamp(16px, 4vw, 18px);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: clamp(8px, 2vw, 12px);
+}
+
+.empty-state-text {
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.5;
+}
+
+/* ===== Error State ===== */
+.error-state {
+    text-align: center;
+    padding: clamp(40px, 10vw, 60px) clamp(20px, 5vw, 30px);
+    color: var(--text-secondary);
+}
+
+.error-state-icon {
+    font-size: clamp(48px, 12vw, 72px);
+    margin-bottom: clamp(16px, 4vw, 20px);
+    opacity: 0.6;
+}
+
+.error-state-title {
+    font-size: clamp(16px, 4vw, 18px);
+    font-weight: 600;
+    color: var(--color-danger);
+    margin-bottom: clamp(8px, 2vw, 12px);
+}
+
+.error-state-text {
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.5;
+    margin-bottom: clamp(16px, 4vw, 20px);
+}
+
+/* ===== Loading State ===== */
+.loading-state {
+    display: none;
+    text-align: center;
+    padding: clamp(40px, 10vw, 60px) clamp(20px, 5vw, 30px);
+    color: var(--text-secondary);
+}
+
+.loading-state.active {
+    display: block;
+}
+
+.loading-spinner {
+    width: clamp(32px, 8vw, 48px);
+    height: clamp(32px, 8vw, 48px);
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--primary-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto clamp(16px, 4vw, 20px);
+}
+
+.loading-state p {
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.5;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== Debug Toggle Mobile ===== */
+.debug-toggle-mobile {
+    position: fixed;
+    bottom: clamp(16px, 4vw, 20px);
+    right: clamp(16px, 4vw, 20px);
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1.5vw, 8px);
+    padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: clamp(6px, 1.5vw, 8px);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: clamp(36px, 9vw, 44px);
+    height: clamp(18px, 4.5vw, 22px);
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: var(--transition-base);
+    border-radius: var(--radius-full);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: clamp(14px, 3.5vw, 18px);
+    width: clamp(14px, 3.5vw, 18px);
+    left: clamp(2px, 0.5vw, 3px);
+    bottom: clamp(2px, 0.5vw, 3px);
+    background-color: white;
+    transition: var(--transition-base);
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary-green);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(clamp(16px, 4vw, 20px));
+}
+
+.toggle-label {
+    font-size: clamp(11px, 2.5vw, 13px);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ===== Responsive Design ===== */
+
+/* Small phones (320px - 374px) */
+@media (max-width: 374px) {
+    .mobile-container {
+        border-radius: 0;
+    }
+
+    .league-card {
+        padding: 10px;
+    }
+
+    .position-badge {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .selector-name {
+        font-size: 13px;
+    }
+
+    .points-value {
+        font-size: 16px;
+    }
+}
+
+/* Standard phones (375px - 767px) */
+@media (min-width: 375px) and (max-width: 767px) {
+    .mobile-container {
+        max-width: 100%;
+        border-radius: 0;
+    }
+
+    .league-list {
+        padding: 12px;
+    }
+
+    .league-card {
+        padding: 14px;
+    }
+}
+
+/* Tablets (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .mobile-container {
+        max-width: 600px;
+        border-radius: 12px;
+        margin: 20px auto;
+    }
+
+    body {
+        padding: 20px;
+        background: var(--bg-darker);
+    }
+
+    .league-list {
+        padding: 16px;
+    }
+
+    .league-card {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .mobile-container {
+        max-width: 480px;
+        border-radius: 16px;
+        margin: 30px auto;
+    }
+
+    body {
+        padding: 30px;
+        background: var(--bg-darker);
+    }
+
+    .league-list {
+        padding: 20px;
+        max-height: calc(100vh - 160px);
+    }
+
+    .league-card {
+        padding: 18px;
+        margin-bottom: 14px;
+    }
+
+    .position-badge {
+        width: 56px;
+        height: 56px;
+        font-size: 18px;
+    }
+
+    .selector-name {
+        font-size: 18px;
+    }
+
+    .points-value {
+        font-size: 28px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+    .mobile-header {
+        padding: 8px 16px;
+    }
+
+    .league-info-bar {
+        padding: 6px 16px;
+    }
+
+    .league-list {
+        max-height: calc(100vh - 100px);
+        padding: 8px;
+    }
+
+    .league-card {
+        padding: 10px;
+        margin-bottom: 6px;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .position-badge {
+        border-width: 1px;
+    }
+
+    .league-card {
+        border-width: 0.5px;
+    }
+}
+
+/* Dark mode support (if system preference changes) */
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-dark: #f6f8f6;
+        --bg-darker: #e5e7e5;
+        --text-primary: #1a2e1a;
+        --text-secondary: #6b7280;
+        --card-bg: rgba(0, 0, 0, 0.03);
+        --card-hover: rgba(0, 0, 0, 0.05);
+        --border-color: rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+    }
+
+    .mobile-header {
+        position: static;
+    }
+
+    .league-info-bar,
+    .debug-toggle-mobile {
+        display: none;
+    }
+
+    .league-list {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .league-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
